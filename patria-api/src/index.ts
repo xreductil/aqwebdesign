@@ -737,7 +737,14 @@ export default {
             .bind(status, body.orderId)
             .run();
           const orders = await getAdminOrders(env.patria_db);
-          return Response.json({ success: true, order: orders.find((order) => order.id === body.orderId) });
+          const order = orders.find((item) => String(item.id) === String(body.orderId));
+          if (!order) {
+            return Response.json({ success: false, error: "Order not found." }, { status: 404 });
+          }
+          return Response.json(
+            { success: true, order },
+            { headers: { "Cache-Control": "no-store", "CDN-Cache-Control": "no-store" } }
+          );
         }
 
         if (request.method === "GET" && url.pathname === "/api/admin/customers") {
@@ -1141,13 +1148,16 @@ export default {
           );
         }
 
-        return Response.json({
-          success: true,
-          orders: await getUserOrders(
-            env.patria_db,
-            Number(current.user.id)
-          ),
-        });
+        return Response.json(
+          {
+            success: true,
+            orders: await getUserOrders(
+              env.patria_db,
+              Number(current.user.id)
+            ),
+          },
+          { headers: { "Cache-Control": "no-store", "CDN-Cache-Control": "no-store" } }
+        );
       }
 
       if (request.method === "PUT" && url.pathname === "/api/address") {

@@ -110,6 +110,7 @@ function apiRequest(path, options) {
     options.headers["Content-Type"] = "application/json";
     options.headers["X-Guest-Id"] = guestId;
     if (authToken) options.headers.Authorization = "Bearer " + authToken;
+    if (!options.cache) options.cache = "no-store";
     if (options.body && typeof options.body !== "string") options.body = JSON.stringify(options.body);
 
     return Promise.resolve().then(function() {
@@ -371,7 +372,7 @@ function startAccountOrdersPolling() {
         if (accountOv && accountOv.classList.contains("open") && isLoggedIn) {
             loadAccountOrders();
         }
-    }, 10000);
+    }, 5000);
 }
 
 function stopAccountOrdersPolling() {

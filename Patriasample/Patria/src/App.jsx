@@ -247,7 +247,7 @@ function MemberDashboard({ user, orders, page, setPage, addressForm, setAddressF
               <a href="#contact-section" onClick={onClose}>Contact</a>
               <button type="button" onClick={onClose}>Back to store</button>
             </div>
-            {[['dashboard', 'Dashboard'], ['orders', `Orders (${orders.length})`], ['addresses', 'Addresses'], ['details', 'Account Details']].map(([key, label]) => <button className={page === key ? "active" : ""} type="button" data-account-page={key} key={key} onClick={() => setPage(key)}>{label}</button>)}
+            {[['dashboard', 'Dashboard'], ['orders', `Orders (${orders.length})`], ['shipping', '物流 Shipping'], ['addresses', 'Addresses'], ['payments', '金流 Payments'], ['details', 'Account Details']].map(([key, label]) => <button className={page === key ? "active" : ""} type="button" data-account-page={key} key={key} onClick={() => setPage(key)}>{label}</button>)}
             <button type="button" id="linkLineBtn" onClick={onLinkLine}>綁定 LINE 帳號</button>
             <button id="accountLogout" type="button" onClick={onLogout}>Logout</button>
           </aside>
@@ -262,7 +262,7 @@ function MemberDashboard({ user, orders, page, setPage, addressForm, setAddressF
                 <div className="account-stat"><i className="fas fa-user" /><div><strong>Account Details</strong><span>{user.name || "Member"}</span></div></div>
               </div>
               <section className="account-section"><div className="account-section-head"><h3>Recent Orders</h3><button type="button" onClick={() => setPage("orders")}>View All Orders</button></div>{orders.length ? orders.slice(0, 3).map((order) => <div className="account-empty-row account-order-summary" key={order.id}><span>Order #{order.id}</span><OrderStatus status={order.status} /><strong>${Number(order.total || 0).toFixed(2)}</strong></div>) : <div className="account-empty-row"><span>You have not placed an order yet.</span><button type="button" className="account-start-order" onClick={onClose}>Start an order</button></div>}</section>
-              <div className="account-card-grid"><section className="account-mini-card"><i className="fas fa-location-dot" /><div><h3>Saved Address</h3><p>{addressForm.fullName || user.name || "Member"}</p><p>{addressLabel}</p><button type="button" onClick={() => setPage("addresses")}>Edit Address</button></div></section><section className="account-mini-card"><i className="fas fa-utensils" /><div><h3>Need Something Delicious?</h3><p>Your Patria favourites are only a few clicks away.</p><button type="button" className="account-start-order filled" onClick={onClose}>Start a New Order</button></div></section></div>
+              <div className="account-card-grid"><section className="account-mini-card"><i className="fas fa-location-dot" /><div><h3>Saved Address</h3><p>{addressForm.fullName || user.name || "Member"}</p><p>{addressLabel}</p><button type="button" onClick={() => setPage("addresses")}>Edit Address</button></div></section><section className="account-mini-card"><i className="fas fa-truck" /><div><h3>物流 Shipping</h3><p>查看取貨日期與訂單物流狀態。</p><button type="button" onClick={() => setPage("shipping")}>查看物流</button></div></section><section className="account-mini-card"><i className="fas fa-credit-card" /><div><h3>金流 Payments</h3><p>查看付款方式、訂單金額與付款狀態。</p><button type="button" onClick={() => setPage("payments")}>查看金流</button></div></section><section className="account-mini-card"><i className="fas fa-utensils" /><div><h3>Need Something Delicious?</h3><p>Your Patria favourites are only a few clicks away.</p><button type="button" className="account-start-order filled" onClick={onClose}>Start a New Order</button></div></section></div>
             </section>}
 
             {page === "orders" && <section className="account-page active"><h2>Orders</h2><p className="account-main-desc">Track your recent orders and start a new Patria order anytime.</p><section className="account-section"><div className="account-section-head"><h3>Recent Orders</h3><button type="button" className="account-start-order" onClick={onClose}>Start an order</button></div>{orders.length ? orders.map((order) => <div className="account-empty-row account-order-summary" key={order.id}><span>Order #{order.id}</span><OrderStatus status={order.status} /><strong>${Number(order.total || 0).toFixed(2)}</strong></div>) : <div className="account-empty-row"><span>You have not placed an order yet.</span><button type="button" className="account-start-order" onClick={onClose}>Browse Menu</button></div>}</section></section>}
@@ -357,10 +357,15 @@ function App() {
       if (active) setOrders(data.orders || []);
     }).catch(() => {});
     refreshOrders();
-    const interval = window.setInterval(refreshOrders, 30000);
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") refreshOrders();
+    };
+    const interval = window.setInterval(refreshOrders, 5000);
+    document.addEventListener("visibilitychange", handleVisibility);
     return () => {
       active = false;
       window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [user, accountOpen]);
 

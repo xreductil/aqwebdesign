@@ -2823,7 +2823,9 @@ footer {
 }
 .account-side button[data-account-page="dashboard"]::before { content: "\f3fd"; }
 .account-side button[data-account-page="orders"]::before { content: "\f291"; }
+.account-side button[data-account-page="shipping"]::before { content: "\f0d1"; }
 .account-side button[data-account-page="addresses"]::before { content: "\f3c5"; }
+.account-side button[data-account-page="payments"]::before { content: "\f09d"; }
 .account-side button[data-account-page="details"]::before { content: "\f007"; }
 #accountLogout::before { content: "\f2f5"; }
 .account-side button:hover {
