@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "patria-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-08",
+
+  "observability": {
+    "enabled": true
+  },
+
+  "upload_source_maps": true,
+
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+
+  "d1_databases": [
+    {
+      "binding": "patria_db",
+      "database_name": "patria-db",
+      "database_id": "6467e872-4c0b-4474-bff3-aa1545e00ee2"
+    }
+  ]
+}

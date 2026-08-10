@@ -3,10 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const ENV_PATH = path.resolve(__dirname, '../../.env');
+const LOCAL_ENV_PATH = path.join(__dirname, '.env');
+const ENV_PATH = fs.existsSync(LOCAL_ENV_PATH) ? LOCAL_ENV_PATH : path.resolve(__dirname, '../../.env');
 require('dotenv').config({ path: ENV_PATH });
 
 const ROOT = __dirname;
+const PUBLIC_ROOT = path.join(ROOT, 'public');
 const ADMIN_ROOT = path.resolve(ROOT, "../../dashboard/dist");
 const DATA_DIR = path.join(ROOT, 'data');
 const DB_PATH = path.join(DATA_DIR, 'db.json');
@@ -835,7 +837,7 @@ function serveStatic(req, res) {
   const url = new URL(req.url, 'http://localhost');
   let filePath = decodeURIComponent(url.pathname);
   if (filePath === '/') filePath = '/index.html';
-  return serveFileFromRoot(ROOT, filePath, res);
+  return serveFileFromRoot(PUBLIC_ROOT, filePath, res);
 }
 
 http.createServer((req, res) => {
