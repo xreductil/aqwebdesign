@@ -622,6 +622,45 @@ export default {
         );
       }
 
+      if (request.method === "POST" && url.pathname === "/api/contact") {
+        const body = await readJson<{
+          name?: string;
+          email?: string;
+          phone?: string;
+          subject?: string;
+          message?: string;
+        }>(request);
+        const name = String(body.name || "").trim();
+        const email = String(body.email || "").trim().toLowerCase();
+        const subject = String(body.subject || "").trim();
+        const message = String(body.message || "").trim();
+
+        if (!name || !email || !subject || !message) {
+          return Response.json(
+            { success: false, error: "Name, email, subject, and message are required." },
+            { status: 400 }
+          );
+        }
+
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
+          return Response.json(
+            { success: false, error: "Please enter a valid email address." },
+            { status: 400 }
+          );
+        }
+
+        const current = await getCurrentUser(request, env.patria_db);
+        await env.patria_db
+          .prepare(`
+            INSERT INTO contact_messages (user_id, name, email, phone, subject, message)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `)
+          .bind(current ? Number(current.user.id) : null, name, email, String(body.phone || "").trim(), subject, message)
+          .run();
+
+        return Response.json({ success: true, message: "Message sent successfully." }, { status: 201 });
+      }
+
       if (url.pathname.startsWith("/api/admin/")) {
         const admin = await getAdminUser(request, env);
         if (!admin) {

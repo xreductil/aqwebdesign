@@ -30,6 +30,27 @@ export function logout() {
   return apiRequest("/api/logout", { method: "POST" });
 }
 
+export function login(loginValue, password) {
+  return apiRequest("/api/login", {
+    method: "POST",
+    body: JSON.stringify({ login: loginValue, password }),
+  });
+}
+
+export function register({ name, email, phone, password }) {
+  return apiRequest("/api/register", {
+    method: "POST",
+    body: JSON.stringify({ name, email, phone, password }),
+  });
+}
+
+export function sendContactMessage(payload) {
+  return apiRequest("/api/contact", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function getProducts() {
   return apiRequest("/api/products");
 }

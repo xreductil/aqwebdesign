@@ -6,7 +6,10 @@ import {
   getCurrentUser,
   getOrders,
   getProducts,
+  login,
   logout,
+  register,
+  sendContactMessage,
 } from "./api/client.js";
 
 const imageBase = "https://www.aq-webdesign.com/images";
@@ -22,6 +25,7 @@ const categories = [
 function ProductCard({ product, badge = "Featured", onAdd }) {
   return (
     <div
+      id={`product-${product.id}`}
       className="mcard"
       data-img={product.img}
       data-title={product.title}
@@ -63,6 +67,12 @@ function App() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [accountPage, setAccountPage] = useState("dashboard");
+  const [accountError, setAccountError] = useState("");
+  const [loginForm, setLoginForm] = useState({ login: "", password: "" });
+  const [registerForm, setRegisterForm] = useState({ name: "", email: "", phone: "", password: "" });
+  const [contactForm, setContactForm] = useState({ name: "", email: "", phone: "", subject: "General Inquiry", message: "" });
+  const [contactStatus, setContactStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [fulfillmentDate, setFulfillmentDate] = useState("");
@@ -82,6 +92,37 @@ function App() {
     if (!user) return;
     getOrders().then((data) => setOrders(data.orders || [])).catch(() => setOrders([]));
   }, [user]);
+
+  useEffect(() => {
+    const openAccountFromHash = () => {
+      if (window.location.hash === "#account") setAccountOpen(true);
+    };
+    openAccountFromHash();
+    window.addEventListener("hashchange", openAccountFromHash);
+    return () => window.removeEventListener("hashchange", openAccountFromHash);
+  }, []);
+
+  useEffect(() => {
+    const formCard = document.querySelector("#contact-section .form-card");
+    const button = formCard?.querySelector(".btn-red");
+    if (!formCard || !button) return undefined;
+
+    const submitContact = async () => {
+      const fields = [...formCard.querySelectorAll(".fctrl")];
+      const [name, email, phone, subject, message] = fields.map((field) => field.value.trim());
+      setContactStatus("");
+      try {
+        await sendContactMessage({ name, email, phone, subject, message });
+        setContactStatus("Message sent! We'll reply within 2 hours.");
+        fields.forEach((field) => { field.value = ""; });
+      } catch (requestError) {
+        setContactStatus(requestError.message);
+      }
+    };
+
+    button.addEventListener("click", submitContact);
+    return () => button.removeEventListener("click", submitContact);
+  }, [loading]);
 
   const visibleProducts = useMemo(() => {
     if (category === "ALL") return products;
@@ -121,6 +162,52 @@ function App() {
     await logout().catch(() => {});
     setUser(null);
     setOrders([]);
+    setAccountOpen(false);
+  }
+
+  async function handleLogin(event) {
+    event.preventDefault();
+    setAccountError("");
+    try {
+      const data = await login(loginForm.login, loginForm.password);
+      setUser(data.user);
+      setLoginForm({ login: "", password: "" });
+      setAccountPage("dashboard");
+    } catch (requestError) {
+      setAccountError(requestError.message);
+    }
+  }
+
+  async function handleRegister(event) {
+    event.preventDefault();
+    setAccountError("");
+    try {
+      const data = await register(registerForm);
+      setUser({ id: data.user.id, name: data.user.display_name || data.user.name, email: data.user.email, avatar: data.user.avatar_url, lineUserId: data.user.line_user_id });
+      setRegisterForm({ name: "", email: "", phone: "", password: "" });
+      setAccountPage("dashboard");
+    } catch (requestError) {
+      setAccountError(requestError.message);
+    }
+  }
+
+  async function handleContactSubmit(event) {
+    event.preventDefault();
+    setContactStatus("");
+    try {
+      await sendContactMessage(contactForm);
+      setContactStatus("Message sent! We'll reply within 2 hours.");
+      setContactForm({ name: "", email: "", phone: "", subject: "General Inquiry", message: "" });
+    } catch (requestError) {
+      setContactStatus(requestError.message);
+    }
+  }
+
+  function focusProduct(productId) {
+    setCategory("ALL");
+    setSearchOpen(false);
+    document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" });
+    window.setTimeout(() => document.getElementById(`product-${productId}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 450);
   }
 
   if (loading) return <div className="container py-5"><p>載入中...</p></div>;
@@ -159,14 +246,14 @@ function App() {
           <div className="sovinput"><input autoFocus={searchOpen} type="text" id="searchInput" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search noodles, dim sum, rice..." autoComplete="off" /><button type="button"><i className="fas fa-search" /></button></div>
           <div className="sovcats">{categories.map((item) => <button type="button" className={`sovcat ${category === item.name ? "active" : ""}`} data-cat={item.name.toLowerCase()} key={item.name} onClick={() => { setCategory(item.name); setSearchOpen(false); document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" }); }}><img src={item.image} alt="" />{item.name}</button>)}</div>
           <div className="sovtrend"><p><i className="fas fa-fire me-1" style={{ color: "var(--secondary)" }} />Trending Searches</p>{["Seafood Noodles", "Spring Rolls", "Fried Rice", "Chicken Soup"].map((term) => <button type="button" className="ttag" key={term} onClick={() => setSearchTerm(term)}>{term}</button>)}</div>
-          {searchTerm && <div className="sovresults">{searchResults.slice(0, 5).map((product) => <button type="button" key={product.id} onClick={() => { setSearchOpen(false); document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" }); }}><span>{product.title}</span><small>{product.cat}</small></button>)}{!searchResults.length && <p>No matching dishes found.</p>}</div>}
+          {searchTerm && <div className="sovresults">{searchResults.slice(0, 5).map((product) => <button type="button" key={product.id} onClick={() => focusProduct(product.id)}><span>{product.title}</span><small>{product.cat}</small></button>)}{!searchResults.length && <p>No matching dishes found.</p>}</div>}
         </div>
       </div>
 
       <div id="accountOv" className={accountOpen ? "open" : ""}>
         <div className="account-nav"><a className="account-nav-brand" href="#hero" onClick={() => setAccountOpen(false)}><span className="account-nav-icon"><i className="fas fa-utensils" /></span><span>Pat<span>ria</span></span></a></div>
         <button type="button" className="account-close" id="accountClose" onClick={() => setAccountOpen(false)}><i className="fas fa-times" /></button>
-        {user ? <div className="account-dashboard open" id="accountDashboard"><div className="container"><div className="account-dashboard-grid"><aside className="account-side"><div className="account-site-links"><a href="#hero" onClick={() => setAccountOpen(false)}>Home</a><a href="#menu" onClick={() => setAccountOpen(false)}>Menu</a><a href="#contact-section" onClick={() => setAccountOpen(false)}>Contact</a></div><button className="active" type="button">Dashboard</button><button type="button">Orders ({orders.length})</button><button type="button">Addresses</button><button type="button">Account Details</button><button type="button" id="linkLineBtn" onClick={() => window.location.href = "/auth/line?mode=link"}>綁定 LINE 帳號</button><button id="accountLogout" type="button" onClick={handleLogout}>Logout</button></aside><main className="account-main"><section className="account-page active"><h2>Welcome back,<br />{user.name || "Patria member"}</h2><p className="account-main-desc">Here’s an overview of your account. View your recent orders and manage your account details.</p><div className="account-stat-grid"><div className="account-stat"><i className="fas fa-utensils" /><div><strong>Recent Orders</strong><span>{orders.length} orders</span></div></div><div className="account-stat"><i className="fas fa-user" /><div><strong>Account Details</strong><span>{user.email || user.name || "Member"}</span></div></div></div></section></main></div></div></div> : <div className="account-panel"><div className="container"><div className="row g-4 g-lg-5"><div className="col-lg-6"><h3>Login</h3><div className="account-card"><label>Username or email address *</label><input type="text" autoComplete="username" /><label>Password *</label><input type="password" autoComplete="current-password" /><p className="account-error">請使用帳號／密碼登入，或選擇 LINE 登入。</p><button type="button" className="account-btn">Log in</button><a className="account-btn account-line-btn" href="/auth/line"><i className="fab fa-line" /> 使用 LINE 登入</a></div></div><div className="col-lg-6"><h3>Register</h3><div className="account-card"><label>Full Name *</label><input type="text" autoComplete="name" /><label>Email address *</label><input type="email" autoComplete="email" /><label>Password *</label><input type="password" autoComplete="new-password" /><button type="button" className="account-btn">Register</button></div></div></div></div></div>}
+        {user ? <div className="account-dashboard open" id="accountDashboard"><div className="container"><div className="account-dashboard-grid"><aside className="account-side"><div className="account-site-links"><a href="#hero" onClick={() => setAccountOpen(false)}>Home</a><a href="#menu" onClick={() => setAccountOpen(false)}>Menu</a><a href="#contact-section" onClick={() => setAccountOpen(false)}>Contact</a></div>{[["dashboard", "Dashboard"], ["orders", `Orders (${orders.length})`], ["addresses", "Addresses"], ["details", "Account Details"]].map(([page, label]) => <button className={accountPage === page ? "active" : ""} type="button" key={page} onClick={() => setAccountPage(page)}>{label}</button>)}<button type="button" id="linkLineBtn" onClick={() => window.location.href = "/auth/line/link"}>綁定 LINE 帳號</button><button id="accountLogout" type="button" onClick={handleLogout}>Logout</button></aside><main className="account-main"><section className="account-page active"><h2>{accountPage === "dashboard" ? <>Welcome back,<br />{user.name || "Patria member"}</> : accountPage === "orders" ? "Orders" : accountPage === "addresses" ? "Addresses" : "Account Details"}</h2><p className="account-main-desc">{accountPage === "orders" ? "Track your recent orders and start a new Patria order anytime." : accountPage === "addresses" ? "Manage the address used for delivery and pickup updates." : accountPage === "details" ? "Update your display name, email and password." : "Here’s an overview of your account. View your recent orders and manage your account details."}</p>{accountPage === "dashboard" && <div className="account-stat-grid"><div className="account-stat"><i className="fas fa-utensils" /><div><strong>Recent Orders</strong><span>{orders.length} orders</span></div></div><div className="account-stat"><i className="fas fa-user" /><div><strong>Account Details</strong><span>{user.email || user.name || "Member"}</span></div></div></div>}{accountPage === "orders" && <section className="account-section"><div className="account-section-head"><h3>Recent Orders</h3><button type="button" onClick={() => { setAccountOpen(false); document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" }); }}>Start an order</button></div>{orders.length ? orders.map((order) => <div className="account-empty-row" key={order.id}><span>Order #{order.id}</span><strong>${Number(order.total || 0).toFixed(2)}</strong></div>) : <div className="account-empty-row"><span>You have not placed an order yet.</span></div>}</section>}{accountPage === "addresses" && <section className="account-section account-form-section"><h3>Saved Address</h3><div className="account-form-grid"><label>Full Name<input type="text" defaultValue={user.name || ""} /></label><label>Phone<input type="text" placeholder="Phone number" /></label><label className="wide">Address<input type="text" placeholder="Add your delivery address" /></label></div><button type="button" className="account-save-btn filled">Save Address</button></section>}{accountPage === "details" && <section className="account-section account-form-section"><div className="account-form-grid"><label>Display Name<input type="text" defaultValue={user.name || ""} /></label><label>Email Address<input type="email" defaultValue={user.email || ""} /></label><label>Phone<input type="text" placeholder="Phone number" /></label></div><button type="button" className="account-save-btn filled">Save Changes</button></section>}</section></main></div></div></div> : <div className="account-panel"><div className="container"><div className="row g-4 g-lg-5"><div className="col-lg-6"><h3>Login</h3><form className="account-card" onSubmit={handleLogin}><label>Username or email address *</label><input type="text" autoComplete="username" value={loginForm.login} onChange={(event) => setLoginForm({ ...loginForm, login: event.target.value })} required /><label>Password *</label><input type="password" autoComplete="current-password" value={loginForm.password} onChange={(event) => setLoginForm({ ...loginForm, password: event.target.value })} required /><p className="account-error">{accountError}</p><button type="submit" className="account-btn">Log in</button><a className="account-btn account-line-btn" href="/auth/line"><i className="fab fa-line" /> 使用 LINE 登入</a></form></div><div className="col-lg-6"><h3>Register</h3><form className="account-card" onSubmit={handleRegister}><label>Full Name *</label><input type="text" autoComplete="name" value={registerForm.name} onChange={(event) => setRegisterForm({ ...registerForm, name: event.target.value })} required /><label>Email address *</label><input type="email" autoComplete="email" value={registerForm.email} onChange={(event) => setRegisterForm({ ...registerForm, email: event.target.value })} required /><label>Phone</label><input type="text" autoComplete="tel" value={registerForm.phone} onChange={(event) => setRegisterForm({ ...registerForm, phone: event.target.value })} /><label>Password *</label><input type="password" autoComplete="new-password" minLength="8" value={registerForm.password} onChange={(event) => setRegisterForm({ ...registerForm, password: event.target.value })} required /><p className="account-error">{accountError}</p><button type="submit" className="account-btn">Register</button></form></div></div></div></div>}
       </div>
 
       <main>
@@ -229,6 +316,7 @@ function App() {
         <section id="account" className="account-inline"><div className="container"><div className="text-center mb-4"><span className="slbl">Your Patria</span><h2 className="stitle">My <span>Account</span></h2><div className="sline" /></div></div></section>
 
         <section id="contact-section"><div className="container"><div className="text-center mb-5" data-aos="fade-up"><span className="slbl">Get In Touch</span><h2 className="stitle">Contact <span>Us</span></h2><div className="sline" /><p className="sdesc mx-auto" style={{ maxWidth: 480 }}>Have a question, feedback, or want to plan a special event? We'd love to hear from you.</p></div><div className="row g-4"><div className="col-lg-4" data-aos="fade-right"><div className="ctdark"><h4>Let's Talk</h4><p className="ctsub">We typically respond within 2 hours during business hours.</p>{[["map-marker-alt", "Address", <>52 Teka Street, Los Angeles,<br />CA 90001</>], ["phone-alt", "Phone", "+1 (300) 659-4381"], ["envelope", "Email", "hello@patriafood.com"], ["clock", "Working Hours", "Mon - Sun: 09 AM - 11 PM"]].map(([icon, title, value]) => <div className="ctitem" key={title}><div className="cticon"><i className={`fas fa-${icon}`} /></div><div className="ctinfo"><strong>{title}</strong><span>{value}</span></div></div>)}<div className="ctsocrow"><a href="#"><i className="fab fa-facebook-f" /></a><a href="#"><i className="fab fa-instagram" /></a><a href="#"><i className="fab fa-twitter" /></a><a href="#"><i className="fab fa-youtube" /></a></div></div></div><div className="col-lg-8" data-aos="fade-left"><div className="form-card"><div className="row g-3"><div className="col-sm-6"><label className="flbl">Your Name *</label><input type="text" className="fctrl" placeholder="John Doe" /></div><div className="col-sm-6"><label className="flbl">Email Address *</label><input type="email" className="fctrl" placeholder="you@email.com" /></div><div className="col-sm-6"><label className="flbl">Phone Number</label><input type="tel" className="fctrl" placeholder="+1 (800) 000-0000" /></div><div className="col-sm-6"><label className="flbl">Subject *</label><select className="fctrl"><option>General Inquiry</option><option>Catering &amp; Events</option><option>Feedback</option><option>Partnership</option><option>Media &amp; Press</option></select></div><div className="col-12"><label className="flbl">Message *</label><textarea className="fctrl" rows="5" placeholder="Write your message here..." /></div><div className="col-12"><button type="button" className="btn-red"><i className="fas fa-paper-plane" />Send Message</button></div></div></div></div></div></div></section>
+        {contactStatus && <div className="container"><p className="sucmsg text-center">{contactStatus}</p></div>}
       </main>
 
       <footer><div className="container"><div className="row g-5"><div className="col-lg-4"><div className="fnm">Pat<span>ria</span></div><p className="fdesc">We bring the world's finest flavors together in a fast, friendly, and affordable experience. Every meal crafted with love.</p><div className="fsoc"><a href="#"><i className="fab fa-facebook-f" /></a><a href="#"><i className="fab fa-instagram" /></a><a href="#"><i className="fab fa-twitter" /></a><a href="#"><i className="fab fa-youtube" /></a><a href="#"><i className="fab fa-tiktok" /></a></div></div><div className="col-sm-6 col-lg-2"><div className="ftit">Quick Links</div><ul className="flinks ps-0"><li><a href="#hero"><i className="fas fa-chevron-right" />Home</a></li><li><a href="#about"><i className="fas fa-chevron-right" />About Us</a></li><li><a href="#menu"><i className="fas fa-chevron-right" />Our Menu</a></li><li><a href="#reservation"><i className="fas fa-chevron-right" />Reservation</a></li><li><a href="#contact-section"><i className="fas fa-chevron-right" />Contact</a></li></ul></div><div className="col-sm-6 col-lg-2"><div className="ftit">Our Menu</div><ul className="flinks ps-0"><li><a href="#menu"><i className="fas fa-chevron-right" />NOODLES</a></li><li><a href="#menu"><i className="fas fa-chevron-right" />DIM SUM</a></li><li><a href="#menu"><i className="fas fa-chevron-right" />RICE</a></li><li><a href="#menu"><i className="fas fa-chevron-right" />SOUP</a></li></ul></div><div className="col-lg-4"><div className="ftit">Get In Touch</div>{[["map-marker-alt", "Address", "52 Teka Street, Los Angeles, CA 90001"], ["phone-alt", "Phone", "+1 (300) 659-4381"], ["envelope", "Email", "hello@patriafood.com"], ["clock", "Hours", "Mon - Sun: 09 AM - 11 PM"]].map(([icon, title, value]) => <div className="fci" key={title}><div className="fciico"><i className={`fas fa-${icon}`} /></div><div className="fciinfo"><strong>{title}</strong>{value}</div></div>)}</div></div></div><div className="fbot"><div className="container"><div className="d-flex justify-content-between align-items-center flex-wrap gap-2"><p>&copy; 2026 <span>Patria Restaurant</span> All rights reserved.<span className="footer-credit">Design by <a href="https://www.aq-webdesign.com/index.html" target="_blank" rel="noopener">A.Q.webdesign</a></span></p><div><a href="#">Privacy Policy</a><a href="#">Terms</a><a href="#">Cookies</a></div></div></div></div></footer>
