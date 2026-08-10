@@ -1,0 +1,15 @@
+{
+  "buildCommand": "npm run build:vercel",
+  "outputDirectory": "dist",
+  "cleanUrls": false,
+  "rewrites": [
+    {
+      "source": "/admin",
+      "destination": "/admin/signin.html"
+    },
+    {
+      "source": "/admin/",
+      "destination": "/admin/signin.html"
+    }
+  ]
+}
