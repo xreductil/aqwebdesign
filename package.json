@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "vercel-build": "npm --prefix Patriasample/dashboardsample install --no-audit --no-fund && npm --prefix Patriasample/dashboardsample run build"
+  },
   "dependencies": {
     "axios": "^1.19.0",
     "dotenv": "^17.4.2",

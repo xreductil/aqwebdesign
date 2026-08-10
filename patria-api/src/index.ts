@@ -447,7 +447,21 @@ export default {
        * 開始 LINE Login
        * --------------------------------
        */
-      if (url.pathname === "/auth/line") {
+      if (
+        url.pathname === "/auth/line" ||
+        url.pathname === "/auth/line/link"
+      ) {
+        const isLinkFlow = url.pathname === "/auth/line/link";
+
+        if (isLinkFlow) {
+          const current = await getCurrentUser(request, env.patria_db);
+          if (!current) {
+            return Response.json(
+              { success: false, error: "Please log in before linking LINE." },
+              { status: 401 }
+            );
+          }
+        }
 
         const state = randomString(32);
         const nonce = randomString(32);
@@ -494,6 +508,11 @@ export default {
             "line_login_nonce",
             nonce
           )
+        );
+
+        headers.append(
+          "Set-Cookie",
+          createCookie("line_login_mode", isLinkFlow ? "link" : "login")
         );
 
         return new Response(null, {
@@ -747,48 +766,71 @@ export default {
         const avatarUrl =
           lineUser.picture ?? null;
 
+        const isLinkFlow =
+          getCookie(request, "line_login_mode") === "link";
+        const current = isLinkFlow
+          ? await getCurrentUser(request, env.patria_db)
+          : null;
 
-        /*
-         * --------------------------------
-         * STEP 6
-         * 寫入 Cloudflare D1
-         * --------------------------------
-         *
-         * 第一次登入：
-         * INSERT
-         *
-         * 已存在：
-         * UPDATE 名稱 / 頭像
-         */
+        if (isLinkFlow) {
+          if (!current) {
+            return Response.json(
+              { success: false, error: "Your login session has expired." },
+              { status: 401 }
+            );
+          }
 
-        await env.patria_db
-          .prepare(`
-            INSERT INTO users (
-              line_user_id,
-              display_name,
-              avatar_url
+          const linkedUser = await env.patria_db
+            .prepare("SELECT id FROM users WHERE line_user_id = ? LIMIT 1")
+            .bind(lineUserId)
+            .first<{ id: number }>();
+
+          if (linkedUser && Number(linkedUser.id) !== Number(current.user.id)) {
+            return Response.json(
+              {
+                success: false,
+                error: "This LINE account is already linked to another member.",
+              },
+              { status: 409 }
+            );
+          }
+
+          await env.patria_db
+            .prepare(`
+              UPDATE users
+              SET line_user_id = ?,
+                  display_name = COALESCE(?, display_name),
+                  avatar_url = ?,
+                  updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `)
+            .bind(
+              lineUserId,
+              displayName,
+              avatarUrl,
+              Number(current.user.id)
             )
-            VALUES (?, ?, ?)
+            .run();
+        } else {
 
-            ON CONFLICT(line_user_id)
-            DO UPDATE SET
-              display_name =
-                excluded.display_name,
+          await env.patria_db
+            .prepare(`
+              INSERT INTO users (
+                line_user_id,
+                display_name,
+                avatar_url
+              )
+              VALUES (?, ?, ?)
 
-              avatar_url =
-                excluded.avatar_url,
-
-              updated_at =
-                CURRENT_TIMESTAMP
-          `)
-
-          .bind(
-            lineUserId,
-            displayName,
-            avatarUrl
-          )
-
-          .run();
+              ON CONFLICT(line_user_id)
+              DO UPDATE SET
+                display_name = excluded.display_name,
+                avatar_url = excluded.avatar_url,
+                updated_at = CURRENT_TIMESTAMP
+            `)
+            .bind(lineUserId, displayName, avatarUrl)
+            .run();
+        }
 
 
         /*
@@ -812,12 +854,14 @@ export default {
 
               FROM users
 
-              WHERE line_user_id = ?
+              WHERE ${isLinkFlow ? "id" : "line_user_id"} = ?
 
               LIMIT 1
             `)
 
-            .bind(lineUserId)
+            .bind(
+              isLinkFlow ? Number(current?.user.id) : lineUserId
+            )
 
             .first();
 
@@ -843,19 +887,21 @@ export default {
           .prepare("DELETE FROM sessions WHERE expires_at <= CURRENT_TIMESTAMP")
           .run();
 
-        const sessionToken = await createSession(
-          env.patria_db,
-          Number((user as { id: number }).id)
-        );
+        if (!isLinkFlow) {
+          const sessionToken = await createSession(
+            env.patria_db,
+            Number((user as { id: number }).id)
+          );
 
-        responseHeaders.append(
-          "Set-Cookie",
-          createCookie(
-            "patria_session",
-            sessionToken,
-            30 * 24 * 60 * 60
-          )
-        );
+          responseHeaders.append(
+            "Set-Cookie",
+            createCookie(
+              "patria_session",
+              sessionToken,
+              30 * 24 * 60 * 60
+            )
+          );
+        }
 
         responseHeaders.append(
           "Set-Cookie",
@@ -869,6 +915,11 @@ export default {
           clearCookie(
             "line_login_nonce"
           )
+        );
+
+        responseHeaders.append(
+          "Set-Cookie",
+          clearCookie("line_login_mode")
         );
 
 

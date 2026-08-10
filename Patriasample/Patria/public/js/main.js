@@ -55,7 +55,7 @@ var adminOpen = document.getElementById("adminOpen");
 if (adminOpen) {
     adminOpen.addEventListener("click", function(e) {
         e.preventDefault();
-        var target = adminOpen.getAttribute("data-admin-url") || adminOpen.getAttribute("href") || "../dashboardsample/dist/index.html#discount-codes";
+        var target = adminOpen.getAttribute("data-admin-url") || adminOpen.getAttribute("href") || "/Patriasample/dashboardsample/dist/signin.html";
         window.location.href = new URL(target, window.location.href).href;
     });
 }
@@ -920,6 +920,7 @@ var accountOv = document.getElementById("accountOv");
 var accountOpen = document.getElementById("accountOpen");
 var accountClose = document.getElementById("accountClose");
 var lineLoginBtn = document.getElementById("lineLoginBtn");
+var linkLineBtn = document.getElementById("linkLineBtn");
 var accountDashboard = document.getElementById("accountDashboard");
 var accountMenuToggle = document.getElementById("accountMenuToggle");
 
@@ -1145,6 +1146,16 @@ if (accountOv) {
 if (lineLoginBtn) {
     lineLoginBtn.addEventListener("click", function() {
         window.location.href = "/auth/line";
+    });
+}
+
+if (linkLineBtn) {
+    linkLineBtn.addEventListener("click", function() {
+        if (!isLoggedIn) {
+            alert("Please log in with your account before linking LINE.");
+            return;
+        }
+        window.location.href = "/auth/line/link";
     });
 }
 
