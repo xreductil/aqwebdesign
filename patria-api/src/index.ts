@@ -53,6 +53,41 @@ async function sha256(value: string): Promise<string> {
     .join("");
 }
 
+async function passwordHash(
+  password: string,
+  salt: string
+): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: new TextEncoder().encode(salt),
+      iterations: 100_000,
+      hash: "SHA-256",
+    },
+    key,
+    256
+  );
+
+  return Array.from(new Uint8Array(bits))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function readJson<T>(request: Request): Promise<T> {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    return {} as T;
+  }
+}
+
 function getCookie(
   request: Request,
   name: string
@@ -102,6 +137,16 @@ function clearCookie(name: string): string {
   ].join("; ");
 }
 
+function getSessionToken(request: Request): string | null {
+  const cookieToken = getCookie(request, "patria_session");
+  if (cookieToken) return cookieToken;
+
+  const authorization = request.headers.get("Authorization");
+  if (!authorization?.startsWith("Bearer ")) return null;
+
+  return authorization.slice("Bearer ".length).trim() || null;
+}
+
 async function createSession(
   db: D1Database,
   userId: number
@@ -130,7 +175,7 @@ async function getCurrentUser(
   request: Request,
   db: D1Database
 ): Promise<{ sessionId: number; user: Record<string, unknown> } | null> {
-  const sessionToken = getCookie(request, "patria_session");
+  const sessionToken = getSessionToken(request);
   if (!sessionToken) return null;
 
   const tokenHash = await sha256(sessionToken);
@@ -192,6 +237,170 @@ export default {
         });
       }
 
+      if (request.method === "POST" && url.pathname === "/api/register") {
+        const body = await readJson<{
+          name?: string;
+          email?: string;
+          phone?: string;
+          password?: string;
+        }>(request);
+        const name = String(body.name || "").trim();
+        const email = String(body.email || "").trim().toLowerCase();
+        const password = String(body.password || "");
+
+        if (!name || !email || !password) {
+          return Response.json(
+            { success: false, error: "Name, email, and password are required." },
+            { status: 400 }
+          );
+        }
+
+        if (password.length < 8) {
+          return Response.json(
+            { success: false, error: "Password must be at least 8 characters." },
+            { status: 400 }
+          );
+        }
+
+        const existing = await env.patria_db
+          .prepare("SELECT id FROM users WHERE lower(email) = ? LIMIT 1")
+          .bind(email)
+          .first();
+
+        if (existing) {
+          return Response.json(
+            { success: false, error: "Email already registered." },
+            { status: 409 }
+          );
+        }
+
+        const salt = randomString(16);
+        const hash = await passwordHash(password, salt);
+        const lineUserId = `local:${randomString(16)}`;
+
+        await env.patria_db
+          .prepare(`
+            INSERT INTO users (
+              line_user_id,
+              display_name,
+              email,
+              password_salt,
+              password_hash
+            ) VALUES (?, ?, ?, ?, ?)
+          `)
+          .bind(lineUserId, name, email, salt, hash)
+          .run();
+
+        const user = await env.patria_db
+          .prepare(`
+            SELECT id, line_user_id, display_name, avatar_url, email,
+                   created_at, updated_at
+            FROM users
+            WHERE email = ?
+            LIMIT 1
+          `)
+          .bind(email)
+          .first<Record<string, unknown>>();
+
+        if (!user) {
+          return Response.json(
+            { success: false, error: "Unable to create account." },
+            { status: 500 }
+          );
+        }
+
+        const sessionToken = await createSession(
+          env.patria_db,
+          Number(user.id)
+        );
+        const headers = new Headers({
+          "Content-Type": "application/json; charset=utf-8",
+        });
+        headers.append(
+          "Set-Cookie",
+          createCookie("patria_session", sessionToken, 30 * 24 * 60 * 60)
+        );
+
+        return new Response(
+          JSON.stringify({ success: true, token: sessionToken, user }),
+          { status: 201, headers }
+        );
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/login") {
+        const body = await readJson<{
+          login?: string;
+          email?: string;
+          password?: string;
+        }>(request);
+        const login = String(body.login || body.email || "").trim().toLowerCase();
+        const password = String(body.password || "");
+
+        if (!login || !password) {
+          return Response.json(
+            { success: false, error: "Email and password are required." },
+            { status: 400 }
+          );
+        }
+
+        const user = await env.patria_db
+          .prepare(`
+            SELECT id, line_user_id, display_name, avatar_url, email,
+                   created_at, updated_at, password_salt, password_hash
+            FROM users
+            WHERE lower(email) = ? OR lower(display_name) = ?
+            LIMIT 1
+          `)
+          .bind(login, login)
+          .first<Record<string, unknown>>();
+
+        if (!user || !user.password_salt || !user.password_hash) {
+          return Response.json(
+            { success: false, error: "Invalid login or password." },
+            { status: 401 }
+          );
+        }
+
+        const hash = await passwordHash(
+          password,
+          String(user.password_salt)
+        );
+
+        if (hash !== String(user.password_hash)) {
+          return Response.json(
+            { success: false, error: "Invalid login or password." },
+            { status: 401 }
+          );
+        }
+
+        const sessionToken = await createSession(
+          env.patria_db,
+          Number(user.id)
+        );
+        const headers = new Headers({
+          "Content-Type": "application/json; charset=utf-8",
+        });
+        headers.append(
+          "Set-Cookie",
+          createCookie("patria_session", sessionToken, 30 * 24 * 60 * 60)
+        );
+
+        const publicUser = {
+          id: user.id,
+          lineUserId: user.line_user_id,
+          name: user.display_name,
+          avatar: user.avatar_url,
+          email: user.email,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at,
+        };
+
+        return new Response(
+          JSON.stringify({ success: true, token: sessionToken, user: publicUser }),
+          { status: 200, headers }
+        );
+      }
+
       if (request.method === "GET" && url.pathname === "/api/me") {
         const current = await getCurrentUser(request, env.patria_db);
 
@@ -209,7 +418,7 @@ export default {
         (request.method === "POST" || request.method === "GET") &&
         url.pathname === "/api/logout"
       ) {
-        const sessionToken = getCookie(request, "patria_session");
+        const sessionToken = getSessionToken(request);
 
         if (sessionToken) {
           const tokenHash = await sha256(sessionToken);
