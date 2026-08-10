@@ -4,6 +4,10 @@
   "cleanUrls": false,
   "rewrites": [
     {
+      "source": "/Patriasample/Patria/index.html",
+      "destination": "/"
+    },
+    {
       "source": "/admin",
       "destination": "/admin/signin.html"
     },

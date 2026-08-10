@@ -3,6 +3,10 @@
   "cleanUrls": false,
   "rewrites": [
     {
+      "source": "/Patriasample/Patria/index.html",
+      "destination": "/Patriasample/Patria/dist/index.html"
+    },
+    {
       "source": "/admin",
       "destination": "/Patriasample/dashboardsample/dist/signin.html"
     },
