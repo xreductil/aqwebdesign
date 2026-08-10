@@ -84,7 +84,11 @@
 
                   <span> Add Product</span>
                 </a>
-                <a href="../index.html" class="">
+                <a href="index.html#discount-codes" class="">
+
+                  <span> Discount Codes</span>
+                </a>
+                <a href="/" class="">
 
                   <span> Back to Patria</span>
                 </a>
@@ -113,12 +117,14 @@
             Product</span></a></li>
     <li><a class="nav-link" href="reports.html"><i class="ti ti-receipt"></i><span class="nav-text">Reports</span></a>
       </li>
+      <li><a class="nav-link" href="#discount-codes"><i class="ti ti-discount-2"></i><span class="nav-text">Discount Codes</span></a>
+      </li>
     <li><a class="nav-link" href="404-error.html"><i class="ti ti-alert-circle"></i><span class="nav-text">404 Error</span></a>
       </li>
       <li><a class="nav-link" href="docs.html"><i class="ti ti-file-text"></i><span class="nav-text">Docs</span></a></li>
 
 
-            <li><a class="nav-link" href="../index.html"><i class="ti ti-arrow-back-up"></i><span class="nav-text">Back to Patria</span></a></li>
+            <li><a class="nav-link" href="/"><i class="ti ti-arrow-back-up"></i><span class="nav-text">Back to Patria</span></a></li>
 
 <li class="px-4 pt-4 pb-2"><small class="nav-text">Account</small></li>
       <li><a class="nav-link" href="signin.html"><i class="ti ti-logout"></i><span class="nav-text">Log in</span></a>
@@ -214,6 +220,73 @@
 
         </div>
 
+      </div>
+      <div class="row g-3 mb-3" id="discount-codes">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center px-4 py-3">
+              <div>
+                <h3 class="h5 mb-1">Discount Codes</h3>
+                <p class="small text-secondary mb-0">Backend-managed coupon codes saved through Patria server APIs.</p>
+              </div>
+              <span class="badge bg-primary-subtle text-primary"><span data-admin-coupon-count>0</span> codes</span>
+            </div>
+            <div class="card-body p-4">
+              <form class="admin-coupon-form" data-admin-coupon-form>
+                <div class="row g-3 align-items-end">
+                  <div class="col-lg-2 col-md-4">
+                    <label class="form-label">Code</label>
+                    <input class="form-control text-uppercase" name="code" placeholder="WELCOME15" required>
+                  </div>
+                  <div class="col-lg-3 col-md-8">
+                    <label class="form-label">Label</label>
+                    <input class="form-control" name="label" placeholder="15% off first order" required>
+                  </div>
+                  <div class="col-lg-2 col-md-4">
+                    <label class="form-label">Type</label>
+                    <select class="form-select" name="type">
+                      <option value="percent">Percent</option>
+                      <option value="fixed">Fixed amount</option>
+                    </select>
+                  </div>
+                  <div class="col-lg-2 col-md-4">
+                    <label class="form-label">Value</label>
+                    <input class="form-control" name="value" type="number" min="0" step="0.01" placeholder="10" required>
+                  </div>
+                  <div class="col-lg-2 col-md-4">
+                    <label class="form-label">Minimum</label>
+                    <input class="form-control" name="min" type="number" min="0" step="0.01" value="0">
+                  </div>
+                  <div class="col-lg-1 col-md-4">
+                    <label class="form-check mb-2">
+                      <input class="form-check-input" name="enabled" type="checkbox" checked>
+                      <span class="form-check-label">Active</span>
+                    </label>
+                    <button class="btn btn-primary w-100" type="submit">Add</button>
+                  </div>
+                </div>
+                <p class="small mb-0 mt-3 text-secondary" data-admin-coupon-status>Discount codes are saved to the backend and used by checkout.</p>
+              </form>
+              <div class="table-responsive mt-4">
+                <table class="table align-middle mb-0">
+                  <thead class="table-light border-light">
+                    <tr>
+                      <th>Code</th>
+                      <th>Type</th>
+                      <th>Value</th>
+                      <th>Minimum</th>
+                      <th>Status</th>
+                      <th class="text-end">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody data-admin-table="coupons">
+                    <tr><td colspan="6" class="text-secondary">Loading discount codes from backend...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="row g-3 mb-3">
         <div class="col-lg-4 col-12">

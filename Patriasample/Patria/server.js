@@ -3,12 +3,19 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
+const ENV_PATH = path.resolve(__dirname, '../../.env');
+require('dotenv').config({ path: ENV_PATH });
+
 const ROOT = __dirname;
 const ADMIN_ROOT = path.resolve(ROOT, "../../dashboard/dist");
 const DATA_DIR = path.join(ROOT, 'data');
 const DB_PATH = path.join(DATA_DIR, 'db.json');
 const PRODUCTS_PATH = path.join(DATA_DIR, 'products.json');
 const PORT = Number(process.env.PORT || 8080);
+const LINE_CHANNEL_ID = process.env.LINE_CHANNEL_ID || '';
+const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET || '';
+const LINE_CALLBACK_URL = process.env.LINE_CALLBACK_URL || 'https://www.aq-webdesign.com/auth/line/callback';
+const SESSION_SECRET = process.env.SESSION_SECRET || 'patria-local-session-secret';
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -26,12 +33,20 @@ const MIME = {
 };
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(DB_PATH)) writeDb({ users: [], sessions: {}, guestCarts: {}, userCarts: {}, orders: [], productOverrides: {}, productAdditions: [], deletedProducts: [], reservations: [], messages: [], subscribers: [], searches: [] });
+const DEFAULT_COUPONS = [
+  { code: 'WELCOME15', label: 'Welcome 15% off', type: 'percent', value: 15, min: 0, enabled: true },
+  { code: 'PATRIA10', label: 'Patria 10% off', type: 'percent', value: 10, min: 0, enabled: true },
+  { code: 'FAMILY5', label: '$5 family order discount', type: 'fixed', value: 5, min: 40, enabled: true }
+];
+
+if (!fs.existsSync(DB_PATH)) writeDb({ users: [], sessions: {}, lineStates: {}, lineTickets: {}, guestCarts: {}, userCarts: {}, orders: [], productOverrides: {}, productAdditions: [], deletedProducts: [], reservations: [], messages: [], subscribers: [], searches: [], coupons: DEFAULT_COUPONS });
 
 function readDb() {
   const db = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
   db.users ||= [];
   db.sessions ||= {};
+  db.lineStates ||= {};
+  db.lineTickets ||= {};
   db.guestCarts ||= {};
   db.userCarts ||= {};
   db.orders ||= [];
@@ -42,6 +57,7 @@ function readDb() {
   db.messages ||= [];
   db.subscribers ||= [];
   db.searches ||= [];
+  db.coupons ||= DEFAULT_COUPONS;
   return db;
 }
 
@@ -76,6 +92,57 @@ function readBody(req) {
 
 function token() {
   return crypto.randomBytes(32).toString('hex');
+}
+
+function lineConfigured() {
+  return Boolean(LINE_CHANNEL_ID && LINE_CHANNEL_SECRET && LINE_CALLBACK_URL);
+}
+
+function redirect(res, location) {
+  res.writeHead(302, { Location: location });
+  res.end();
+}
+
+async function lineTokenExchange(code) {
+  const response = await fetch('https://api.line.me/oauth2/v2.1/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: LINE_CALLBACK_URL,
+      client_id: LINE_CHANNEL_ID,
+      client_secret: LINE_CHANNEL_SECRET
+    })
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error_description || data.error || 'LINE token exchange failed.');
+  return data;
+}
+
+async function lineProfile(accessToken) {
+  const response = await fetch('https://api.line.me/v2/profile', {
+    headers: { Authorization: 'Bearer ' + accessToken }
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || 'LINE profile request failed.');
+  return data;
+}
+
+async function lineVerifyIdToken(idToken, nonce) {
+  const response = await fetch('https://api.line.me/oauth2/v2.1/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ id_token: idToken, client_id: LINE_CHANNEL_ID, nonce })
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error_description || data.error || 'LINE ID token verification failed.');
+  return data;
+}
+
+function lineCallbackPage(res, message) {
+  res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end('<!doctype html><meta charset="utf-8"><title>LINE Login</title><p>' + String(message).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])) + '</p>');
 }
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
@@ -170,6 +237,30 @@ function cartSummary(cart) {
   return { items: cart, total: Number(total.toFixed(2)) };
 }
 
+function normalizeCoupon(coupon) {
+  const type = coupon && coupon.type === 'fixed' ? 'fixed' : 'percent';
+  let value = Math.max(0, Number(coupon && coupon.value) || 0);
+  if (type === 'percent') value = Math.min(100, value);
+  return {
+    code: String(coupon && coupon.code || '').trim().toUpperCase(),
+    label: String(coupon && coupon.label || '').trim(),
+    type,
+    value,
+    min: Math.max(0, Number(coupon && coupon.min) || 0),
+    enabled: coupon && coupon.enabled === false ? false : true,
+    updatedAt: coupon && coupon.updatedAt ? coupon.updatedAt : new Date().toISOString()
+  };
+}
+
+function couponDetails(db, code, subtotal) {
+  const normalized = String(code || '').trim().toUpperCase();
+  const coupon = (db.coupons || []).map(normalizeCoupon).find(item => item.enabled && item.code === normalized);
+  if (!coupon) return null;
+  if (subtotal < Number(coupon.min || 0)) return { code: normalized, coupon, valid: false, discount: 0 };
+  const discount = coupon.type === 'percent' ? subtotal * (Number(coupon.value || 0) / 100) : Number(coupon.value || 0);
+  return { code: normalized, coupon, valid: true, discount: Math.min(subtotal, Math.max(0, discount)) };
+}
+
 function mergeGuestCart(db, userId, guestId) {
   if (!guestId || !db.guestCarts[guestId]) return;
   db.userCarts[userId] ||= [];
@@ -192,6 +283,10 @@ async function handleApi(req, res) {
   try {
     const body = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) ? await readBody(req) : {};
     if (req.method === 'GET' && url.pathname === '/api/products') return send(res, 200, { products });
+
+    if (req.method === 'GET' && url.pathname === '/api/coupons') {
+      return send(res, 200, { coupons: (db.coupons || []).map(normalizeCoupon).filter(coupon => coupon.enabled) });
+    }
 
     if (req.method === 'POST' && url.pathname === '/api/reservations') {
       const required = ['name', 'phone', 'email', 'guests', 'date', 'time'];
@@ -372,6 +467,18 @@ async function handleApi(req, res) {
       return send(res, 200, { token: sessionToken, user: publicUser(user), cart: cartSummary(db.userCarts[user.id] || []) });
     }
 
+    if (req.method === 'POST' && url.pathname === '/api/auth/line/exchange') {
+      const ticket = String(body.ticket || '');
+      const entry = db.lineTickets[ticket];
+      if (!entry || entry.expiresAt < Date.now()) return send(res, 401, { error: 'LINE login ticket is invalid or expired.' });
+      delete db.lineTickets[ticket];
+      const user = db.users.find(item => item.id === entry.userId);
+      if (!user || !db.sessions[entry.sessionToken]) return send(res, 401, { error: 'LINE session is no longer available.' });
+      mergeGuestCart(db, user.id, body.guestId || guestId);
+      writeDb(db);
+      return send(res, 200, { token: entry.sessionToken, user: publicUser(user), cart: cartSummary(db.userCarts[user.id] || []) });
+    }
+
     if (req.method === 'POST' && url.pathname === '/api/logout') {
       if (auth) delete db.sessions[auth.sessionToken];
       writeDb(db);
@@ -471,8 +578,23 @@ async function handleApi(req, res) {
       const selectedDate = new Date(fulfillmentDate + 'T00:00:00');
       const minDateText = minDate.getFullYear() + '-' + String(minDate.getMonth() + 1).padStart(2, '0') + '-' + String(minDate.getDate()).padStart(2, '0');
       if (selectedDate < minDate) return send(res, 400, { error: 'Pickup date must be on or after ' + minDateText + '.' });
-      const total = cart.reduce((sum, item) => sum + item.priceValue * item.qty, 0);
-      const order = { id: token().slice(0, 12), userId: auth.user.id, items: cart, total: Number(total.toFixed(2)), fulfillmentDate, leadDays, status: 'created', createdAt: new Date().toISOString() };
+      const subtotal = cart.reduce((sum, item) => sum + item.priceValue * item.qty, 0);
+      const coupon = couponDetails(db, body.couponCode, subtotal);
+      const discount = coupon && coupon.valid ? coupon.discount : 0;
+      const total = Math.max(0, subtotal - discount);
+      const order = {
+        id: token().slice(0, 12),
+        userId: auth.user.id,
+        items: cart,
+        subtotal: Number(subtotal.toFixed(2)),
+        discount: Number(discount.toFixed(2)),
+        couponCode: coupon && coupon.valid ? coupon.code : '',
+        total: Number(total.toFixed(2)),
+        fulfillmentDate,
+        leadDays,
+        status: 'created',
+        createdAt: new Date().toISOString()
+      };
       db.orders.push(order);
       db.userCarts[auth.user.id] = [];
       writeDb(db);
@@ -501,6 +623,40 @@ async function handleApi(req, res) {
         orderCount: db.orders.filter(order => order.userId === user.id).length
       }));
       return send(res, 200, { customers });
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/admin/coupons') {
+      db.coupons = (db.coupons || DEFAULT_COUPONS).map(normalizeCoupon);
+      writeDb(db);
+      return send(res, 200, { coupons: db.coupons });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/admin/coupons') {
+      db.coupons = (db.coupons || DEFAULT_COUPONS).map(normalizeCoupon);
+      const coupon = normalizeCoupon({ ...body, updatedAt: new Date().toISOString() });
+      if (!coupon.code) return send(res, 400, { error: 'Please enter a coupon code.' });
+      if (db.coupons.some(item => item.code === coupon.code)) return send(res, 409, { error: 'This coupon code already exists.' });
+      db.coupons.push(coupon);
+      writeDb(db);
+      return send(res, 201, { coupon, coupons: db.coupons });
+    }
+
+    if (req.method === 'PATCH' && url.pathname === '/api/admin/coupons') {
+      db.coupons = (db.coupons || DEFAULT_COUPONS).map(normalizeCoupon);
+      const code = String(body.code || '').trim().toUpperCase();
+      const existing = db.coupons.find(coupon => coupon.code === code);
+      if (!existing) return send(res, 404, { error: 'Coupon not found.' });
+      db.coupons = db.coupons.map(coupon => coupon.code === code ? normalizeCoupon({ ...coupon, ...body, code, updatedAt: new Date().toISOString() }) : coupon);
+      writeDb(db);
+      return send(res, 200, { coupon: db.coupons.find(coupon => coupon.code === code), coupons: db.coupons });
+    }
+
+    if (req.method === 'DELETE' && url.pathname === '/api/admin/coupons') {
+      db.coupons = (db.coupons || DEFAULT_COUPONS).map(normalizeCoupon);
+      const code = String(body.code || '').trim().toUpperCase();
+      db.coupons = db.coupons.filter(coupon => coupon.code !== code);
+      writeDb(db);
+      return send(res, 200, { ok: true, coupons: db.coupons });
     }
 
     if (req.method === 'GET' && url.pathname === '/api/admin/engagement') {
@@ -578,6 +734,80 @@ async function handleApi(req, res) {
   }
 }
 
+async function handleLineCallback(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  if (!lineConfigured()) return lineCallbackPage(res, 'LINE Login is not configured on this server.');
+  const state = url.searchParams.get('state');
+  const db = readDb();
+  const lineState = state && db.lineStates[state];
+  if (!lineState || Date.now() - lineState.createdAt > 10 * 60 * 1000) {
+    return lineCallbackPage(res, 'LINE Login state is invalid or expired.');
+  }
+  delete db.lineStates[state];
+  writeDb(db);
+  if (url.searchParams.get('error')) return redirect(res, '/?line_error=' + encodeURIComponent(url.searchParams.get('error_description') || 'LINE Login was cancelled.'));
+
+  const code = url.searchParams.get('code');
+  if (!code) return lineCallbackPage(res, 'LINE did not return an authorization code.');
+
+  try {
+    const lineTokens = await lineTokenExchange(code);
+    const lineUser = await lineVerifyIdToken(lineTokens.id_token, lineState.nonce);
+    if (lineUser.nonce !== lineState.nonce) return lineCallbackPage(res, 'LINE Login nonce verification failed.');
+    if (lineUser.aud !== LINE_CHANNEL_ID) return lineCallbackPage(res, 'LINE Login client verification failed.');
+    const lineProfile = {
+      lineUserId: lineUser.sub,
+      name: lineUser.name ?? null,
+      avatar: lineUser.picture ?? null
+    };
+    db.lineTickets ||= {};
+    let user = db.users.find(item => item.lineUserId === lineProfile.lineUserId);
+    if (!user) {
+      user = {
+        id: token(),
+        name: String(lineProfile.name || 'LINE Customer').trim(),
+        email: 'line_' + lineProfile.lineUserId + '@line.local',
+        phone: '',
+        lineUserId: lineProfile.lineUserId,
+        linePictureUrl: lineProfile.avatar || '',
+        address: null,
+        createdAt: new Date().toISOString()
+      };
+      db.users.push(user);
+    } else {
+      user.name = String(lineProfile.name || user.name || 'LINE Customer').trim();
+      user.linePictureUrl = lineProfile.avatar || user.linePictureUrl || '';
+    }
+
+    const sessionToken = token();
+    db.sessions[sessionToken] = { userId: user.id, createdAt: new Date().toISOString() };
+    const ticket = token();
+    db.lineTickets[ticket] = { sessionToken, userId: user.id, expiresAt: Date.now() + 5 * 60 * 1000 };
+    writeDb(db);
+    return redirect(res, '/?line_ticket=' + encodeURIComponent(ticket));
+  } catch (error) {
+    return lineCallbackPage(res, error.message || 'LINE Login failed.');
+  }
+}
+
+function startLineLogin(req, res) {
+  if (!lineConfigured()) return lineCallbackPage(res, 'LINE Login is not configured on this server.');
+  const state = token();
+  const nonce = token();
+  const db = readDb();
+  db.lineStates[state] = { nonce, createdAt: Date.now() };
+  writeDb(db);
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: LINE_CHANNEL_ID,
+    redirect_uri: LINE_CALLBACK_URL,
+    state,
+    scope: 'profile openid',
+    nonce
+  });
+  return redirect(res, 'https://access.line.me/oauth2/v2.1/authorize?' + params.toString());
+}
+
 function serveFileFromRoot(baseRoot, filePath, res) {
   const resolved = path.normalize(path.join(baseRoot, filePath));
   if (!resolved.startsWith(baseRoot)) {
@@ -609,6 +839,9 @@ function serveStatic(req, res) {
 }
 
 http.createServer((req, res) => {
+  if (req.method === 'GET' && (req.url === '/auth/line' || req.url.startsWith('/auth/line?'))) return startLineLogin(req, res);
+  if (req.method === 'GET' && req.url.startsWith('/auth/line/start')) return startLineLogin(req, res);
+  if (req.method === 'GET' && req.url.startsWith('/auth/line/callback')) return handleLineCallback(req, res);
   if (req.url.startsWith('/api/')) return handleApi(req, res);
   if (req.url === '/admin' || req.url.startsWith('/admin/')) return serveAdmin(req, res);
   return serveStatic(req, res);

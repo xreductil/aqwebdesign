@@ -1,5 +1,5 @@
 const API_BASE = import.meta.env.VITE_PATRIA_API_BASE || (window.location.protocol === 'file:' ? 'http://127.0.0.1:8080' : '');
-const STATIC_BASE = import.meta.env.VITE_PATRIA_STATIC_BASE || 'http://127.0.0.1:8080';
+const STATIC_BASE = import.meta.env.VITE_PATRIA_STATIC_BASE || window.location.origin;
 let latestAdminOrders = [];
 let latestInventoryProducts = [];
 let inventoryPage = 1;
@@ -690,6 +690,107 @@ function openProductEditor(product, index) {
   document.body.appendChild(modal);
 }
 
+function couponDiscountText(coupon) {
+  if (coupon.type === 'fixed') return money(coupon.value);
+  return Number(coupon.value || 0) + '%';
+}
+
+function renderCoupons(coupons) {
+  const tbody = document.querySelector('[data-admin-table="coupons"]');
+  const count = document.querySelector('[data-admin-coupon-count]');
+  if (count) count.textContent = String((coupons || []).length);
+  if (!tbody) return;
+  if (!coupons || !coupons.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-secondary">No discount codes yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = coupons.map(coupon => {
+    const statusClass = coupon.enabled ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary';
+    return '<tr>'
+      + '<td><strong>' + escapeHtml(coupon.code) + '</strong><div class="small text-secondary">' + escapeHtml(coupon.label || 'Untitled discount') + '</div></td>'
+      + '<td>' + (coupon.type === 'fixed' ? 'Fixed amount' : 'Percentage') + '</td>'
+      + '<td>' + couponDiscountText(coupon) + '</td>'
+      + '<td>' + money(coupon.min || 0) + '</td>'
+      + '<td><span class="badge ' + statusClass + '">' + (coupon.enabled ? 'Active' : 'Paused') + '</span></td>'
+      + '<td class="text-end">'
+      + '<button type="button" class="btn btn-sm btn-light me-1" data-coupon-toggle="' + escapeHtml(coupon.code) + '">' + (coupon.enabled ? 'Pause' : 'Enable') + '</button>'
+      + '<button type="button" class="btn btn-sm btn-light link-danger" data-coupon-delete="' + escapeHtml(coupon.code) + '"><i class="ti ti-trash"></i></button>'
+      + '</td>'
+      + '</tr>';
+  }).join('');
+  tbody.querySelectorAll('[data-coupon-toggle]').forEach(button => {
+    button.addEventListener('click', async () => {
+      const code = button.getAttribute('data-coupon-toggle');
+      const coupon = coupons.find(item => item.code === code);
+      if (!coupon) return;
+      const data = await api('/api/admin/coupons', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, enabled: !coupon.enabled })
+      });
+      renderCoupons(data.coupons || []);
+    });
+  });
+  tbody.querySelectorAll('[data-coupon-delete]').forEach(button => {
+    button.addEventListener('click', async () => {
+      const code = button.getAttribute('data-coupon-delete');
+      if (!window.confirm('Delete discount code ' + code + '?')) return;
+      const data = await api('/api/admin/coupons', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      renderCoupons(data.coupons || []);
+    });
+  });
+}
+
+function initCouponManager(coupons) {
+  const form = document.querySelector('[data-admin-coupon-form]');
+  if (!form || form.getAttribute('data-bound') === 'true') {
+    renderCoupons(coupons);
+    return;
+  }
+  form.setAttribute('data-bound', 'true');
+  const status = document.querySelector('[data-admin-coupon-status]');
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (status) {
+      status.className = 'small mb-0 text-secondary';
+      status.textContent = 'Saving discount code to backend...';
+    }
+    try {
+      const formData = new FormData(form);
+      const data = await api('/api/admin/coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: formData.get('code'),
+          label: formData.get('label'),
+          type: formData.get('type'),
+          value: Number(formData.get('value')),
+          min: Number(formData.get('min')),
+          enabled: formData.get('enabled') === 'on'
+        })
+      });
+      form.reset();
+      const enabled = form.querySelector('[name="enabled"]');
+      if (enabled) enabled.checked = true;
+      renderCoupons(data.coupons || []);
+      if (status) {
+        status.className = 'small mb-0 text-success';
+        status.textContent = data.coupon.code + ' 已寫入後端折扣碼。';
+      }
+    } catch (error) {
+      if (status) {
+        status.className = 'small mb-0 text-danger';
+        status.textContent = error.message;
+      }
+    }
+  });
+  renderCoupons(coupons);
+}
+
 export async function loadAdminDashboard() {
   if (!document.querySelector('[data-admin-page="dashboard"]')) return;
   try {
@@ -698,6 +799,7 @@ export async function loadAdminDashboard() {
     let orders = [];
     let summary = null;
     let notifications = [];
+    let coupons = [];
     try {
       const ordersData = await api('/api/admin/orders');
       orders = ordersData.orders || [];
@@ -712,6 +814,12 @@ export async function loadAdminDashboard() {
     } catch (summaryError) {
       console.warn('Admin summary API is not available yet. Restart Patria/Patria/server.js to enable it.', summaryError);
     }
+    try {
+      const couponData = await api('/api/admin/coupons');
+      coupons = couponData.coupons || [];
+    } catch (couponError) {
+      console.warn('Admin coupons API is not available yet. Restart Patria/Patria/server.js to enable it.', couponError);
+    }
     const totalSales = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
     const itemCount = orders.reduce((sum, order) => sum + (order.items || []).reduce((s, item) => s + Number(item.qty || 0), 0), 0);
     setText('[data-admin-stat="sales"]', money(totalSales));
@@ -723,6 +831,7 @@ export async function loadAdminDashboard() {
     renderRecentOrders(orders);
     renderAdminSummary(summary);
     renderAdminNotifications(notifications);
+    initCouponManager(coupons);
     setText('[data-admin-status]', orders.length ? 'Connected to Patria customer orders.' : 'Connected to Patria backend. Waiting for customer orders.');
   } catch (error) {
     console.error(error);

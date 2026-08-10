@@ -55,7 +55,7 @@ var adminOpen = document.getElementById("adminOpen");
 if (adminOpen) {
     adminOpen.addEventListener("click", function(e) {
         e.preventDefault();
-        var target = adminOpen.getAttribute("data-admin-url") || adminOpen.getAttribute("href") || "../../dashboardsample/dist/signin.html";
+        var target = adminOpen.getAttribute("data-admin-url") || adminOpen.getAttribute("href") || "../dashboardsample/dist/index.html#discount-codes";
         window.location.href = new URL(target, window.location.href).href;
     });
 }
@@ -96,13 +96,23 @@ function productSlug(text) {
 }
 
 var PATRIA_API_BASE = window.PATRIA_API_BASE || "";
-var PATRIA_SAMPLE_MODE = true;
+var PATRIA_SAMPLE_MODE = typeof window.PATRIA_SAMPLE_MODE === "boolean" ? window.PATRIA_SAMPLE_MODE : window.location.protocol === "file:";
 var DEMO_USERS_KEY = "patriaSampleUsers";
 var DEMO_TOKENS_KEY = "patriaSampleTokens";
 var DEMO_CARTS_KEY = "patriaSampleCarts";
 var DEMO_ORDERS_KEY = "patriaSampleOrders";
 var DEMO_ENGAGEMENT_KEY = "patriaSampleEngagement";
 var DEMO_PRODUCTS_KEY = "patriaSampleProducts";
+var COUPON_STORAGE_KEY = "patriaCouponCode";
+var ADMIN_COUPONS_KEY = "patriaSampleCoupons";
+var couponCode = (localStorage.getItem(COUPON_STORAGE_KEY) || "").toUpperCase();
+var couponMessage = "";
+var serverCoupons = null;
+var DEFAULT_COUPONS = [
+    { code: "WELCOME15", label: "Welcome 15% off", type: "percent", value: 15, min: 0, enabled: true },
+    { code: "PATRIA10", label: "Patria 10% off", type: "percent", value: 10, min: 0, enabled: true },
+    { code: "FAMILY5", label: "$5 family order discount", type: "fixed", value: 5, min: 40, enabled: true }
+];
 
 function demoRead(key, fallback) {
     try {
@@ -114,6 +124,41 @@ function demoRead(key, fallback) {
 
 function demoWrite(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
+}
+
+function normalizeCoupon(coupon) {
+    var type = coupon && coupon.type === "fixed" ? "fixed" : "percent";
+    var value = Math.max(0, Number(coupon && coupon.value) || 0);
+    if (type === "percent") value = Math.min(100, value);
+    return {
+        code: String(coupon && coupon.code || "").trim().toUpperCase(),
+        label: String(coupon && coupon.label || "").trim(),
+        type: type,
+        value: value,
+        min: Math.max(0, Number(coupon && coupon.min) || 0),
+        enabled: coupon && coupon.enabled === false ? false : true
+    };
+}
+
+function availableCoupons() {
+    var stored = demoRead(ADMIN_COUPONS_KEY, null);
+    var coupons = !PATRIA_SAMPLE_MODE && Array.isArray(serverCoupons) ? serverCoupons : (Array.isArray(stored) && stored.length ? stored : DEFAULT_COUPONS);
+    return coupons.map(normalizeCoupon).filter(function(coupon) {
+        return coupon.code && coupon.enabled;
+    });
+}
+
+function loadCoupons() {
+    if (PATRIA_SAMPLE_MODE) return Promise.resolve(availableCoupons());
+    return apiRequest("/api/coupons").then(function(data) {
+        serverCoupons = data.coupons || [];
+        renderOrder();
+        renderAccountOrders();
+        return serverCoupons;
+    }).catch(function(err) {
+        console.warn("Coupon API is not available yet.", err);
+        return availableCoupons();
+    });
 }
 
 function demoDelay(data) {
@@ -163,14 +208,6 @@ function demoProductsFromPage() {
     });
     var storedProducts = demoRead(DEMO_PRODUCTS_KEY, []);
     if (storedProducts.length) {
-        var seen = {};
-        storedProducts.forEach(function(product) {
-            if (product.id) seen[product.id] = true;
-        });
-        products.forEach(function(product) {
-            if (!seen[product.id]) storedProducts.push(product);
-        });
-        demoWrite(DEMO_PRODUCTS_KEY, storedProducts);
         return storedProducts;
     }
     demoWrite(DEMO_PRODUCTS_KEY, products);
@@ -393,12 +430,16 @@ function demoApiRequest(path, options) {
         if (!user) return Promise.reject(new Error("Please log in before checkout."));
         var checkoutCart = demoCartFor(user).items;
         if (!checkoutCart.length) return Promise.reject(new Error("Cart is empty."));
+        var checkoutTotals = cartTotals(checkoutCart);
         var order = {
             id: "PS-" + Date.now().toString().slice(-8),
             userId: user.id,
             customer: demoPublicUser(user),
             items: checkoutCart,
-            total: checkoutCart.reduce(function(sum, item) { return sum + item.priceValue * item.qty; }, 0),
+            subtotal: checkoutTotals.subtotal,
+            discount: checkoutTotals.discount,
+            couponCode: checkoutTotals.coupon && checkoutTotals.coupon.valid ? checkoutTotals.coupon.code : "",
+            total: checkoutTotals.total,
             status: "created",
             fulfillmentDate: body.fulfillmentDate || "",
             createdAt: new Date().toISOString()
@@ -501,6 +542,81 @@ function formatMoney(value) {
     return "$" + Number(value || 0).toFixed(2);
 }
 
+function cartSubtotal(items) {
+    return (items || []).reduce(function(sum, item) {
+        return sum + Number(item.priceValue || 0) * Number(item.qty || 0);
+    }, 0);
+}
+
+function couponDetails(code, subtotal) {
+    var normalized = String(code || "").trim().toUpperCase();
+    var coupon = availableCoupons().find(function(item) {
+        return item.code === normalized;
+    });
+    if (!coupon) return null;
+    if (subtotal < Number(coupon.min || 0)) {
+        return {
+            code: normalized,
+            coupon: coupon,
+            valid: false,
+            discount: 0,
+            message: normalized + " requires a subtotal of " + formatMoney(coupon.min) + "."
+        };
+    }
+    var discount = coupon.type === "percent" ? subtotal * (Number(coupon.value || 0) / 100) : Number(coupon.value || 0);
+    discount = Math.min(subtotal, Math.max(0, discount));
+    return {
+        code: normalized,
+        coupon: coupon,
+        valid: true,
+        discount: discount,
+        message: normalized + " applied: " + coupon.label + "."
+    };
+}
+
+function cartTotals(items) {
+    var subtotal = cartSubtotal(items);
+    var coupon = couponDetails(couponCode, subtotal);
+    var discount = coupon && coupon.valid ? coupon.discount : 0;
+    return {
+        subtotal: subtotal,
+        coupon: coupon,
+        discount: discount,
+        total: Math.max(0, subtotal - discount)
+    };
+}
+
+function couponStatusHtml(totals) {
+    var sampleCodes = availableCoupons().slice(0, 3).map(function(coupon) {
+        return coupon.code;
+    }).join(", ");
+    var message = couponMessage || (totals.coupon ? totals.coupon.message : (sampleCodes ? "Try " + sampleCodes + "." : "No active discount codes right now."));
+    var tone = totals.coupon && totals.coupon.valid ? " success" : (couponMessage ? " error" : "");
+    return "<p class=\"coupon-message" + tone + "\">" + escapeHtml(message) + "</p>";
+}
+
+function couponFormHtml(prefix, totals) {
+    var value = couponCode ? escapeHtml(couponCode) : "";
+    var removeButton = couponCode ? "<button type=\"button\" data-coupon-action=\"remove\">Remove</button>" : "";
+    return "<div class=\"" + prefix + "-coupon coupon-box\">" +
+        "<label for=\"" + prefix + "CouponInput\">優惠碼</label>" +
+        "<div class=\"coupon-controls\">" +
+        "<input type=\"text\" id=\"" + prefix + "CouponInput\" data-coupon-input value=\"" + value + "\" placeholder=\"輸入 WELCOME15\" autocomplete=\"off\"/>" +
+        "<button type=\"button\" data-coupon-action=\"apply\" data-coupon-source=\"" + prefix + "\">Apply</button>" +
+        removeButton +
+        "</div>" +
+        couponStatusHtml(totals) +
+        "</div>";
+}
+
+function totalsHtml(totals, className) {
+    return "<div class=\"" + className + " order-total-lines\">" +
+        "<div><span>Subtotal</span><span>" + formatMoney(totals.subtotal) + "</span></div>" +
+        (totals.discount ? "<div class=\"discount\"><span>Discount" + (totals.coupon ? " (" + escapeHtml(totals.coupon.code) + ")" : "") + "</span><span>-" + formatMoney(totals.discount) + "</span></div>" : "") +
+        "<div class=\"grand-total\"><span>Total</span><span>" + formatMoney(totals.total) + "</span></div>" +
+        "</div>";
+}
+
 function formatOrderDate(value) {
     if (!value) return "Just now";
     return new Date(value).toLocaleString([], {
@@ -564,9 +680,7 @@ function renderAccountCartRows() {
     if (!cartItems.length) {
         return "<div class=\"account-cart-box empty\"><span>Your cart is empty.</span><button type=\"button\" class=\"account-start-order\">Browse Menu</button></div>";
     }
-    var total = cartItems.reduce(function(sum, item) {
-        return sum + Number(item.priceValue || 0) * Number(item.qty || 0);
-    }, 0);
+    var totals = cartTotals(cartItems);
     return "<div class=\"account-cart-box\">" +
         "<div class=\"account-cart-list\">" + cartItems.map(function(item, index) {
             var itemTotal = Number(item.priceValue || 0) * Number(item.qty || 0);
@@ -585,7 +699,8 @@ function renderAccountCartRows() {
                 "</div>" +
                 "</article>";
         }).join("") + "</div>" +
-        "<div class=\"account-cart-total\"><span>Total</span><strong>" + formatMoney(total) + "</strong></div>" +
+        couponFormHtml("account", totals) +
+        totalsHtml(totals, "account-cart-total") +
         "<button type=\"button\" class=\"account-checkout-btn\" data-cart-action=\"checkout\">Checkout</button>" +
         "<p class=\"account-cart-note\">" + (isLoggedIn ? "This cart is synced with Your Order." : "Please log in before checkout.") + "</p>" +
         "</div>";
@@ -748,6 +863,29 @@ function setAuth(data) {
     loadAccountOrders();
 }
 
+function completeLineLogin() {
+    var params = new URLSearchParams(window.location.search);
+    var ticket = params.get("line_ticket");
+    var lineError = params.get("line_error");
+    if (lineError) {
+        alert(lineError);
+        window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+        return;
+    }
+    if (!ticket) return;
+    apiRequest("/api/auth/line/exchange", { method: "POST", body: { ticket: ticket, guestId: guestId } }).then(function(data) {
+        setAuth(data);
+        window.history.replaceState({}, document.title, window.location.pathname + "#account");
+        if (accountOv) {
+            accountOv.classList.add("open");
+            showAccountDashboard();
+        }
+    }).catch(function(err) {
+        alert(err.message || "LINE 登入失敗。");
+        window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+    });
+}
+
 function updateAccountDashboard() {
     var name = currentUser && currentUser.name ? currentUser.name : "jinfeng8605";
     accountOv && accountOv.querySelectorAll(".account-main h2").forEach(function(h2) {
@@ -781,6 +919,7 @@ function validateAccountForm(form) {
 var accountOv = document.getElementById("accountOv");
 var accountOpen = document.getElementById("accountOpen");
 var accountClose = document.getElementById("accountClose");
+var lineLoginBtn = document.getElementById("lineLoginBtn");
 var accountDashboard = document.getElementById("accountDashboard");
 var accountMenuToggle = document.getElementById("accountMenuToggle");
 
@@ -1003,6 +1142,12 @@ if (accountOv) {
     }
 }
 
+if (lineLoginBtn) {
+    lineLoginBtn.addEventListener("click", function() {
+        window.location.href = "/auth/line";
+    });
+}
+
 var orderOv = document.getElementById("orderOv");
 var orderOpen = document.getElementById("orderOpen");
 var orderClose = document.getElementById("orderClose");
@@ -1039,9 +1184,7 @@ function renderOrder() {
     }
 
     orderBody.classList.remove("is-empty");
-    var total = cartItems.reduce(function(sum, item) {
-        return sum + item.priceValue * item.qty;
-    }, 0);
+    var totals = cartTotals(cartItems);
     var leadDays = orderLeadDays(cartItems);
     var minOrderDate = dateAfterDays(leadDays);
     if (selectedOrderDate && selectedOrderDate < minOrderDate) selectedOrderDate = "";
@@ -1060,7 +1203,8 @@ function renderOrder() {
             "</div>" +
             "<div class=\"order-item-total\">$" + itemTotal.toFixed(2) + "</div></div>" +
             "</div>";
-    }).join("") + "<div class=\"order-summary\"><span>Total</span><span>$" + total.toFixed(2) + "</span></div>" +
+    }).join("") + couponFormHtml("order", totals) +
+        totalsHtml(totals, "order-summary") +
         "<label class=\"order-date-field\">Pickup date<input type=\"date\" id=\"orderDate\" min=\"" + minOrderDate + "\" value=\"" + escapeHtml(selectedOrderDate) + "\"/></label>" +
         "<p class=\"order-login-note\">Earliest available date is " + minOrderDate + " because this order requires " + leadDays + " days notice.</p>" +
         "<button type=\"button\" class=\"order-checkout\" data-cart-action=\"checkout\">Checkout</button>" +
@@ -1095,6 +1239,41 @@ function updateCartItem(index, action) {
     });
 }
 
+function updateCoupon(action, source) {
+    if (action === "remove") {
+        couponCode = "";
+        couponMessage = "優惠碼已移除。";
+        localStorage.removeItem(COUPON_STORAGE_KEY);
+        renderOrder();
+        renderAccountOrders();
+        return;
+    }
+
+    var input = document.getElementById((source || "order") + "CouponInput") || document.querySelector("[data-coupon-input]");
+    var code = input ? input.value.trim().toUpperCase() : "";
+    var totals = cartTotals(cartItems);
+    var details = couponDetails(code, totals.subtotal);
+    if (!code) {
+        couponCode = "";
+        couponMessage = "請先輸入優惠碼。";
+        localStorage.removeItem(COUPON_STORAGE_KEY);
+    } else if (!details) {
+        couponCode = "";
+        couponMessage = "找不到這個優惠碼，請確認後再試一次。";
+        localStorage.removeItem(COUPON_STORAGE_KEY);
+    } else if (!details.valid) {
+        couponCode = code;
+        couponMessage = details.message;
+        localStorage.setItem(COUPON_STORAGE_KEY, couponCode);
+    } else {
+        couponCode = code;
+        couponMessage = details.message;
+        localStorage.setItem(COUPON_STORAGE_KEY, couponCode);
+    }
+    renderOrder();
+    renderAccountOrders();
+}
+
 function checkoutOrder() {
     if (!cartItems.length) return;
 
@@ -1116,9 +1295,12 @@ function checkoutOrder() {
         return;
     }
 
-    apiRequest("/api/checkout", { method: "POST", body: { fulfillmentDate: selectedOrderDate } }).then(function(data) {
+    apiRequest("/api/checkout", { method: "POST", body: { fulfillmentDate: selectedOrderDate, couponCode: couponCode } }).then(function(data) {
         pendingCheckout = false;
         selectedOrderDate = "";
+        couponCode = "";
+        couponMessage = "";
+        localStorage.removeItem(COUPON_STORAGE_KEY);
         syncCart(data.cart || { items: [] });
         loadAccountOrders();
         alert("Order created: " + data.order.id);
@@ -1143,6 +1325,19 @@ document.addEventListener("click", function(e) {
     var index = parseInt(btn.getAttribute("data-cart-index"), 10);
     var action = btn.getAttribute("data-cart-action");
     updateCartItem(index, action);
+});
+
+document.addEventListener("click", function(e) {
+    var btn = e.target.closest("[data-coupon-action]");
+    if (!btn) return;
+    updateCoupon(btn.getAttribute("data-coupon-action"), btn.getAttribute("data-coupon-source"));
+});
+
+document.addEventListener("keydown", function(e) {
+    if (e.key !== "Enter" || !e.target || !e.target.matches("[data-coupon-input]")) return;
+    e.preventDefault();
+    var source = e.target.id === "accountCouponInput" ? "account" : "order";
+    updateCoupon("apply", source);
 });
 
 document.addEventListener("change", function(e) {
@@ -1325,6 +1520,13 @@ function renderMenuProducts(products) {
 apiRequest('/api/products').then(function(data) {
     renderMenuProducts(data.products || []);
 }).catch(function() {});
+
+window.addEventListener('storage', function(event) {
+    if (event.key !== DEMO_PRODUCTS_KEY || !PATRIA_SAMPLE_MODE) return;
+    apiRequest('/api/products').then(function(data) {
+        renderMenuProducts(data.products || []);
+    }).catch(function() {});
+});
 
 
 var menuPop = document.getElementById('menuPop');
@@ -1662,6 +1864,8 @@ window.addEventListener('scroll', function() {
     }
 });
 
+loadCoupons();
+completeLineLogin();
 apiRequest('/api/cart').then(syncCart).catch(function() {});
 if (authToken) {
     apiRequest('/api/me').then(function(data) {

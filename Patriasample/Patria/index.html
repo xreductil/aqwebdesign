@@ -7,10 +7,10 @@
       <meta name="author" content="Patria">
       <meta name="description" content="Patria - Chinese Food & Restaurant HTML Template">
       <title>Patria - Chinese Food & Restaurant HTML Template</title>
-      <link rel="apple-touch-icon" sizes="180x180" href="../../dashboardsample/dist/assets/images/apple-touch-icon.webp">
-      <link rel="icon" type="image/png" sizes="32x32" href="../../dashboardsample/dist/assets/images/favicon-32x32.webp">
-      <link rel="icon" type="image/png" sizes="16x16" href="../../dashboardsample/dist/assets/images/favicon-16x16.webp">
-      <link rel="manifest" href="../../dashboardsample/dist/assets/site.webmanifest">
+      <link rel="apple-touch-icon" sizes="180x180" href="../dashboardsample/dist/assets/images/apple-touch-icon.webp">
+      <link rel="icon" type="image/png" sizes="32x32" href="../dashboardsample/dist/assets/images/favicon-32x32.webp">
+      <link rel="icon" type="image/png" sizes="16x16" href="../dashboardsample/dist/assets/images/favicon-16x16.webp">
+      <link rel="manifest" href="../dashboardsample/dist/assets/site.webmanifest">
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet"/>
       <!-- Bootstrap 5.3 -->
       <link href="css/bootstrap.min.css" rel="stylesheet"/>
@@ -78,7 +78,7 @@
                </ul>
                <div class="nav-actions d-flex align-items-center">
                   <!-- FIX 1: Search button -->
-                  <a href="../../dashboardsample/dist/signin.html" data-admin-url="../../dashboardsample/dist/signin.html" class="admin-dashboard-link" id="adminOpen" title="管理後台" aria-label="管理後台" data-tooltip="管理後台"><i class="fas fa-table-columns"></i></a>
+                  <a href="/admin/signin.html" data-admin-url="/admin/signin.html" class="admin-dashboard-link" id="adminOpen" title="管理後台" aria-label="管理後台" data-tooltip="管理後台"><i class="fas fa-table-columns"></i></a>
                   <button id="navSearchBtn" title="搜尋" aria-label="搜尋" data-tooltip="搜尋"><i class="fas fa-search"></i></button>
                   <a href="#0" class="nav-link" id="accountOpen" title="帳戶" aria-label="帳戶" data-tooltip="帳戶"><i class="fas fa-user"></i></a>
                   <a href="#0" class="nav-link" id="orderOpen" title="購物車" aria-label="購物車" data-tooltip="購物車"><i class="fas fa-shopping-cart"></i></a>
@@ -152,6 +152,7 @@
                         <label class="account-check"><input type="checkbox"/> <span>Remember me</span></label>
                         <p class="account-error"></p>
                         <button type="button" class="account-btn" data-account-action="login">Log in</button>
+                        <button type="button" class="account-btn account-line-btn" id="lineLoginBtn"><i class="fab fa-line" aria-hidden="true"></i> 使用 LINE 登入</button>
                         <a href="#0" class="account-link">Lost your password?</a>
                      </form>
                   </div>

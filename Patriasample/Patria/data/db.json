@@ -241,8 +241,63 @@
       "total": 12.99,
       "fulfillmentDate": "2026-08-14",
       "leadDays": 5,
-      "status": "created",
-      "createdAt": "2026-07-31T18:30:21.948Z"
+      "status": "picked_up",
+      "createdAt": "2026-07-31T18:30:21.948Z",
+      "updatedAt": "2026-08-10T08:11:08.479Z"
+    },
+    {
+      "id": "8d34066380ff",
+      "userId": "af6a671ffdc4474cdc7d8dfdc37ab0a4cdb76984440d7b5fe86c46c61588a907",
+      "items": [
+        {
+          "id": "chicken-noodle-lunch-set",
+          "source": "static",
+          "title": "Chicken Noodle Lunch Set",
+          "cat": "NOODLES",
+          "price": "$11.99",
+          "old": "",
+          "priceValue": 11.99,
+          "img": "img/QuickMeals/2.webp",
+          "desc": "A fast lunch set with stir-fried noodles, chicken, broccoli, peppers, onions and shiitake mushrooms.",
+          "rating": "4.8",
+          "reviews": "64",
+          "cal": "480",
+          "time": "10",
+          "tags": "Quick Meals,Lunch Set,Noodles",
+          "quantity": 25,
+          "day": "5",
+          "qty": 1
+        },
+        {
+          "id": "chicken-rice-lunch-set",
+          "source": "static",
+          "title": "Chicken Rice Lunch Set",
+          "cat": "RICE",
+          "price": "$13.99",
+          "old": "",
+          "priceValue": 13.99,
+          "img": "img/QuickMeals/1.webp",
+          "desc": "A quick lunch set with steamed rice, saucy chicken, broccoli, baby corn, mushrooms and cabbage.",
+          "rating": "4.9",
+          "reviews": "82",
+          "cal": "520",
+          "time": "12",
+          "tags": "Quick Meals,Lunch Set,Rice",
+          "quantity": 80,
+          "day": "5",
+          "updatedAt": "2026-07-30T15:11:49.588Z",
+          "qty": 1
+        }
+      ],
+      "subtotal": 25.98,
+      "discount": 3.9,
+      "couponCode": "1234",
+      "total": 22.08,
+      "fulfillmentDate": "2026-08-20",
+      "leadDays": 5,
+      "status": "picked_up",
+      "createdAt": "2026-08-10T08:01:01.582Z",
+      "updatedAt": "2026-08-10T08:10:57.579Z"
     }
   ],
   "productOverrides": {
@@ -324,5 +379,41 @@
       "createdAt": "2026-07-30T15:01:10.496Z"
     }
   ],
-  "searches": []
+  "searches": [],
+  "coupons": [
+    {
+      "code": "WELCOME15",
+      "label": "Welcome 15% off",
+      "type": "percent",
+      "value": 15,
+      "min": 0,
+      "enabled": true,
+      "updatedAt": "2026-08-10T07:03:03.922Z"
+    },
+    {
+      "code": "PATRIA10",
+      "label": "Patria 10% off",
+      "type": "percent",
+      "value": 10,
+      "min": 0,
+      "enabled": true,
+      "updatedAt": "2026-08-10T07:03:03.923Z"
+    },
+    {
+      "code": "FAMILY5",
+      "label": "$5 family order discount",
+      "type": "fixed",
+      "value": 5,
+      "min": 40,
+      "enabled": true,
+      "updatedAt": "2026-08-10T07:03:03.923Z"
+    }
+  ],
+  "lineStates": {
+    "094a2c1325e775bcbe9341da3f814815058ce1987c2eee3b90db018a0ea12ded": {
+      "nonce": "a18bc2dd0588d43f313a0bbe4fbdf904fc586316f336a3448eac6a24db6ecda2",
+      "createdAt": 1786353841025
+    }
+  },
+  "lineTickets": {}
 }
