@@ -3,6 +3,7 @@ import {
   addToCart,
   checkout,
   getCart,
+  getCoupons,
   getCurrentUser,
   getOrders,
   getProducts,
@@ -10,8 +11,10 @@ import {
   logout,
   register,
   sendContactMessage,
+  removeCartItem,
   updateMemberAddress,
   updateMemberProfile,
+  updateCartItem,
 } from "./api/client.js";
 
 const imageBase = "https://www.aq-webdesign.com/images";
@@ -24,11 +27,12 @@ const categories = [
   { name: "SOUP", image: "./img/category/6.webp" },
 ];
 
-function ProductCard({ product, badge = "Featured", onAdd }) {
+function ProductCard({ product, badge = "Featured", onOpen }) {
   return (
     <div
       id={`product-${product.id}`}
       className="mcard"
+      onClick={() => onOpen(product)}
       data-img={product.img}
       data-title={product.title}
       data-cat={product.cat}
@@ -39,7 +43,7 @@ function ProductCard({ product, badge = "Featured", onAdd }) {
       <div className="mimg">
         <img src={product.img} alt={product.title} loading="lazy" />
         <div className="mbdg hot"><i className="fas fa-star" /> {badge}</div>
-        <div className="mhrt"><i className="far fa-heart" /></div>
+        <div className="mhrt" onClick={(event) => event.stopPropagation()}><i className="far fa-heart" /></div>
       </div>
       <div className="mbody">
         <div className="mcat">{product.cat}</div>
@@ -50,11 +54,102 @@ function ProductCard({ product, badge = "Featured", onAdd }) {
             <div className="mprice">{product.price}</div>
             <div className="mstars"><i className="fas fa-star" /> {product.rating || "4.9"}</div>
           </div>
-          <button type="button" className="madd" onClick={() => onAdd(product.id)} title="View Details">
+          <button type="button" className="madd" onClick={(event) => { event.stopPropagation(); onOpen(product); }} title="View Details">
             <i className="fas fa-plus" />
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ProductModal({ product, quantity, setQuantity, onClose, onAdd }) {
+  if (!product) return null;
+  const rating = Number(product.rating || 4.9);
+  const fullStars = Math.round(rating);
+  const tags = String(product.tags || product.cat || "Patria").split(",").map((tag) => tag.trim()).filter(Boolean);
+  return (
+    <div id="menuPop" className="open" onClick={(event) => event.target === event.currentTarget && onClose()}>
+      <div className="mpbox">
+        <button type="button" className="mpclose" onClick={onClose} aria-label="Close product details"><i className="fas fa-times" /></button>
+        <div className="mpimg"><img src={product.img} alt={product.title} /></div>
+        <div className="mpbody">
+          <div id="mpCat">{product.cat}</div>
+          <div id="mpTitle">{product.title}</div>
+          <div id="mpStars">{Array.from({ length: 5 }, (_, index) => <i className={index < fullStars ? "fas fa-star" : "far fa-star"} key={index} />)} <span>{rating} ({product.reviews || 0} reviews)</span></div>
+          <div id="mpDesc">{product.desc}</div>
+          <div id="mpPrice">{product.price}{product.old && <small>{product.old}</small>}</div>
+          <div className="mpmeta" id="mpMeta">
+            <div className="mpm"><div className="mpmv">{product.cal || "—"} kcal</div><div className="mpml">Calories</div></div>
+            <div className="mpm"><div className="mpmv">{product.time || "—"} min</div><div className="mpml">Prep Time</div></div>
+            <div className="mpm"><div className="mpmv">{rating}/5</div><div className="mpml">Rating</div></div>
+          </div>
+          <div className="mpqty"><button type="button" className="mpqbtn" onClick={() => setQuantity(Math.max(1, quantity - 1))}>−</button><span className="mpqnum">{quantity}</span><button type="button" className="mpqbtn" onClick={() => setQuantity(quantity + 1)}>+</button><span className="mpportion">portion</span></div>
+          <div className="mptags">{tags.map((tag) => <span className="mptag" key={tag}>{tag}</span>)}</div>
+          <button type="button" className="mpaddcart" onClick={() => onAdd(product.id, quantity)}><i className="fas fa-shopping-cart" /> Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrderDrawer({ cart, user, coupons, couponCode, setCouponCode, couponMessage, fulfillmentDate, setFulfillmentDate, onApplyCoupon, onRemoveCoupon, onChangeQty, onRemove, onCheckout, onClose, busy, error }) {
+  const subtotal = Number(cart.total || 0);
+  const coupon = coupons.find((item) => String(item.code).toUpperCase() === couponCode.toUpperCase());
+  const discount = coupon && subtotal >= Number(coupon.min || 0)
+    ? Math.min(subtotal, coupon.type === "percent" ? subtotal * Number(coupon.value || 0) / 100 : Number(coupon.value || 0))
+    : 0;
+  const total = Math.max(0, subtotal - discount);
+  const leadDays = cart.items.reduce((max, item) => Math.max(max, Number(item.day || 5)), 0);
+  const minimumDateObject = new Date();
+  minimumDateObject.setHours(0, 0, 0, 0);
+  minimumDateObject.setDate(minimumDateObject.getDate() + leadDays);
+  const minimumDate = minimumDateObject.toISOString().slice(0, 10);
+
+  return (
+    <div className="order-overlay open react-order-overlay" onClick={(event) => event.target === event.currentTarget && onClose()}>
+      <aside className="order-drawer" aria-label="Your Order">
+        <div className="order-head"><h2>Your Order</h2><button type="button" className="order-close" onClick={onClose} aria-label="Close order"><i className="fas fa-times" /></button></div>
+        <div className={`order-body${cart.items.length ? "" : " is-empty"}`}>
+          {!cart.items.length ? <p className="order-empty">No products in the cart.</p> : <>
+            <div className="order-list">
+              {cart.items.map((item) => {
+                const quantity = Number(item.qty || 0);
+                const itemTotal = Number(item.priceValue || 0) * quantity;
+                return <div className="order-item" key={item.id}>
+                  <img src={item.img} alt={item.title} />
+                  <div className="order-item-info">
+                    <div className="order-item-title">{item.title}</div>
+                    <div className="order-item-meta">{item.cat} · {item.price}</div>
+                    <div className="order-controls">
+                      <button type="button" className="order-qty-btn" onClick={() => onChangeQty(item, quantity - 1)} aria-label={"Decrease " + item.title}>−</button>
+                      <span className="order-qty">{quantity}</span>
+                      <button type="button" className="order-qty-btn" onClick={() => onChangeQty(item, quantity + 1)} aria-label={"Increase " + item.title}>+</button>
+                      <button type="button" className="order-remove" onClick={() => onRemove(item)}>Remove</button>
+                    </div>
+                    <div className="order-item-total">{"$"}{itemTotal.toFixed(2)}</div>
+                  </div>
+                </div>;
+              })}
+            </div>
+            <div className="coupon-box order-coupon">
+              <label htmlFor="orderCouponInput">優惠碼</label>
+              <div className="coupon-controls"><input id="orderCouponInput" type="text" value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} placeholder="輸入 WELCOME15" /><button type="button" onClick={onApplyCoupon}>Apply</button>{couponCode && <button type="button" onClick={onRemoveCoupon}>Remove</button>}</div>
+              {couponMessage && <p className={`coupon-message ${coupon ? "success" : "error"}`}>{couponMessage}</p>}
+            </div>
+            <div className="order-summary order-total-lines">
+              <div><span>Subtotal</span><span>{"$"}{subtotal.toFixed(2)}</span></div>
+              {discount > 0 && <div className="discount"><span>Discount</span><span>−{"$"}{discount.toFixed(2)}</span></div>}
+              <div className="grand-total"><span>Total</span><span>{"$"}{total.toFixed(2)}</span></div>
+            </div>
+            <label className="order-date-field">Pickup date<input type="date" min={minimumDate} value={fulfillmentDate} onChange={(event) => setFulfillmentDate(event.target.value)} /></label>
+            <p className="order-login-note">Earliest available date is {minimumDate} because this order requires {leadDays} days notice.</p>
+            {error && <p className="coupon-message error">{error}</p>}
+            <button type="button" className="order-checkout" disabled={busy} onClick={onCheckout}>{busy ? "Processing..." : "Checkout"}</button>
+            <p className="order-login-note">{user ? "You are logged in and ready to checkout." : "Please log in before checkout."}</p>
+          </>}
+        </div>
+      </aside>
     </div>
   );
 }
@@ -109,8 +204,14 @@ function App() {
   const [orders, setOrders] = useState([]);
   const [category, setCategory] = useState("ALL");
   const [cartOpen, setCartOpen] = useState(false);
+  const [coupons, setCoupons] = useState([]);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponMessage, setCouponMessage] = useState("");
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [productQuantity, setProductQuantity] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [accountPage, setAccountPage] = useState("dashboard");
   const [accountError, setAccountError] = useState("");
@@ -126,11 +227,12 @@ function App() {
   const [fulfillmentDate, setFulfillmentDate] = useState("");
 
   useEffect(() => {
-    Promise.all([getCurrentUser().catch(() => null), getProducts(), getCart()])
-      .then(([me, productData, cartData]) => {
+    Promise.all([getCurrentUser().catch(() => null), getProducts(), getCart(), getCoupons().catch(() => ({ coupons: [] }))])
+      .then(([me, productData, cartData, couponData]) => {
         setUser(me?.success ? me.user : null);
         setProducts(productData.products || []);
         setCart({ items: cartData.items || [], total: cartData.total || 0 });
+        setCoupons(couponData.coupons || []);
       })
       .catch((requestError) => setError(requestError.message))
       .finally(() => setLoading(false));
@@ -221,23 +323,78 @@ function App() {
   const quickMealProducts = products.slice(0, 3);
   const localFavouriteProducts = products.slice(3, 9);
 
-  async function handleAdd(productId) {
+  async function handleAdd(productId, quantity = 1) {
     try {
-      setCart(await addToCart(productId));
+      setCart(await addToCart(productId, quantity));
+      setSelectedProduct(null);
+      setProductQuantity(1);
       setCartOpen(true);
     } catch (requestError) {
       setError(requestError.message);
     }
   }
 
+  function openProduct(product) {
+    setSelectedProduct(product);
+    setProductQuantity(1);
+  }
+
   async function handleCheckout() {
+    if (!user) {
+      setCartOpen(false);
+      setAccountOpen(true);
+      return;
+    }
+    if (!fulfillmentDate) {
+      setError("Please choose a pickup date.");
+      return;
+    }
+    setCheckoutBusy(true);
+    setError("");
     try {
-      const data = await checkout(fulfillmentDate);
+      const data = await checkout(fulfillmentDate, couponCode);
       setCart(data.cart);
       setOrders((current) => [data.order, ...current]);
       setFulfillmentDate("");
+      setCouponCode("");
+      setCouponMessage("");
+      setCartOpen(false);
+      setError("");
     } catch (requestError) {
       setError(requestError.message);
+    } finally {
+      setCheckoutBusy(false);
+    }
+  }
+
+  async function handleCartQuantity(item, quantity) {
+    try {
+      setCart(await (quantity <= 0 ? removeCartItem(item.id) : updateCartItem(item.id, quantity)));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
+  async function handleRemoveCartItem(item) {
+    try {
+      setCart(await removeCartItem(item.id));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
+  function handleApplyCoupon() {
+    const normalized = couponCode.trim().toUpperCase();
+    const coupon = coupons.find((item) => String(item.code).toUpperCase() === normalized);
+    if (!normalized) {
+      setCouponMessage("請先輸入優惠碼。");
+    } else if (!coupon) {
+      setCouponMessage("找不到這個優惠碼，請確認後再試一次。");
+    } else if (Number(cart.total || 0) < Number(coupon.min || 0)) {
+      setCouponMessage(normalized + " requires a subtotal of $" + Number(coupon.min || 0).toFixed(2) + ".");
+    } else {
+      setCouponCode(normalized);
+      setCouponMessage(normalized + " applied: " + (coupon.label || "discount") + ".");
     }
   }
 
@@ -390,7 +547,7 @@ function App() {
         <section id="category"><div className="container">
           <div className="quick-menu-types" data-aos="fade-up"><h2 className="stitle">Quick Meals / <span>Lunch Sets</span></h2></div>
           <div className="row g-4 quick-meals-grid">
-            {quickMealProducts.map((product, index) => <div className="col-sm-6 col-lg-4" data-aos="fade-up" data-aos-delay={index * 80} key={`quick-${product.id}`}><ProductCard product={product} badge={index === 0 ? "Quick" : index === 1 ? "Lunch" : "Combo"} onAdd={handleAdd} /></div>)}
+            {quickMealProducts.map((product, index) => <div className="col-sm-6 col-lg-4" data-aos="fade-up" data-aos-delay={index * 80} key={`quick-${product.id}`}><ProductCard product={product} badge={index === 0 ? "Quick" : index === 1 ? "Lunch" : "Combo"} onOpen={openProduct} /></div>)}
           </div>
           <div className="text-center mb-5" data-aos="fade-up"><span className="slbl">What We Offer</span><h2 className="stitle">Explore <span>Our Menu</span></h2><div className="sline" /><p className="sdesc mx-auto" style={{ maxWidth: 480 }}>From sizzling burgers to exotic world cuisines - find your favourite in our menu</p></div>
           <div className="row g-3 justify-content-center">
@@ -398,7 +555,7 @@ function App() {
           </div>
           <div className="local-favourites"><h2 className="stitle">Local <span>Favourites</span></h2></div>
           <div className="row g-4 local-favourites-grid">
-            {localFavouriteProducts.map((product, index) => <div className="col-sm-6 col-lg-4" data-aos="fade-up" data-aos-delay={(index % 3) * 80} key={`local-${product.id}`}><ProductCard product={product} badge={index === 0 ? "Local" : index === 1 ? "New" : index === 2 ? "Best Seller" : "Chef Pick"} onAdd={handleAdd} /></div>)}
+            {localFavouriteProducts.map((product, index) => <div className="col-sm-6 col-lg-4" data-aos="fade-up" data-aos-delay={(index % 3) * 80} key={`local-${product.id}`}><ProductCard product={product} badge={index === 0 ? "Local" : index === 1 ? "New" : index === 2 ? "Best Seller" : "Chef Pick"} onOpen={openProduct} /></div>)}
           </div>
         </div></section>
 
@@ -407,7 +564,7 @@ function App() {
             {["ALL", "NOODLES", "DIM SUM", "RICE", "SOUP"].map((item) => <button type="button" className={`filtbtn ${category === item ? "active" : ""}`} data-f={item.toLowerCase()} key={item} onClick={() => setCategory(item)}>{item}</button>)}
           </div>
           {error && <p className="alert alert-danger">{error}</p>}
-          <div className="row g-4" id="mgrid">{visibleProducts.map((product, index) => <div className="col-sm-6 col-lg-4 mwrap" data-c={String(product.cat || "").toLowerCase()} data-aos="fade-up" data-aos-delay={(index % 3) * 80} key={product.id}><ProductCard product={product} onAdd={handleAdd} /></div>)}</div>
+          <div className="row g-4" id="mgrid">{visibleProducts.map((product, index) => <div className="col-sm-6 col-lg-4 mwrap" data-c={String(product.cat || "").toLowerCase()} data-aos="fade-up" data-aos-delay={(index % 3) * 80} key={product.id}><ProductCard product={product} onOpen={openProduct} /></div>)}</div>
         </div></section>
 
         <section id="about"><div className="container"><div className="row align-items-center g-5"><div className="col-lg-5"><div className="astack"><div className="aexp"><span className="anum">12+</span><small>Years of<br />Excellence</small></div><div className="amain"><img src="./img/about1.jpg" alt="Restaurant" /></div><div className="asm"><img src="./img/about2.jpg" alt="" /></div></div></div><div className="col-lg-7"><span className="slbl">Our Story</span><h2 className="stitle text-start">We Invite You to Visit<br />Our <span>Food Restaurant</span></h2><div className="sline lft" /><p className="sdesc mb-4">Founded in 2012, Patria began as a small corner joint with a big dream - to serve food that brings people together. Today we serve thousands of happy customers every week with the same passion.</p><a href="#menu" className="btn-red"><i className="fas fa-book-open" /> View Full Menu</a></div></div></div></section>
@@ -435,6 +592,8 @@ function App() {
       <footer><div className="container"><div className="row g-5"><div className="col-lg-4"><div className="fnm">Pat<span>ria</span></div><p className="fdesc">We bring the world's finest flavors together in a fast, friendly, and affordable experience. Every meal crafted with love.</p><div className="fsoc"><a href="#"><i className="fab fa-facebook-f" /></a><a href="#"><i className="fab fa-instagram" /></a><a href="#"><i className="fab fa-twitter" /></a><a href="#"><i className="fab fa-youtube" /></a><a href="#"><i className="fab fa-tiktok" /></a></div></div><div className="col-sm-6 col-lg-2"><div className="ftit">Quick Links</div><ul className="flinks ps-0"><li><a href="#hero"><i className="fas fa-chevron-right" />Home</a></li><li><a href="#about"><i className="fas fa-chevron-right" />About Us</a></li><li><a href="#menu"><i className="fas fa-chevron-right" />Our Menu</a></li><li><a href="#reservation"><i className="fas fa-chevron-right" />Reservation</a></li><li><a href="#contact-section"><i className="fas fa-chevron-right" />Contact</a></li></ul></div><div className="col-sm-6 col-lg-2"><div className="ftit">Our Menu</div><ul className="flinks ps-0"><li><a href="#menu"><i className="fas fa-chevron-right" />NOODLES</a></li><li><a href="#menu"><i className="fas fa-chevron-right" />DIM SUM</a></li><li><a href="#menu"><i className="fas fa-chevron-right" />RICE</a></li><li><a href="#menu"><i className="fas fa-chevron-right" />SOUP</a></li></ul></div><div className="col-lg-4"><div className="ftit">Get In Touch</div>{[["map-marker-alt", "Address", "52 Teka Street, Los Angeles, CA 90001"], ["phone-alt", "Phone", "+1 (300) 659-4381"], ["envelope", "Email", "hello@patriafood.com"], ["clock", "Hours", "Mon - Sun: 09 AM - 11 PM"]].map(([icon, title, value]) => <div className="fci" key={title}><div className="fciico"><i className={`fas fa-${icon}`} /></div><div className="fciinfo"><strong>{title}</strong>{value}</div></div>)}</div></div></div><div className="fbot"><div className="container"><div className="d-flex justify-content-between align-items-center flex-wrap gap-2"><p>&copy; 2026 <span>Patria Restaurant</span> All rights reserved.<span className="footer-credit">Design by <a href="https://www.aq-webdesign.com/index.html" target="_blank" rel="noopener">A.Q.webdesign</a></span></p><div><a href="#">Privacy Policy</a><a href="#">Terms</a><a href="#">Cookies</a></div></div></div></div></footer>
 
       {cartOpen && <div className="order-overlay open" onClick={(event) => event.target === event.currentTarget && setCartOpen(false)}><aside className="order-drawer"><div className="order-head"><h2>Your Order</h2><button type="button" className="order-close" onClick={() => setCartOpen(false)}><i className="fas fa-times" /></button></div><div className="order-body">{cart.items.length ? <>{cart.items.map((item) => <div className="account-cart-row" key={item.id}><img src={item.img} alt="" /><span>{item.title} × {item.qty}</span></div>)}<strong>Total: ${Number(cart.total).toFixed(2)}</strong><input type="date" value={fulfillmentDate} onChange={(event) => setFulfillmentDate(event.target.value)} /><button type="button" className="account-btn filled" disabled={!user} onClick={handleCheckout}>{user ? "Checkout" : "Please log in"}</button></> : <p className="order-empty">No products in the cart.</p>}</div></aside></div>}
+      {cartOpen && <OrderDrawer cart={cart} user={user} coupons={coupons} couponCode={couponCode} setCouponCode={setCouponCode} couponMessage={couponMessage} fulfillmentDate={fulfillmentDate} setFulfillmentDate={setFulfillmentDate} onApplyCoupon={handleApplyCoupon} onRemoveCoupon={() => { setCouponCode(""); setCouponMessage("優惠碼已移除。"); }} onChangeQty={handleCartQuantity} onRemove={handleRemoveCartItem} onCheckout={handleCheckout} onClose={() => setCartOpen(false)} busy={checkoutBusy} error={error} />}
+      {selectedProduct && <ProductModal product={selectedProduct} quantity={productQuantity} setQuantity={setProductQuantity} onClose={() => { setSelectedProduct(null); setProductQuantity(1); }} onAdd={handleAdd} />}
     </>
   );
 }

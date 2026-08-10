@@ -69,6 +69,10 @@ export function getProducts() {
   return apiRequest("/api/products");
 }
 
+export function getCoupons() {
+  return apiRequest("/api/coupons");
+}
+
 export function getCart() {
   return apiRequest("/api/cart", {
     headers: {

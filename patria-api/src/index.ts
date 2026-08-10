@@ -816,6 +816,20 @@ export default {
         });
       }
 
+      if (request.method === "GET" && url.pathname === "/api/coupons") {
+        const result = await env.patria_db
+          .prepare("SELECT code, label, type, value, min_total AS min FROM coupons WHERE enabled = 1 ORDER BY created_at DESC")
+          .all<Record<string, unknown>>();
+        return Response.json({
+          success: true,
+          coupons: result.results.map((coupon) => ({
+            ...coupon,
+            value: Number(coupon.value || 0),
+            min: Number(coupon.min || 0),
+          })),
+        });
+      }
+
       if (url.pathname === "/api/cart") {
         const current = await getCurrentUser(request, env.patria_db);
         const guestId = request.headers.get("X-Guest-Id");
@@ -984,8 +998,25 @@ export default {
         }
 
         const subtotal = Number(cartSummary(cart).total.toFixed(2));
-        const discount = 0;
-        const total = subtotal;
+        const couponCode = String(body.couponCode || "").trim().toUpperCase();
+        let discount = 0;
+        if (couponCode) {
+          const coupon = await env.patria_db
+            .prepare("SELECT code, label, type, value, min_total AS min FROM coupons WHERE code = ? AND enabled = 1 LIMIT 1")
+            .bind(couponCode)
+            .first<Record<string, unknown>>();
+          if (!coupon) {
+            return Response.json({ success: false, error: "Invalid coupon code." }, { status: 400 });
+          }
+          if (subtotal < Number(coupon.min || 0)) {
+            return Response.json({ success: false, error: "This coupon requires a subtotal of $" + Number(coupon.min || 0).toFixed(2) + "." }, { status: 400 });
+          }
+          discount = coupon.type === "percent"
+            ? subtotal * Number(coupon.value || 0) / 100
+            : Number(coupon.value || 0);
+          discount = Number(Math.min(subtotal, Math.max(0, discount)).toFixed(2));
+        }
+        const total = Number(Math.max(0, subtotal - discount).toFixed(2));
         const orderId = storeToken();
         const now = new Date().toISOString();
         const statements = [
@@ -1001,7 +1032,7 @@ export default {
               userId,
               subtotal,
               discount,
-              String(body.couponCode || "").trim().toUpperCase(),
+              couponCode,
               total,
               fulfillmentDate,
               leadDays,
@@ -1039,7 +1070,7 @@ export default {
               items: cart,
               subtotal,
               discount,
-              couponCode: body.couponCode || "",
+              couponCode,
               total,
               fulfillmentDate,
               leadDays,

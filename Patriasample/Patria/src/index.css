@@ -44,6 +44,10 @@
   background: rgb(0 0 0 / 45%);
 }
 
+.order-overlay:not(.react-order-overlay) {
+  display: none !important;
+}
+
 #orderOpen,
 #accountOv .account-side button,
 #accountOv .account-site-links a,
