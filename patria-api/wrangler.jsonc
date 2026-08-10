@@ -1,41 +1,45 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "patria-api",
-  "main": "src/index.ts",
-  "compatibility_date": "2026-08-08",
-
-  "observability": {
-    "enabled": true
-  },
-
-  "upload_source_maps": true,
-
-  "vars": {
-    "LINE_CHANNEL_ID": "2011054194",
-    "LINE_CALLBACK_URL": "https://www.aq-webdesign.com/auth/line/callback",
-    "LOGIN_SUCCESS_URL": "https://www.aq-webdesign.com/Patriasample/Patria/index.html#account"
-  },
-
-  "routes": [
-    {
-      "pattern": "www.aq-webdesign.com/auth/line*",
-      "custom_domain": false
-    },
-    {
-      "pattern": "www.aq-webdesign.com/api/*",
-      "custom_domain": false
-    }
-  ],
-
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
-
-  "d1_databases": [
-    {
-      "binding": "patria_db",
-      "database_name": "patria-db",
-      "database_id": "6467e872-4c0b-4474-bff3-aa1545e00ee2"
-    }
-  ]
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "patria-api",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-08-08",
+	"observability": {
+		"enabled": true
+	},
+	"upload_source_maps": true,
+	"vars": {
+		"LINE_CHANNEL_ID": "2011054194",
+		"LINE_CALLBACK_URL": "https://www.aq-webdesign.com/auth/line/callback",
+		"LOGIN_SUCCESS_URL": "https://www.aq-webdesign.com/Patriasample/Patria/index.html#account"
+	},
+	"routes": [
+		{
+			"pattern": "www.aq-webdesign.com/auth/line*",
+			"custom_domain": false
+		},
+		{
+			"pattern": "www.aq-webdesign.com/api/*",
+			"custom_domain": false
+		},
+		{
+			"pattern": "www.aq-webdesign.com/images/*",
+			"custom_domain": false
+		}
+	],
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"d1_databases": [
+		{
+			"binding": "patria_db",
+			"database_name": "patria-db",
+			"database_id": "6467e872-4c0b-4474-bff3-aa1545e00ee2"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "patria_images",
+			"bucket_name": "patria-images"
+		}
+	]
 }

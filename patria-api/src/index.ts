@@ -1,5 +1,6 @@
 interface Env {
   patria_db: D1Database;
+  patria_images: R2Bucket;
 
   LINE_CHANNEL_ID: string;
   LINE_CHANNEL_SECRET: string;
@@ -215,6 +216,128 @@ async function getCurrentUser(
   };
 }
 
+type ProductRow = Record<string, unknown>;
+
+function publicProduct(row: ProductRow): Record<string, unknown> {
+  return {
+    id: row.id,
+    title: row.title,
+    cat: row.category,
+    price: row.price,
+    priceValue: Number(row.price_value || 0),
+    old: row.old_price || "",
+    img: row.image_url || "",
+    desc: row.description || "",
+    rating: row.rating,
+    reviews: row.reviews,
+    cal: row.calories,
+    time: row.prep_time,
+    tags: row.tags || "",
+    quantity: Number(row.quantity || 0),
+    day: String(row.lead_days ?? 5),
+  };
+}
+
+async function getProducts(
+  db: D1Database,
+  productId?: string
+): Promise<Record<string, unknown>[]> {
+  const statement = productId
+    ? db
+        .prepare("SELECT * FROM products WHERE id = ? AND enabled = 1 LIMIT 1")
+        .bind(productId)
+    : db
+        .prepare("SELECT * FROM products WHERE enabled = 1 ORDER BY title ASC")
+        .bind();
+  const result = await statement.all<ProductRow>();
+  return result.results.map(publicProduct);
+}
+
+async function getStoreCart(
+  db: D1Database,
+  userId: number | null,
+  guestId: string | null
+): Promise<Record<string, unknown>[]> {
+  if (!userId && !guestId) return [];
+
+  const isUserCart = Boolean(userId);
+  const table = isUserCart ? "cart_items" : "guest_cart_items";
+  const ownerColumn = isUserCart ? "user_id" : "guest_id";
+  const owner = isUserCart ? userId : guestId;
+  const result = await db
+    .prepare(`
+      SELECT p.*, c.quantity AS cart_quantity
+      FROM ${table} c
+      INNER JOIN products p ON p.id = c.product_id
+      WHERE c.${ownerColumn} = ? AND p.enabled = 1
+      ORDER BY c.updated_at DESC
+    `)
+    .bind(owner)
+    .all<ProductRow>();
+
+  return result.results.map((row) => ({
+    ...publicProduct(row),
+    qty: Number(row.cart_quantity || 0),
+  }));
+}
+
+function cartSummary(items: Record<string, unknown>[]) {
+  const total = items.reduce(
+    (sum, item) =>
+      sum + Number(item.priceValue || 0) * Number(item.qty || 0),
+    0
+  );
+
+  return {
+    items,
+    total: Number(total.toFixed(2)),
+  };
+}
+
+function storeToken(): string {
+  return randomString(18);
+}
+
+async function getUserOrders(
+  db: D1Database,
+  userId: number
+): Promise<Record<string, unknown>[]> {
+  const orders = await db
+    .prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC")
+    .bind(userId)
+    .all<Record<string, unknown>>();
+
+  return Promise.all(
+    orders.results.map(async (order) => {
+      const items = await db
+        .prepare(`
+          SELECT product_id AS id, title, image_url AS img,
+                 price_value AS priceValue, quantity AS qty
+          FROM order_items
+          WHERE order_id = ?
+          ORDER BY id ASC
+        `)
+        .bind(order.id)
+        .all<Record<string, unknown>>();
+
+      return {
+        id: order.id,
+        userId: order.user_id,
+        items: items.results,
+        subtotal: Number(order.subtotal || 0),
+        discount: Number(order.discount || 0),
+        couponCode: order.coupon_code || "",
+        total: Number(order.total || 0),
+        fulfillmentDate: order.fulfillment_date,
+        leadDays: Number(order.lead_days || 0),
+        status: order.status,
+        createdAt: order.created_at,
+        updatedAt: order.updated_at,
+      };
+    })
+  );
+}
+
 export default {
   async fetch(
     request: Request,
@@ -223,6 +346,32 @@ export default {
     const url = new URL(request.url);
 
     try {
+
+      if (
+        request.method === "GET" &&
+        url.pathname.startsWith("/images/")
+      ) {
+        const key = decodeURIComponent(
+          url.pathname.slice("/images/".length)
+        );
+        const object = await env.patria_images.get(key);
+
+        if (!object) {
+          return new Response("Image not found", { status: 404 });
+        }
+
+        const headers = new Headers();
+        headers.set(
+          "Content-Type",
+          object.httpMetadata?.contentType || "application/octet-stream"
+        );
+        headers.set(
+          "Cache-Control",
+          "public, max-age=31536000, immutable"
+        );
+
+        return new Response(object.body, { headers });
+      }
 
       /*
        * --------------------------------
@@ -399,6 +548,267 @@ export default {
           JSON.stringify({ success: true, token: sessionToken, user: publicUser }),
           { status: 200, headers }
         );
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/products") {
+        return Response.json({
+          success: true,
+          products: await getProducts(env.patria_db),
+        });
+      }
+
+      if (url.pathname === "/api/cart") {
+        const current = await getCurrentUser(request, env.patria_db);
+        const guestId = request.headers.get("X-Guest-Id");
+        const userId = current ? Number(current.user.id) : null;
+
+        if (request.method === "GET") {
+          return Response.json({
+            success: true,
+            ...cartSummary(
+              await getStoreCart(env.patria_db, userId, guestId)
+            ),
+          });
+        }
+      }
+
+      if (
+        request.method === "POST" &&
+        url.pathname === "/api/cart/add"
+      ) {
+        const body = await readJson<{ productId?: string; qty?: number }>(request);
+        const productId = String(body.productId || "");
+        const qty = Math.max(1, Math.floor(Number(body.qty || 1)));
+        const product = (await getProducts(env.patria_db, productId))[0];
+        const current = await getCurrentUser(request, env.patria_db);
+        const guestId = request.headers.get("X-Guest-Id");
+
+        if (!product) {
+          return Response.json(
+            { success: false, error: "Product not found." },
+            { status: 404 }
+          );
+        }
+
+        if (current) {
+          await env.patria_db
+            .prepare(`
+              INSERT INTO cart_items (user_id, product_id, quantity)
+              VALUES (?, ?, ?)
+              ON CONFLICT(user_id, product_id)
+              DO UPDATE SET
+                quantity = cart_items.quantity + excluded.quantity,
+                updated_at = CURRENT_TIMESTAMP
+            `)
+            .bind(Number(current.user.id), productId, qty)
+            .run();
+        } else if (guestId) {
+          await env.patria_db
+            .prepare(`
+              INSERT INTO guest_cart_items (guest_id, product_id, quantity)
+              VALUES (?, ?, ?)
+              ON CONFLICT(guest_id, product_id)
+              DO UPDATE SET
+                quantity = guest_cart_items.quantity + excluded.quantity,
+                updated_at = CURRENT_TIMESTAMP
+            `)
+            .bind(guestId, productId, qty)
+            .run();
+        } else {
+          return Response.json(
+            { success: false, error: "Guest ID is required." },
+            { status: 400 }
+          );
+        }
+
+        const cart = await getStoreCart(
+          env.patria_db,
+          current ? Number(current.user.id) : null,
+          guestId
+        );
+        return Response.json({ success: true, ...cartSummary(cart) });
+      }
+
+      if (
+        (request.method === "PATCH" || request.method === "DELETE") &&
+        url.pathname === "/api/cart/item"
+      ) {
+        const body = await readJson<{ productId?: string; qty?: number }>(request);
+        const productId = String(body.productId || "");
+        const current = await getCurrentUser(request, env.patria_db);
+        const guestId = request.headers.get("X-Guest-Id");
+        const owner = current ? Number(current.user.id) : guestId;
+
+        if (!owner) {
+          return Response.json(
+            { success: false, error: "Guest ID is required." },
+            { status: 400 }
+          );
+        }
+
+        const table = current ? "cart_items" : "guest_cart_items";
+        const ownerColumn = current ? "user_id" : "guest_id";
+        const quantity = Math.max(0, Math.floor(Number(body.qty || 0)));
+
+        if (request.method === "DELETE" || quantity === 0) {
+          await env.patria_db
+            .prepare(`DELETE FROM ${table} WHERE ${ownerColumn} = ? AND product_id = ?`)
+            .bind(owner, productId)
+            .run();
+        } else {
+          await env.patria_db
+            .prepare(`
+              UPDATE ${table}
+              SET quantity = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE ${ownerColumn} = ? AND product_id = ?
+            `)
+            .bind(quantity, owner, productId)
+            .run();
+        }
+
+        const cart = await getStoreCart(
+          env.patria_db,
+          current ? Number(current.user.id) : null,
+          guestId
+        );
+        return Response.json({ success: true, ...cartSummary(cart) });
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/checkout") {
+        const current = await getCurrentUser(request, env.patria_db);
+        if (!current) {
+          return Response.json(
+            { success: false, error: "Please log in before checkout." },
+            { status: 401 }
+          );
+        }
+
+        const body = await readJson<{
+          fulfillmentDate?: string;
+          couponCode?: string;
+        }>(request);
+        const fulfillmentDate = String(body.fulfillmentDate || "").trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(fulfillmentDate)) {
+          return Response.json(
+            { success: false, error: "Please choose a pickup date." },
+            { status: 400 }
+          );
+        }
+
+        const userId = Number(current.user.id);
+        const cart = await getStoreCart(env.patria_db, userId, null);
+        if (!cart.length) {
+          return Response.json(
+            { success: false, error: "Cart is empty." },
+            { status: 400 }
+          );
+        }
+
+        const leadDays = cart.reduce(
+          (max, item) => Math.max(max, Number(item.day || 5)),
+          0
+        );
+        const minimumDate = new Date();
+        minimumDate.setHours(0, 0, 0, 0);
+        minimumDate.setDate(minimumDate.getDate() + leadDays);
+        const selectedDate = new Date(`${fulfillmentDate}T00:00:00`);
+        if (selectedDate < minimumDate) {
+          return Response.json(
+            {
+              success: false,
+              error: `Pickup date must be on or after ${minimumDate
+                .toISOString()
+                .slice(0, 10)}.`,
+            },
+            { status: 400 }
+          );
+        }
+
+        const subtotal = Number(cartSummary(cart).total.toFixed(2));
+        const discount = 0;
+        const total = subtotal;
+        const orderId = storeToken();
+        const now = new Date().toISOString();
+        const statements = [
+          env.patria_db
+            .prepare(`
+              INSERT INTO orders (
+                id, user_id, subtotal, discount, coupon_code, total,
+                fulfillment_date, lead_days, status, created_at, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'created', ?, ?)
+            `)
+            .bind(
+              orderId,
+              userId,
+              subtotal,
+              discount,
+              String(body.couponCode || "").trim().toUpperCase(),
+              total,
+              fulfillmentDate,
+              leadDays,
+              now,
+              now
+            ),
+          ...cart.map((item) =>
+            env.patria_db
+              .prepare(`
+                INSERT INTO order_items (
+                  order_id, product_id, title, image_url, price_value, quantity
+                ) VALUES (?, ?, ?, ?, ?, ?)
+              `)
+              .bind(
+                orderId,
+                item.id,
+                item.title,
+                item.img,
+                Number(item.priceValue || 0),
+                Number(item.qty || 0)
+              )
+          ),
+          env.patria_db
+            .prepare("DELETE FROM cart_items WHERE user_id = ?")
+            .bind(userId),
+        ];
+        await env.patria_db.batch(statements);
+
+        return Response.json(
+          {
+            success: true,
+            order: {
+              id: orderId,
+              userId,
+              items: cart,
+              subtotal,
+              discount,
+              couponCode: body.couponCode || "",
+              total,
+              fulfillmentDate,
+              leadDays,
+              status: "created",
+              createdAt: now,
+            },
+            cart: cartSummary([]),
+          },
+          { status: 201 }
+        );
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/orders") {
+        const current = await getCurrentUser(request, env.patria_db);
+        if (!current) {
+          return Response.json(
+            { success: false, error: "Please log in first." },
+            { status: 401 }
+          );
+        }
+
+        return Response.json({
+          success: true,
+          orders: await getUserOrders(
+            env.patria_db,
+            Number(current.user.id)
+          ),
+        });
       }
 
       if (request.method === "GET" && url.pathname === "/api/me") {

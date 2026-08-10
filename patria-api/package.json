@@ -6,6 +6,8 @@
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
     "start": "wrangler dev",
+    "seed-products": "node scripts/seed-products.mjs",
+    "upload-images": "node scripts/upload-images.mjs",
     "test": "vitest",
     "cf-typegen": "wrangler types"
   },

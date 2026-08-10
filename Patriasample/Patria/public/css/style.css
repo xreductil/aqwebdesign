@@ -3618,12 +3618,14 @@ footer {
 }
 .account-line-btn {
   margin-top: 12px;
-  background: #06c755;
-  color: #fff;
+  background: #06c755 !important;
+  border-color: #06c755 !important;
+  color: #fff !important;
 }
 .account-line-btn:hover {
-  background: #05a947;
-  color: #fff;
+  background: #05a947 !important;
+  border-color: #05a947 !important;
+  color: #fff !important;
 }
 .account-line-btn i {
   margin-right: 8px;
