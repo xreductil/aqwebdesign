@@ -10,7 +10,9 @@ import {
   login,
   logout,
   register,
+  sendReservation,
   sendContactMessage,
+  subscribeNewsletter,
   removeCartItem,
   updateMemberAddress,
   updateMemberProfile,
@@ -101,7 +103,8 @@ function ProductModal({ product, quantity, setQuantity, onClose, onAdd }) {
 
 function OrderDrawer({ cart, user, coupons, couponCode, setCouponCode, couponMessage, fulfillmentDate, setFulfillmentDate, onApplyCoupon, onRemoveCoupon, onChangeQty, onRemove, onCheckout, onClose, busy, error }) {
   const subtotal = Number(cart.total || 0);
-  const coupon = coupons.find((item) => String(item.code).toUpperCase() === couponCode.toUpperCase());
+  const availableCoupons = coupons.length ? coupons : fallbackCoupons;
+  const coupon = availableCoupons.find((item) => String(item.code).toUpperCase() === couponCode.toUpperCase());
   const discount = coupon && subtotal >= Number(coupon.min || 0)
     ? Math.min(subtotal, coupon.type === "percent" ? subtotal * Number(coupon.value || 0) / 100 : Number(coupon.value || 0))
     : 0;
@@ -158,6 +161,65 @@ function OrderDrawer({ cart, user, coupons, couponCode, setCouponCode, couponMes
       </aside>
     </div>
   );
+}
+
+function GalleryModal({ items, index, setIndex, onClose }) {
+  if (index === null) return null;
+  const item = items[index];
+  return <div id="galPop" className="open" onClick={(event) => event.target === event.currentTarget && onClose()}><div className="gpbox"><button type="button" className="gpclose" onClick={onClose} aria-label="Close gallery"><i className="fas fa-times" /></button><img id="gpImg" src={item.img} alt={item.title} /><div className="gpcap"><h5 id="gpTitle">{item.title}</h5><p id="gpDesc">{item.desc}</p></div><div className="gpnav"><button type="button" onClick={() => setIndex((index - 1 + items.length) % items.length)}><i className="fas fa-chevron-left me-1" />Prev</button><button type="button" onClick={() => setIndex((index + 1) % items.length)}>Next <i className="fas fa-chevron-right ms-1" /></button></div></div></div>;
+}
+
+function ReservationSection({ form, setForm, status, setStatus }) {
+  const [busy, setBusy] = useState(false);
+  async function submit(event) {
+    event.preventDefault();
+    setBusy(true);
+    setStatus("");
+    try {
+      await sendReservation(form);
+      setStatus("Table reserved! We'll confirm via email shortly.");
+      setForm({ name: "", phone: "", email: "", guests: "2 People", date: "", time: "09:00 AM", requests: "" });
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return <section id="reservation"><div className="container"><div className="text-center mb-5"><span className="slbl">Book a Table</span><h2 className="stitle">Make a <span>Reservation</span></h2><div className="sline" /><p className="sdesc mx-auto" style={{ maxWidth: 480 }}>Reserve your table for a memorable dining experience. We recommend booking 24 hours in advance for weekend evenings.</p></div><div className="row g-4 align-items-start"><div className="col-lg-4"><div style={{ background: "var(--dark)", borderRadius: 18, padding: 36 }}><h4 style={{ color: "#fff", fontSize: "1.3rem", marginBottom: 8 }}>Contact Info</h4><p style={{ color: "rgba(255,255,255,.55)", fontSize: ".85rem", marginBottom: 26 }}>We're happy to help you plan the perfect dining experience.</p><div className="d-flex flex-column gap-3">{[["clock", "Opening Hours", "Mon - Sun, 09 AM - 11 PM"], ["phone-alt", "Call for Booking", "+1 (300) 659-4381"], ["users", "Group Dining", "Special menus for 10+ guests"], ["map-marker-alt", "Location", "52 Teka Street, LA"]].map(([icon, title, text]) => <div className="d-flex align-items-center gap-3" key={title}><div className="reservation-info-icon"><i className={`fas fa-${icon}`} /></div><div><strong className="reservation-info-title">{title}</strong><span className="reservation-info-text">{text}</span></div></div>)}</div></div></div><div className="col-lg-8"><form className="reservation-card" onSubmit={submit}><div className="row g-3"><div className="col-sm-6"><label className="flbl">Full Name *</label><input required className="fctrl" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="John Doe" /></div><div className="col-sm-6"><label className="flbl">Phone Number *</label><input required type="tel" className="fctrl" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} placeholder="+1 (800) 000-0000" /></div><div className="col-sm-6"><label className="flbl">Email Address *</label><input required type="email" className="fctrl" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="you@email.com" /></div><div className="col-sm-6"><label className="flbl">Number of Guests *</label><select required className="fctrl" value={form.guests} onChange={(event) => setForm({ ...form, guests: event.target.value })}>{["1 Person", "2 People", "3 - 4 People", "5 - 6 People", "7 -10 People", "10+ People"].map((value) => <option key={value}>{value}</option>)}</select></div><div className="col-sm-6"><label className="flbl">Date *</label><input required type="date" className="fctrl" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} /></div><div className="col-sm-6"><label className="flbl">Time *</label><select required className="fctrl" value={form.time} onChange={(event) => setForm({ ...form, time: event.target.value })}>{["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "06:00 PM", "07:00 PM", "08:00 PM", "09:00 PM", "10:00 PM"].map((value) => <option key={value}>{value}</option>)}</select></div><div className="col-12"><label className="flbl">Special Requests</label><textarea className="fctrl" rows="3" value={form.requests} onChange={(event) => setForm({ ...form, requests: event.target.value })} placeholder="Allergies, dietary needs, special occasions..." /></div><div className="col-12"><button type="submit" className="btn-red w-100 justify-content-center" disabled={busy}><i className={busy ? "fas fa-spinner fa-spin" : "fas fa-calendar-check"} />{busy ? " Booking..." : " Confirm Reservation"}</button></div></div>{status && <p className="sucmsg reservation-status">{status}</p>}</form></div></div></div></section>;
+}
+
+function NewsletterSection({ email, setEmail, status, setStatus }) {
+  const [busy, setBusy] = useState(false);
+  async function submit(event) {
+    event.preventDefault();
+    setBusy(true);
+    setStatus("");
+    try {
+      await subscribeNewsletter(email);
+      setStatus("Subscribed! Check your inbox for Patria updates.");
+      setEmail("");
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return <section id="newsletter"><div className="nlbg" /><div className="container"><div className="nlw text-center"><span className="slbl" style={{ color: "rgba(255,255,255,.7)" }}>Stay Connected</span><h2 className="mb-3" style={{ color: "#fff" }}>Subscribe &amp; Get Exclusive <span style={{ color: "var(--secondary)" }}>Deals</span></h2><p className="mb-4" style={{ color: "rgba(255,255,255,.78)" }}>Get 15% off your first order plus early access to new menu items</p><form className="nl-form-wrap" onSubmit={submit}><input required type="email" className="nlinput" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Enter your email address..." /><button type="submit" className="nlbtn" disabled={busy}><i className="fas fa-paper-plane me-1" />{busy ? "Subscribing..." : "Subscribe"}</button></form>{status && <p className="newsletter-status">{status}</p>}<p style={{ color: "rgba(255,255,255,.45)", fontSize: ".76rem", marginTop: 11 }}><i className="fas fa-lock me-1" />No spam, unsubscribe anytime.</p></div></div></section>;
+}
+
+function DealCountdown() {
+  const [remaining, setRemaining] = useState({ hours: 8, minutes: 45, seconds: 30 });
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setRemaining((current) => {
+        const total = current.hours * 3600 + current.minutes * 60 + current.seconds - 1;
+        const value = total <= 0 ? 8 * 3600 + 45 * 60 + 30 : total;
+        return { hours: Math.floor(value / 3600), minutes: Math.floor((value % 3600) / 60), seconds: value % 60 };
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return <div className="deal-countdown" aria-label="Special offer countdown"><span>Today's offer ends in</span><strong>{String(remaining.hours).padStart(2, "0")}:{String(remaining.minutes).padStart(2, "0")}:{String(remaining.seconds).padStart(2, "0")}</strong></div>;
 }
 
 function MemberDashboard({ user, orders, page, setPage, addressForm, setAddressForm, detailsForm, setDetailsForm, onSaveAddress, onSaveDetails, onLinkLine, onLogout, onClose, notice }) {
@@ -225,12 +287,24 @@ function App() {
   const [registerForm, setRegisterForm] = useState({ name: "", email: "", phone: "", password: "" });
   const [contactForm, setContactForm] = useState({ name: "", email: "", phone: "", subject: "General Inquiry", message: "" });
   const [contactStatus, setContactStatus] = useState("");
+  const [reservationStatus, setReservationStatus] = useState("");
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterStatus, setNewsletterStatus] = useState("");
+  const [galleryIndex, setGalleryIndex] = useState(null);
+  const [reservationForm, setReservationForm] = useState({ name: "", phone: "", email: "", guests: "2 People", date: "", time: "09:00 AM", requests: "" });
   const [accountNotice, setAccountNotice] = useState("");
   const [addressForm, setAddressForm] = useState({ fullName: "", phone: "", address: "", city: "", zip: "" });
   const [detailsForm, setDetailsForm] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [fulfillmentDate, setFulfillmentDate] = useState("");
+  const galleryItems = [
+    { img: "./img/portfolio/1.webp", title: "Gourmet Burgers", desc: "Our award-winning smash burgers, hand-crafted with 100% premium beef, aged cheddar and house-made sauces." },
+    { img: "./img/portfolio/2.webp", title: "Wood-Fired Pizza", desc: "Authentic Neapolitan-style pizzas fired at 900°F in our wood-burning stone oven for the perfect char." },
+    { img: "./img/portfolio/4.webp", title: "Crispy Fried Chicken", desc: "Double-brined, hand-battered chicken fried to golden perfection using our 15-spice secret blend." },
+    { img: "./img/portfolio/5.webp", title: "Sweet Desserts", desc: "Handcrafted desserts—from molten lava cakes to artisan ice cream sundaes and seasonal pastries." },
+    { img: "./img/portfolio/6.webp", title: "Fresh Wraps & Rolls", desc: "Loaded fresh wraps packed with grilled proteins, crunchy vegetables and our house-made sauces." },
+  ];
 
   useEffect(() => {
     Promise.all([getCurrentUser().catch(() => null), getProducts(), getCart(), getCoupons().catch(() => ({ coupons: [] }))])
@@ -391,7 +465,8 @@ function App() {
 
   function handleApplyCoupon() {
     const normalized = couponCode.trim().toUpperCase();
-    const coupon = coupons.find((item) => String(item.code).toUpperCase() === normalized);
+    const availableCoupons = coupons.length ? coupons : fallbackCoupons;
+    const coupon = availableCoupons.find((item) => String(item.code).toUpperCase() === normalized);
     if (!normalized) {
       setCouponMessage("請先輸入優惠碼。");
     } else if (!coupon) {
@@ -503,9 +578,9 @@ function App() {
               {[["Home", "hero"], ["About", "about"], ["Menu", "menu"], ["Chefs", "chefs"], ["Reservation", "reservation"], ["Reviews", "testimonials"], ["Contact", "contact-section"]].map(([label, id]) => <li className="nav-item" key={id}><a className="nav-link" href={`#${id}`}>{label}</a></li>)}
             </ul>
             <div className="nav-actions d-flex align-items-center">
-              <a href="/admin/signin.html" className="admin-dashboard-link" title="管理後台"><i className="fas fa-table-columns" /></a>
-              <button type="button" id="navSearchBtn" onClick={() => setSearchOpen(true)} title="搜尋" aria-label="搜尋"><i className="fas fa-search" /></button>
-              <button type="button" id="accountOpen" className="nav-link" onClick={() => setAccountOpen(true)} title="帳戶" aria-label="帳戶"><i className="fas fa-user" /></button>
+              <a href="/admin/signin.html" id="adminOpen" className="admin-dashboard-link" title="管理後台" aria-label="管理後台" data-tooltip="管理後台"><i className="fas fa-table-columns" /></a>
+              <button type="button" id="navSearchBtn" onClick={() => setSearchOpen(true)} title="搜尋" aria-label="搜尋" data-tooltip="搜尋"><i className="fas fa-search" /></button>
+              <button type="button" id="accountOpen" className="nav-link" onClick={() => setAccountOpen(true)} title="帳戶" aria-label="帳戶" data-tooltip="會員帳戶"><i className="fas fa-user" /></button>
               <button type="button" id="orderOpen" className="nav-link" onClick={() => setCartOpen(true)} title="購物車" aria-label="購物車" data-tooltip="購物車"><i className="fas fa-shopping-cart" /><span className="cart-count">{cart.items.length}</span></button>
             </div>
           </div>
@@ -541,7 +616,7 @@ function App() {
               <div className="hero-mobile-art"><div className="hcircle"><img src={`${imageBase}/banners/home-hero.webp`} alt="Patria Chinese food" /></div></div>
               <h1 className="htitle">Delicious <span className="hl">chinese food</span>for Every Day</h1>
               <p className="hdesc">Experience authentic Chinese flavors prepared by premium ingredients. From savory stir-fried noodles to crispy spring rolls, every dish is made to share and savor.</p>
-              <div className="hero-actions d-flex flex-wrap gap-3 mb-2"><a href="#menu" className="btn-red"><i className="fas fa-utensils" />Explore Menu</a><a href="#category" className="btn-play"><div className="pico"><i className="fas fa-shopping-cart" /></div><span>Order here</span></a></div>
+              <div className="hero-actions d-flex flex-wrap gap-3 mb-2"><a href="#menu" className="btn-red"><i className="fas fa-utensils" />Explore Menu</a><a href="#category" className="btn-play"><div className="pico"><i className="fas fa-shopping-cart" /></div><span>Order here</span></a></div><DealCountdown />
               <div className="hstats d-flex gap-3 flex-wrap mt-4"><div className="hstat"><span className="snum">342<em>+</em></span><small>Happy Customers</small></div><div className="sdiv" /><div className="hstat"><span className="snum">150<em>+</em></span><small>Menu Items</small></div><div className="sdiv" /><div className="hstat"><span className="snum">10<em>+</em></span><small>Expert Chefs</small></div><div className="sdiv" /><div className="hstat"><span className="snum">18<em>yr</em></span><small>Experience</small></div></div>
             </div>
             <div className="col-lg-6 hero-desktop-art"><div className="hero-art-wrap"><div className="hcircle"><img src={`${imageBase}/banners/home-hero.webp`} alt="Patria Chinese food" /></div><div className="fcard fc1"><div className="fcoi r"><i className="fas fa-fire" /></div><div><span className="fcnum">Hot Deal</span><span className="fcsm">30% off today</span></div></div><div className="fcard fc2"><div className="fcoi y"><i className="fas fa-star" /></div><div><span className="fcnum">4.9/5</span><span className="fcsm">2k+ reviews</span></div></div><div className="fcard fc3"><div className="fcoi g"><i className="fas fa-clock" /></div><div><span className="fcnum">20 min</span><span className="fcsm">Fast delivery</span></div></div></div></div>
@@ -579,7 +654,7 @@ function App() {
 
         <section id="about"><div className="container"><div className="row align-items-center g-5"><div className="col-lg-5"><div className="astack"><div className="aexp"><span className="anum">12+</span><small>Years of<br />Excellence</small></div><div className="amain"><img src="./img/about1.jpg" alt="Restaurant" /></div><div className="asm"><img src="./img/about2.jpg" alt="" /></div></div></div><div className="col-lg-7"><span className="slbl">Our Story</span><h2 className="stitle text-start">We Invite You to Visit<br />Our <span>Food Restaurant</span></h2><div className="sline lft" /><p className="sdesc mb-4">Founded in 2012, Patria began as a small corner joint with a big dream - to serve food that brings people together. Today we serve thousands of happy customers every week with the same passion.</p><a href="#menu" className="btn-red"><i className="fas fa-book-open" /> View Full Menu</a></div></div></div></section>
 
-        <section id="gallery"><div className="container"><div className="text-center mb-5"><span className="slbl">Food Showcase</span><h2 className="stitle">Let's See Our <span>Chinese Food</span></h2><div className="sline" /></div><div className="ggrid">{[1, 2, 4, 5, 6].map((number) => <div className="gitem" key={number}><img src={`./img/portfolio/${number}.webp`} alt="Patria dish" /><div className="gover"><span><i className="fas fa-expand-alt" /> Patria Food</span></div></div>)}</div></div></section>
+        <section id="gallery"><div className="container"><div className="text-center mb-5"><span className="slbl">Food Showcase</span><h2 className="stitle">Let's See Our <span>Chinese Food</span></h2><div className="sline" /></div><div className="ggrid">{galleryItems.map((item, index) => <div className="gitem" key={item.img} onClick={() => setGalleryIndex(index)} role="button" tabIndex="0" onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setGalleryIndex(index); } }}><img src={item.img} alt={item.title} /><div className="gover"><span><i className="fas fa-expand-alt" /> {item.title}</span></div></div>)}</div></div></section>
 
         <section id="history"><div className="container"><div className="text-center mb-5"><span className="slbl">Our Journey</span><h2 className="stitle">A History of <span>Restaurant</span></h2><div className="sline" /><p className="sdesc mx-auto" style={{ maxWidth: 480 }}>From humble beginnings to a beloved restaurant - every chapter written with passion.</p></div><div className="timeline">{[["2012", "Patria opens its first diner on Teka Street."], ["2015", "We introduced our signature tasting menu."], ["2019", "Our modern Chinese food line launched."], ["2026", "Patria continues to grow with online ordering."]].map(([year, text]) => <div className="tli" key={year}><div className="tl-left"><div className="tlyear">{year}</div><p>{text}</p></div><div className="tl-center"><div className="tldot" /></div><div className="tl-right"><div className="tlyear">{year}</div><p>{text}</p></div></div>)}</div></div></section>
 
@@ -589,9 +664,9 @@ function App() {
 
         <section id="testimonials"><div className="container"><div className="text-center mb-5"><span className="slbl">What People Say</span><h2 className="stitle">Our Customers <span>Feedback</span></h2><div className="sline" /></div><div className="row g-4">{[[1, "Jack Pichai", "Honestly the best Chinese food I've ever had."], [2, "Jenny Marley", "The food arrived hot and fresh in 22 minutes."], [3, "Tim Bozone", "Great ambiance, friendly staff and delicious food."], [4, "Lily Blate", "Fresh, delicious, on time and well presented."]].map(([number, name, quote]) => <div className="col-md-6 col-lg-3" key={name}><div className="tescard"><div className="tesq">"</div><div className="tess">★★★★★</div><p className="testxt">{quote}</p><div className="tesauth"><img src={`./img/testimonial/${number}.webp`} alt={name} /><div><div className="tesnm">{name}</div><div className="tesrl">Customer</div></div></div></div></div>)}</div></div></section>
 
-        <section id="reservation"><div className="container"><div className="text-center mb-5"><span className="slbl">Book a Table</span><h2 className="stitle">Make a <span>Reservation</span></h2><div className="sline" /></div><div className="reservation-card"><div className="row g-3"><div className="col-sm-6"><label className="flbl">Full Name *</label><input className="fctrl" placeholder="John Doe" /></div><div className="col-sm-6"><label className="flbl">Phone Number *</label><input className="fctrl" placeholder="+1 (800) 000-0000" /></div><div className="col-sm-6"><label className="flbl">Date *</label><input className="fctrl" type="date" /></div><div className="col-sm-6"><label className="flbl">Guests *</label><select className="fctrl"><option>2 People</option><option>3 - 4 People</option><option>5+ People</option></select></div><div className="col-12"><label className="flbl">Special Requests</label><textarea className="fctrl" rows="3" placeholder="Allergies, dietary needs, special occasions..." /></div><div className="col-12"><button type="button" className="btn-red w-100 justify-content-center"> <i className="fas fa-calendar-check" /> Confirm Reservation</button></div></div></div></div></section>
+        <ReservationSection form={reservationForm} setForm={setReservationForm} status={reservationStatus} setStatus={setReservationStatus} />
 
-        <section id="newsletter"><div className="container"><div className="nlw text-center"><span className="slbl">Stay Connected</span><h2>Subscribe &amp; Get Exclusive <span>Deals</span></h2><p>Get 15% off your first order plus early access to new menu items</p><div className="nl-form-wrap"><input className="nlinput" type="email" placeholder="Enter your email address..." /><button type="button" className="nlbtn"><i className="fas fa-paper-plane me-1" /> Subscribe</button></div></div></div></section>
+        <NewsletterSection email={newsletterEmail} setEmail={setNewsletterEmail} status={newsletterStatus} setStatus={setNewsletterStatus} />
 
         <section id="account" className="account-inline"><div className="container"><div className="text-center mb-4"><span className="slbl">Your Patria</span><h2 className="stitle">My <span>Account</span></h2><div className="sline" /></div></div></section>
 
@@ -604,6 +679,7 @@ function App() {
       {cartOpen && <div className="order-overlay open" onClick={(event) => event.target === event.currentTarget && setCartOpen(false)}><aside className="order-drawer"><div className="order-head"><h2>Your Order</h2><button type="button" className="order-close" onClick={() => setCartOpen(false)}><i className="fas fa-times" /></button></div><div className="order-body">{cart.items.length ? <>{cart.items.map((item) => <div className="account-cart-row" key={item.id}><img src={item.img} alt="" /><span>{item.title} × {item.qty}</span></div>)}<strong>Total: ${Number(cart.total).toFixed(2)}</strong><input type="date" value={fulfillmentDate} onChange={(event) => setFulfillmentDate(event.target.value)} /><button type="button" className="account-btn filled" disabled={!user} onClick={handleCheckout}>{user ? "Checkout" : "Please log in"}</button></> : <p className="order-empty">No products in the cart.</p>}</div></aside></div>}
       {cartOpen && <OrderDrawer cart={cart} user={user} coupons={coupons} couponCode={couponCode} setCouponCode={setCouponCode} couponMessage={couponMessage} fulfillmentDate={fulfillmentDate} setFulfillmentDate={setFulfillmentDate} onApplyCoupon={handleApplyCoupon} onRemoveCoupon={() => { setCouponCode(""); setCouponMessage("優惠碼已移除。"); }} onChangeQty={handleCartQuantity} onRemove={handleRemoveCartItem} onCheckout={handleCheckout} onClose={() => setCartOpen(false)} busy={checkoutBusy} error={error} />}
       {selectedProduct && <ProductModal product={selectedProduct} quantity={productQuantity} setQuantity={setProductQuantity} onClose={() => { setSelectedProduct(null); setProductQuantity(1); }} onAdd={handleAdd} />}
+      <GalleryModal items={galleryItems} index={galleryIndex} setIndex={setGalleryIndex} onClose={() => setGalleryIndex(null)} />
     </>
   );
 }

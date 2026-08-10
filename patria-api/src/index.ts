@@ -668,6 +668,50 @@ export default {
         return Response.json({ success: true, message: "Message sent successfully." }, { status: 201 });
       }
 
+      if (request.method === "POST" && url.pathname === "/api/reservations") {
+        const body = await readJson<{
+          name?: string;
+          phone?: string;
+          email?: string;
+          guests?: string;
+          date?: string;
+          time?: string;
+          requests?: string;
+        }>(request);
+        const name = String(body.name || "").trim();
+        const phone = String(body.phone || "").trim();
+        const email = String(body.email || "").trim().toLowerCase();
+        const guests = String(body.guests || "").trim();
+        const date = String(body.date || "").trim();
+        const time = String(body.time || "").trim();
+        if (!name || !phone || !email || !guests || !date || !time) {
+          return Response.json({ success: false, error: "Name, phone, email, guests, date, and time are required." }, { status: 400 });
+        }
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
+          return Response.json({ success: false, error: "Please enter a valid email address." }, { status: 400 });
+        }
+        const current = await getCurrentUser(request, env.patria_db);
+        await env.patria_db.prepare(`
+          INSERT INTO reservations (user_id, name, phone, email, guests, date, time, requests)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(current ? Number(current.user.id) : null, name, phone, email, guests, date, time, String(body.requests || "").trim()).run();
+        return Response.json({ success: true, message: "Reservation received successfully." }, { status: 201 });
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/newsletter") {
+        const body = await readJson<{ email?: string }>(request);
+        const email = String(body.email || "").trim().toLowerCase();
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
+          return Response.json({ success: false, error: "Please enter a valid email address." }, { status: 400 });
+        }
+        await env.patria_db.prepare(`
+          INSERT INTO newsletter_subscribers (email)
+          VALUES (?)
+          ON CONFLICT(email) DO UPDATE SET status = 'active'
+        `).bind(email).run();
+        return Response.json({ success: true, message: "Subscribed successfully." }, { status: 201 });
+      }
+
       if (url.pathname.startsWith("/api/admin/")) {
         const admin = await getAdminUser(request, env);
         if (!admin) {
@@ -712,7 +756,12 @@ export default {
         }
 
         if (request.method === "GET" && url.pathname === "/api/admin/engagement") {
-          return Response.json({ success: true, reservations: [], messages: [], subscribers: [], searches: [] });
+          const [reservations, messages, subscribers] = await Promise.all([
+            env.patria_db.prepare("SELECT id, name, phone, email, guests, date, time, requests, status, created_at AS createdAt FROM reservations ORDER BY created_at DESC").all(),
+            env.patria_db.prepare("SELECT id, name, email, phone, subject, message, created_at AS createdAt FROM contact_messages ORDER BY created_at DESC").all(),
+            env.patria_db.prepare("SELECT id, email, status, created_at AS createdAt FROM newsletter_subscribers ORDER BY created_at DESC").all(),
+          ]);
+          return Response.json({ success: true, reservations: reservations.results, messages: messages.results, subscribers: subscribers.results, searches: [] });
         }
 
         if (request.method === "GET" && url.pathname === "/api/admin/summary") {

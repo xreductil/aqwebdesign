@@ -65,6 +65,20 @@ export function sendContactMessage(payload) {
   });
 }
 
+export function sendReservation(payload) {
+  return apiRequest("/api/reservations", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function subscribeNewsletter(email) {
+  return apiRequest("/api/newsletter", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
 export function getProducts() {
   return apiRequest("/api/products");
 }

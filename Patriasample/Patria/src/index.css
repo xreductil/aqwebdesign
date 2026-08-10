@@ -48,6 +48,60 @@
   display: none !important;
 }
 
+.reservation-info-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 11px;
+  background: rgb(232 40 26 / 20%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.reservation-info-title,
+.reservation-info-text {
+  display: block;
+}
+
+.reservation-info-title {
+  color: #ccc;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.reservation-info-text {
+  color: #fff;
+  font-size: 0.87rem;
+}
+
+.reservation-status,
+.newsletter-status {
+  margin-top: 16px;
+}
+
+.deal-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  color: var(--dark);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.deal-countdown strong {
+  padding: 7px 11px;
+  border-radius: 8px;
+  background: var(--dark);
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+
 #orderOpen,
 #accountOv .account-side button,
 #accountOv .account-site-links a,
