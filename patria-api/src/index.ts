@@ -5,6 +5,7 @@ interface Env {
   LINE_CHANNEL_ID: string;
   LINE_CHANNEL_SECRET: string;
   LINE_CALLBACK_URL: string;
+  ADMIN_EMAILS?: string;
 
   LOGIN_SUCCESS_URL?: string;
 }
@@ -236,6 +237,77 @@ function publicProduct(row: ProductRow): Record<string, unknown> {
     quantity: Number(row.quantity || 0),
     day: String(row.lead_days ?? 5),
   };
+}
+
+function isAdminEmail(email: unknown, env: Env): boolean {
+  const allowed = String(env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+  return Boolean(email && allowed.includes(String(email).toLowerCase()));
+}
+
+async function getAdminUser(
+  request: Request,
+  env: Env
+): Promise<{ sessionId: number; user: Record<string, unknown> } | null> {
+  const current = await getCurrentUser(request, env.patria_db);
+  return current && isAdminEmail(current.user.email, env) ? current : null;
+}
+
+function productIdFromTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || `product-${randomString(6)}`;
+}
+
+async function getAdminOrders(
+  db: D1Database
+): Promise<Record<string, unknown>[]> {
+  const result = await db
+    .prepare(`
+      SELECT orders.*, users.display_name, users.email, users.avatar_url
+      FROM orders
+      LEFT JOIN users ON users.id = orders.user_id
+      ORDER BY orders.created_at DESC
+    `)
+    .all<Record<string, unknown>>();
+
+  return Promise.all(result.results.map(async (order) => {
+    const items = await db
+      .prepare(`
+        SELECT product_id AS id, title, image_url AS img,
+               price_value AS priceValue, quantity AS qty
+        FROM order_items
+        WHERE order_id = ?
+        ORDER BY id ASC
+      `)
+      .bind(order.id)
+      .all<Record<string, unknown>>();
+
+    return {
+      id: order.id,
+      userId: order.user_id,
+      customer: {
+        name: order.display_name || "Member",
+        email: order.email || "",
+        avatar: order.avatar_url || "",
+      },
+      items: items.results,
+      subtotal: Number(order.subtotal || 0),
+      discount: Number(order.discount || 0),
+      couponCode: order.coupon_code || "",
+      total: Number(order.total || 0),
+      fulfillmentDate: order.fulfillment_date,
+      leadDays: Number(order.lead_days || 0),
+      status: order.status,
+      createdAt: order.created_at,
+      updatedAt: order.updated_at,
+    };
+  }));
 }
 
 async function getProducts(
@@ -548,6 +620,147 @@ export default {
           JSON.stringify({ success: true, token: sessionToken, user: publicUser }),
           { status: 200, headers }
         );
+      }
+
+      if (url.pathname.startsWith("/api/admin/")) {
+        const admin = await getAdminUser(request, env);
+        if (!admin) {
+          return Response.json(
+            { success: false, error: "Administrator access required." },
+            { status: 403 }
+          );
+        }
+
+        if (request.method === "GET" && url.pathname === "/api/admin/orders") {
+          return Response.json({ success: true, orders: await getAdminOrders(env.patria_db) });
+        }
+
+        if (request.method === "PATCH" && url.pathname === "/api/admin/orders/status") {
+          const body = await readJson<{ orderId?: string; status?: string }>(request);
+          const status = String(body.status || "").trim().toLowerCase();
+          const allowedStatuses = new Set(["created", "completed", "picked_up", "cancelled"]);
+          if (!body.orderId || !allowedStatuses.has(status)) {
+            return Response.json({ success: false, error: "Invalid order status." }, { status: 400 });
+          }
+          await env.patria_db
+            .prepare("UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+            .bind(status, body.orderId)
+            .run();
+          const orders = await getAdminOrders(env.patria_db);
+          return Response.json({ success: true, order: orders.find((order) => order.id === body.orderId) });
+        }
+
+        if (request.method === "GET" && url.pathname === "/api/admin/customers") {
+          const customers = await env.patria_db
+            .prepare(`
+              SELECT users.id, users.display_name AS name, users.email,
+                     users.avatar_url AS avatar, users.created_at AS createdAt,
+                     COUNT(orders.id) AS orderCount
+              FROM users
+              LEFT JOIN orders ON orders.user_id = users.id
+              GROUP BY users.id
+              ORDER BY users.created_at DESC
+            `)
+            .all<Record<string, unknown>>();
+          return Response.json({ success: true, customers: customers.results });
+        }
+
+        if (request.method === "GET" && url.pathname === "/api/admin/engagement") {
+          return Response.json({ success: true, reservations: [], messages: [], subscribers: [], searches: [] });
+        }
+
+        if (request.method === "GET" && url.pathname === "/api/admin/summary") {
+          const orders = await getAdminOrders(env.patria_db);
+          const products = await getProducts(env.patria_db);
+          const users = await env.patria_db.prepare("SELECT COUNT(*) AS count FROM users").first<{ count: number }>();
+          const completed = orders.filter((order) => ["completed", "picked_up"].includes(String(order.status)));
+          const itemCount = orders.reduce(
+            (sum, order) => sum + (order.items as Record<string, unknown>[]).reduce(
+              (itemSum, item) => itemSum + Number(item.qty || 0), 0
+            ),
+            0
+          );
+          const totalSales = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+          return Response.json({
+            success: true,
+            summary: {
+              totalSales,
+              completedSales: completed.reduce((sum, order) => sum + Number(order.total || 0), 0),
+              pendingSales: orders.filter((order) => !["completed", "picked_up", "cancelled"].includes(String(order.status))).reduce((sum, order) => sum + Number(order.total || 0), 0),
+              itemCount,
+              orderCount: orders.length,
+              completedOrderCount: completed.length,
+              customerCount: Number(users?.count || 0),
+              productCount: products.length,
+            },
+            notifications: [],
+          });
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/admin/products") {
+          const body = await readJson<Record<string, unknown>>(request);
+          const title = String(body.title || "").trim();
+          if (!title) return Response.json({ success: false, error: "Product title is required." }, { status: 400 });
+          const id = String(body.id || productIdFromTitle(title));
+          const priceValue = Number(body.priceValue || 0);
+          await env.patria_db.prepare(`
+            INSERT INTO products (id, title, category, price_value, price, old_price, image_url, description, quantity, lead_days)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            id, title, String(body.cat || "MENU"), priceValue,
+            String(body.price || `$${priceValue.toFixed(2)}`), String(body.old || ""),
+            String(body.img || ""), String(body.desc || ""),
+            Math.max(0, Math.floor(Number(body.quantity || 0))), Math.max(0, Math.floor(Number(body.day || 5)))
+          ).run();
+          const product = (await getProducts(env.patria_db, id))[0];
+          return Response.json({ success: true, product }, { status: 201 });
+        }
+
+        if (request.method === "PATCH" && url.pathname === "/api/admin/products") {
+          const body = await readJson<Record<string, unknown>>(request);
+          const id = String(body.id || "");
+          if (!id) return Response.json({ success: false, error: "Product id is required." }, { status: 400 });
+          await env.patria_db.prepare(`
+            UPDATE products SET title = ?, category = ?, price_value = ?, price = ?,
+              image_url = ?, description = ?, quantity = ?, lead_days = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).bind(
+            String(body.title || ""), String(body.cat || "MENU"), Number(body.priceValue || 0),
+            String(body.price || `$${Number(body.priceValue || 0).toFixed(2)}`), String(body.img || ""),
+            String(body.desc || ""), Math.max(0, Math.floor(Number(body.quantity || 0))),
+            Math.max(0, Math.floor(Number(body.day || 5))), id
+          ).run();
+          const product = (await getProducts(env.patria_db, id))[0];
+          return Response.json({ success: true, product });
+        }
+
+        if (request.method === "DELETE" && url.pathname === "/api/admin/products") {
+          const body = await readJson<{ id?: string }>(request);
+          if (!body.id) return Response.json({ success: false, error: "Product id is required." }, { status: 400 });
+          await env.patria_db.prepare("UPDATE products SET enabled = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(body.id).run();
+          return Response.json({ success: true });
+        }
+
+        if (url.pathname === "/api/admin/coupons") {
+          if (request.method === "GET") {
+            const coupons = await env.patria_db.prepare("SELECT code, label, type, value, min_total AS min, enabled, updated_at AS updatedAt FROM coupons ORDER BY created_at DESC").all<Record<string, unknown>>();
+            return Response.json({ success: true, coupons: coupons.results.map((coupon) => ({ ...coupon, enabled: Boolean(coupon.enabled) })) });
+          }
+          const body = await readJson<Record<string, unknown>>(request);
+          const code = String(body.code || "").trim().toUpperCase();
+          if (!code) return Response.json({ success: false, error: "Coupon code is required." }, { status: 400 });
+          if (request.method === "POST") {
+            await env.patria_db.prepare("INSERT INTO coupons (code, label, type, value, min_total, enabled) VALUES (?, ?, ?, ?, ?, ?)").bind(code, String(body.label || ""), body.type === "fixed" ? "fixed" : "percent", Number(body.value || 0), Number(body.min || 0), body.enabled === false ? 0 : 1).run();
+          } else if (request.method === "PATCH") {
+            await env.patria_db.prepare("UPDATE coupons SET label = COALESCE(?, label), type = COALESCE(?, type), value = COALESCE(?, value), min_total = COALESCE(?, min_total), enabled = COALESCE(?, enabled), updated_at = CURRENT_TIMESTAMP WHERE code = ?").bind(body.label ?? null, body.type ?? null, body.value ?? null, body.min ?? null, typeof body.enabled === "boolean" ? (body.enabled ? 1 : 0) : null, code).run();
+          } else if (request.method === "DELETE") {
+            await env.patria_db.prepare("DELETE FROM coupons WHERE code = ?").bind(code).run();
+          }
+          const coupons = await env.patria_db.prepare("SELECT code, label, type, value, min_total AS min, enabled, updated_at AS updatedAt FROM coupons ORDER BY created_at DESC").all<Record<string, unknown>>();
+          return Response.json({ success: true, coupons: coupons.results.map((coupon) => ({ ...coupon, enabled: Boolean(coupon.enabled) })) });
+        }
+
+        return Response.json({ success: false, error: "Admin endpoint not found." }, { status: 404 });
       }
 
       if (request.method === "GET" && url.pathname === "/api/products") {

@@ -181,75 +181,19 @@ function sampleBody(options) {
 }
 
 async function api(path, options = {}) {
-  const method = String(options.method || 'GET').toUpperCase();
-  const body = sampleBody(options);
-
-  if (method === 'GET' && path === '/api/products') return { products: sampleProducts() };
-  if (method === 'GET' && path === '/api/admin/orders') return { orders: sampleOrders() };
-  if (method === 'GET' && path === '/api/admin/customers') return { customers: sampleCustomers() };
-  if (method === 'GET' && path === '/api/admin/engagement') return sampleEngagement();
-  if (method === 'GET' && path === '/api/admin/coupons') return { coupons: sampleCoupons() };
-  if (method === 'GET' && path === '/api/admin/summary') return { summary: sampleSummary(), notifications: sampleNotifications() };
-
-  if (method === 'PATCH' && path === '/api/admin/orders/status') {
-    const orders = sampleOrders();
-    const updated = orders.map(order => order.id === body.orderId ? { ...order, status: body.status, updatedAt: new Date().toISOString() } : order);
-    saveSampleOrders(updated);
-    return { order: updated.find(order => order.id === body.orderId) };
-  }
-
-  if (method === 'POST' && path === '/api/admin/products') {
-    const products = sampleProducts();
-    const product = normalizeProduct({
-      ...body,
-      id: body.id || sampleSlug(body.title) + '-' + Date.now().toString(36),
-      price: body.price || money(body.priceValue),
-      source: 'admin'
-    }, products.length);
-    const saved = saveSampleProducts([...products, product]);
-    return { product: saved[saved.length - 1], products: saved };
-  }
-
-  if (method === 'PATCH' && path === '/api/admin/products') {
-    const products = sampleProducts();
-    const updated = products.map(product => product.id === body.id ? normalizeProduct({ ...product, ...body, price: body.price || money(body.priceValue) }) : product);
-    saveSampleProducts(updated);
-    return { product: updated.find(product => product.id === body.id), products: updated };
-  }
-
-  if (method === 'DELETE' && path === '/api/admin/products') {
-    const products = sampleProducts().filter(product => product.id !== body.id);
-    saveSampleProducts(products);
-    return { ok: true, products };
-  }
-
-  if (method === 'POST' && path === '/api/admin/coupons') {
-    const coupons = sampleCoupons();
-    const coupon = normalizeCoupon({ ...body, updatedAt: new Date().toISOString() });
-    if (!coupon.code) throw new Error('Please enter a coupon code.');
-    if (coupons.some(item => item.code === coupon.code)) throw new Error('This coupon code already exists.');
-    const saved = saveSampleCoupons([...coupons, coupon]);
-    return { coupon, coupons: saved };
-  }
-
-  if (method === 'PATCH' && path === '/api/admin/coupons') {
-    const coupons = sampleCoupons();
-    const code = String(body.code || '').trim().toUpperCase();
-    const exists = coupons.some(coupon => coupon.code === code);
-    if (!exists) throw new Error('Coupon not found.');
-    const updated = coupons.map(coupon => coupon.code === code ? normalizeCoupon({ ...coupon, ...body, code, updatedAt: new Date().toISOString() }) : coupon);
-    saveSampleCoupons(updated);
-    return { coupon: updated.find(coupon => coupon.code === code), coupons: updated };
-  }
-
-  if (method === 'DELETE' && path === '/api/admin/coupons') {
-    const code = String(body.code || '').trim().toUpperCase();
-    const coupons = sampleCoupons().filter(coupon => coupon.code !== code);
-    saveSampleCoupons(coupons);
-    return { ok: true, coupons };
-  }
-
-  return { ok: true };
+  const apiBase = String(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+  const response = await fetch(`${apiBase}${path}`, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.headers || {})
+    }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'API request failed.');
+  return data;
 }
 
 function money(value) {
