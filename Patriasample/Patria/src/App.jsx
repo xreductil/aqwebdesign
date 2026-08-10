@@ -27,6 +27,12 @@ const categories = [
   { name: "SOUP", image: "./img/category/6.webp" },
 ];
 
+const fallbackCoupons = [
+  { code: "WELCOME15", label: "Welcome 15% off", type: "percent", value: 15, min: 0 },
+  { code: "PATRIA10", label: "Patria 10% off", type: "percent", value: 10, min: 0 },
+  { code: "FAMILY5", label: "$5 family order discount", type: "fixed", value: 5, min: 40 },
+];
+
 function ProductCard({ product, badge = "Featured", onOpen }) {
   return (
     <div
@@ -232,7 +238,7 @@ function App() {
         setUser(me?.success ? me.user : null);
         setProducts(productData.products || []);
         setCart({ items: cartData.items || [], total: cartData.total || 0 });
-        setCoupons(couponData.coupons || []);
+        setCoupons(couponData.coupons?.length ? couponData.coupons : fallbackCoupons);
       })
       .catch((requestError) => setError(requestError.message))
       .finally(() => setLoading(false));
@@ -551,7 +557,11 @@ function App() {
           </div>
           <div className="text-center mb-5" data-aos="fade-up"><span className="slbl">What We Offer</span><h2 className="stitle">Explore <span>Our Menu</span></h2><div className="sline" /><p className="sdesc mx-auto" style={{ maxWidth: 480 }}>From sizzling burgers to exotic world cuisines - find your favourite in our menu</p></div>
           <div className="row g-3 justify-content-center">
-            {categories.map((item, index) => <div className="col-6 col-sm-4 col-md-3 col-lg-2" data-aos="zoom-in" data-aos-delay={index * 70} key={item.name}><button type="button" className={`catcard ${category === item.name ? "active" : ""}`} data-filter={item.name.toLowerCase()} onClick={() => { setCategory(item.name); document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" }); }}><img className="catimg" src={item.image} alt="" /><div className="catnm">{item.name}</div><div className="catct">{item.name === "ALL" ? products.length : products.filter((product) => String(product.cat).toUpperCase() === item.name).length} items</div></button></div>)}
+            {categories.map((item, index) => {
+              const itemCount = item.name === "ALL" ? products.length : products.filter((product) => String(product.cat).toUpperCase() === item.name).length;
+              const selectCategory = () => { setCategory(item.name); document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" }); };
+              return <div className="col-6 col-sm-4 col-md-3 col-lg-2" data-aos="zoom-in" data-aos-delay={index * 70} key={item.name}><div className={`catcard ${category === item.name ? "active" : ""}`} data-filter={item.name.toLowerCase()} role="button" tabIndex="0" onClick={selectCategory} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selectCategory(); } }}><img className="catimg" src={item.image} alt="" /><div className="catnm">{item.name}</div><div className="catct">{itemCount} items</div></div></div>;
+            })}
           </div>
           <div className="local-favourites"><h2 className="stitle">Local <span>Favourites</span></h2></div>
           <div className="row g-4 local-favourites-grid">
