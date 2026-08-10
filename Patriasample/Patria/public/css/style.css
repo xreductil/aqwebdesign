@@ -3849,6 +3849,9 @@ footer {
   align-items: center;
   justify-content: center;
   padding: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 #galPop.open {
   display: flex;
@@ -3859,6 +3862,7 @@ footer {
   width: 100%;
   position: relative;
   text-align: center;
+  margin: auto;
 }
 .gpbox img {
   width: 100%;
