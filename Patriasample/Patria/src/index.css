@@ -1,17 +1,3 @@
-:root {
-  font-family: Arial, sans-serif;
-  color: #222;
-  background: #fff;
-}
-
-body {
-  margin: 0;
-}
-
-a {
-  color: #06c755;
-}
-
 .product-card__image {
   display: block;
   width: 100%;
