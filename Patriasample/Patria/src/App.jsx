@@ -10,6 +10,8 @@ import {
   logout,
   register,
   sendContactMessage,
+  updateMemberAddress,
+  updateMemberProfile,
 } from "./api/client.js";
 
 const imageBase = "https://www.aq-webdesign.com/images";
@@ -73,6 +75,9 @@ function App() {
   const [registerForm, setRegisterForm] = useState({ name: "", email: "", phone: "", password: "" });
   const [contactForm, setContactForm] = useState({ name: "", email: "", phone: "", subject: "General Inquiry", message: "" });
   const [contactStatus, setContactStatus] = useState("");
+  const [accountNotice, setAccountNotice] = useState("");
+  const [addressForm, setAddressForm] = useState({ fullName: "", phone: "", address: "", city: "", zip: "" });
+  const [detailsForm, setDetailsForm] = useState({ name: "", email: "", phone: "", password: "" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [fulfillmentDate, setFulfillmentDate] = useState("");
@@ -91,6 +96,8 @@ function App() {
   useEffect(() => {
     if (!user) return;
     getOrders().then((data) => setOrders(data.orders || [])).catch(() => setOrders([]));
+    setAddressForm({ fullName: user.address?.fullName || user.name || "", phone: user.address?.phone || user.phone || "", address: user.address?.address || "", city: user.address?.city || "", zip: user.address?.zip || "" });
+    setDetailsForm({ name: user.name || "", email: user.email || "", phone: user.phone || "", password: "" });
   }, [user]);
 
   useEffect(() => {
@@ -123,6 +130,91 @@ function App() {
     button.addEventListener("click", submitContact);
     return () => button.removeEventListener("click", submitContact);
   }, [loading]);
+
+  useEffect(() => {
+    if (!accountOpen || !user || !["addresses", "details"].includes(accountPage)) return undefined;
+
+    const panel = document.querySelector("#accountOv .account-form-section");
+    const saveButton = panel?.querySelector(".account-save-btn");
+    if (!panel || !saveButton) return undefined;
+
+    const addField = (labelText, type, placeholder, marker) => {
+      if (panel.querySelector(`[data-profile-field="${marker}"]`)) return;
+      const label = document.createElement("label");
+      label.dataset.profileField = marker;
+      label.textContent = labelText;
+      const input = document.createElement("input");
+      input.type = type;
+      input.placeholder = placeholder;
+      input.dataset.profileField = marker;
+      label.appendChild(input);
+      panel.querySelector(".account-form-grid")?.appendChild(label);
+    };
+
+    if (accountPage === "addresses") {
+      addField("City", "text", "Los Angeles", "city");
+      addField("ZIP Code", "text", "90001", "zip");
+    } else {
+      addField("New Password", "password", "Leave blank to keep current password", "password");
+      addField("Confirm Password", "password", "Confirm new password", "confirmPassword");
+    }
+
+    const save = async () => {
+      const inputs = [...panel.querySelectorAll("input")];
+      const values = Object.fromEntries(inputs.map((input) => [input.dataset.profileField || input.closest("label")?.textContent?.trim(), input.value.trim()]));
+      setAccountNotice("");
+      try {
+        if (accountPage === "addresses") {
+          const data = await updateMemberAddress({ fullName: inputs[0]?.value, phone: inputs[1]?.value, address: inputs[2]?.value, city: values.city || "", zip: values.zip || "" });
+          setUser(data.user);
+          setAccountNotice("Address saved.");
+        } else {
+          if (values.password && values.password !== values.confirmPassword) throw new Error("Passwords do not match.");
+          const data = await updateMemberProfile({ name: inputs[0]?.value, email: inputs[1]?.value, phone: inputs[2]?.value, password: values.password || "" });
+          setUser(data.user);
+          setAccountNotice("Account details saved.");
+        }
+      } catch (requestError) {
+        setAccountNotice(requestError.message);
+      }
+    };
+
+    saveButton.addEventListener("click", save);
+    return () => saveButton.removeEventListener("click", save);
+  }, [accountOpen, accountPage, user]);
+
+  useEffect(() => {
+    if (!accountOpen) return undefined;
+
+    const passwordInputs = [...document.querySelectorAll("#accountOv input[type='password']")];
+    const cleanups = [];
+    passwordInputs.forEach((input) => {
+      if (input.dataset.passwordToggle === "true") return;
+      input.dataset.passwordToggle = "true";
+      const wrapper = document.createElement("div");
+      wrapper.className = "account-password";
+      input.parentNode.insertBefore(wrapper, input);
+      wrapper.appendChild(input);
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "account-password-toggle";
+      toggle.title = "Show password";
+      toggle.setAttribute("aria-label", "Show password");
+      toggle.innerHTML = '<i class="fas fa-eye"></i>';
+      wrapper.appendChild(toggle);
+      const onToggle = () => {
+        const visible = input.type === "text";
+        input.type = visible ? "password" : "text";
+        toggle.title = visible ? "Show password" : "Hide password";
+        toggle.setAttribute("aria-label", toggle.title);
+        toggle.innerHTML = `<i class="fas fa-eye${visible ? "" : "-slash"}"></i>`;
+      };
+      toggle.addEventListener("click", onToggle);
+      cleanups.push(() => toggle.removeEventListener("click", onToggle));
+    });
+
+    return () => cleanups.forEach((cleanup) => cleanup());
+  }, [accountOpen, accountPage, user]);
 
   const visibleProducts = useMemo(() => {
     if (category === "ALL") return products;
@@ -203,6 +295,29 @@ function App() {
     }
   }
 
+  async function handleSaveAddress() {
+    setAccountNotice("");
+    try {
+      const data = await updateMemberAddress(addressForm);
+      setUser(data.user);
+      setAccountNotice("Address saved.");
+    } catch (requestError) {
+      setAccountNotice(requestError.message);
+    }
+  }
+
+  async function handleSaveDetails() {
+    setAccountNotice("");
+    try {
+      const data = await updateMemberProfile(detailsForm);
+      setUser(data.user);
+      setDetailsForm((current) => ({ ...current, password: "" }));
+      setAccountNotice("Account details saved.");
+    } catch (requestError) {
+      setAccountNotice(requestError.message);
+    }
+  }
+
   function focusProduct(productId) {
     setCategory("ALL");
     setSearchOpen(false);
@@ -255,6 +370,8 @@ function App() {
         <button type="button" className="account-close" id="accountClose" onClick={() => setAccountOpen(false)}><i className="fas fa-times" /></button>
         {user ? <div className="account-dashboard open" id="accountDashboard"><div className="container"><div className="account-dashboard-grid"><aside className="account-side"><div className="account-site-links"><a href="#hero" onClick={() => setAccountOpen(false)}>Home</a><a href="#menu" onClick={() => setAccountOpen(false)}>Menu</a><a href="#contact-section" onClick={() => setAccountOpen(false)}>Contact</a></div>{[["dashboard", "Dashboard"], ["orders", `Orders (${orders.length})`], ["addresses", "Addresses"], ["details", "Account Details"]].map(([page, label]) => <button className={accountPage === page ? "active" : ""} type="button" key={page} onClick={() => setAccountPage(page)}>{label}</button>)}<button type="button" id="linkLineBtn" onClick={() => window.location.href = "/auth/line/link"}>綁定 LINE 帳號</button><button id="accountLogout" type="button" onClick={handleLogout}>Logout</button></aside><main className="account-main"><section className="account-page active"><h2>{accountPage === "dashboard" ? <>Welcome back,<br />{user.name || "Patria member"}</> : accountPage === "orders" ? "Orders" : accountPage === "addresses" ? "Addresses" : "Account Details"}</h2><p className="account-main-desc">{accountPage === "orders" ? "Track your recent orders and start a new Patria order anytime." : accountPage === "addresses" ? "Manage the address used for delivery and pickup updates." : accountPage === "details" ? "Update your display name, email and password." : "Here’s an overview of your account. View your recent orders and manage your account details."}</p>{accountPage === "dashboard" && <div className="account-stat-grid"><div className="account-stat"><i className="fas fa-utensils" /><div><strong>Recent Orders</strong><span>{orders.length} orders</span></div></div><div className="account-stat"><i className="fas fa-user" /><div><strong>Account Details</strong><span>{user.email || user.name || "Member"}</span></div></div></div>}{accountPage === "orders" && <section className="account-section"><div className="account-section-head"><h3>Recent Orders</h3><button type="button" onClick={() => { setAccountOpen(false); document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" }); }}>Start an order</button></div>{orders.length ? orders.map((order) => <div className="account-empty-row" key={order.id}><span>Order #{order.id}</span><strong>${Number(order.total || 0).toFixed(2)}</strong></div>) : <div className="account-empty-row"><span>You have not placed an order yet.</span></div>}</section>}{accountPage === "addresses" && <section className="account-section account-form-section"><h3>Saved Address</h3><div className="account-form-grid"><label>Full Name<input type="text" defaultValue={user.name || ""} /></label><label>Phone<input type="text" placeholder="Phone number" /></label><label className="wide">Address<input type="text" placeholder="Add your delivery address" /></label></div><button type="button" className="account-save-btn filled">Save Address</button></section>}{accountPage === "details" && <section className="account-section account-form-section"><div className="account-form-grid"><label>Display Name<input type="text" defaultValue={user.name || ""} /></label><label>Email Address<input type="email" defaultValue={user.email || ""} /></label><label>Phone<input type="text" placeholder="Phone number" /></label></div><button type="button" className="account-save-btn filled">Save Changes</button></section>}</section></main></div></div></div> : <div className="account-panel"><div className="container"><div className="row g-4 g-lg-5"><div className="col-lg-6"><h3>Login</h3><form className="account-card" onSubmit={handleLogin}><label>Username or email address *</label><input type="text" autoComplete="username" value={loginForm.login} onChange={(event) => setLoginForm({ ...loginForm, login: event.target.value })} required /><label>Password *</label><input type="password" autoComplete="current-password" value={loginForm.password} onChange={(event) => setLoginForm({ ...loginForm, password: event.target.value })} required /><p className="account-error">{accountError}</p><button type="submit" className="account-btn">Log in</button><a className="account-btn account-line-btn" href="/auth/line"><i className="fab fa-line" /> 使用 LINE 登入</a></form></div><div className="col-lg-6"><h3>Register</h3><form className="account-card" onSubmit={handleRegister}><label>Full Name *</label><input type="text" autoComplete="name" value={registerForm.name} onChange={(event) => setRegisterForm({ ...registerForm, name: event.target.value })} required /><label>Email address *</label><input type="email" autoComplete="email" value={registerForm.email} onChange={(event) => setRegisterForm({ ...registerForm, email: event.target.value })} required /><label>Phone</label><input type="text" autoComplete="tel" value={registerForm.phone} onChange={(event) => setRegisterForm({ ...registerForm, phone: event.target.value })} /><label>Password *</label><input type="password" autoComplete="new-password" minLength="8" value={registerForm.password} onChange={(event) => setRegisterForm({ ...registerForm, password: event.target.value })} required /><p className="account-error">{accountError}</p><button type="submit" className="account-btn">Register</button></form></div></div></div></div>}
       </div>
+
+      {accountNotice && <div className="account-save-notice" role="status">{accountNotice}</div>}
 
       <main>
         <section id="hero">

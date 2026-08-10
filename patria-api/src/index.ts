@@ -190,6 +190,8 @@ async function getCurrentUser(
         users.display_name,
         users.avatar_url,
         users.email,
+        users.phone,
+        users.address_json,
         users.created_at,
         users.updated_at
       FROM sessions
@@ -211,6 +213,8 @@ async function getCurrentUser(
       name: row.display_name,
       avatar: row.avatar_url,
       email: row.email,
+      phone: row.phone,
+      address: row.address_json ? JSON.parse(String(row.address_json)) : {},
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     },
@@ -505,16 +509,17 @@ export default {
               line_user_id,
               display_name,
               email,
+              phone,
               password_salt,
               password_hash
-            ) VALUES (?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?)
           `)
-          .bind(lineUserId, name, email, salt, hash)
+          .bind(lineUserId, name, email, String(body.phone || "").trim(), salt, hash)
           .run();
 
         const user = await env.patria_db
           .prepare(`
-            SELECT id, line_user_id, display_name, avatar_url, email,
+            SELECT id, line_user_id, display_name, avatar_url, email, phone, address_json,
                    created_at, updated_at
             FROM users
             WHERE email = ?
@@ -566,7 +571,7 @@ export default {
 
         const user = await env.patria_db
           .prepare(`
-            SELECT id, line_user_id, display_name, avatar_url, email,
+            SELECT id, line_user_id, display_name, avatar_url, email, phone, address_json,
                    created_at, updated_at, password_salt, password_hash
             FROM users
             WHERE lower(email) = ? OR lower(display_name) = ?
@@ -612,6 +617,8 @@ export default {
           name: user.display_name,
           avatar: user.avatar_url,
           email: user.email,
+          phone: user.phone,
+          address: user.address_json ? JSON.parse(String(user.address_json)) : {},
           createdAt: user.created_at,
           updatedAt: user.updated_at,
         };
@@ -1061,6 +1068,79 @@ export default {
             Number(current.user.id)
           ),
         });
+      }
+
+      if (request.method === "PUT" && url.pathname === "/api/address") {
+        const current = await getCurrentUser(request, env.patria_db);
+        if (!current) return Response.json({ success: false, error: "Not logged in" }, { status: 401 });
+
+        const body = await readJson<{
+          fullName?: string;
+          phone?: string;
+          address?: string;
+          city?: string;
+          zip?: string;
+        }>(request);
+        const address = {
+          fullName: String(body.fullName || "").trim(),
+          address: String(body.address || "").trim(),
+          city: String(body.city || "").trim(),
+          zip: String(body.zip || "").trim(),
+        };
+
+        await env.patria_db
+          .prepare("UPDATE users SET phone = ?, address_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+          .bind(String(body.phone || "").trim(), JSON.stringify(address), Number(current.user.id))
+          .run();
+
+        const updated = await getCurrentUser(request, env.patria_db);
+        return Response.json({ success: true, user: updated?.user });
+      }
+
+      if (request.method === "PUT" && url.pathname === "/api/me") {
+        const current = await getCurrentUser(request, env.patria_db);
+        if (!current) return Response.json({ success: false, error: "Not logged in" }, { status: 401 });
+
+        const body = await readJson<{
+          name?: string;
+          email?: string;
+          phone?: string;
+          password?: string;
+        }>(request);
+        const name = String(body.name || "").trim();
+        const email = String(body.email || "").trim().toLowerCase();
+        if (!name || !email) {
+          return Response.json({ success: false, error: "Name and email are required." }, { status: 400 });
+        }
+
+        const duplicate = await env.patria_db
+          .prepare("SELECT id FROM users WHERE lower(email) = ? AND id <> ? LIMIT 1")
+          .bind(email, Number(current.user.id))
+          .first();
+        if (duplicate) return Response.json({ success: false, error: "Email already registered." }, { status: 409 });
+
+        if (body.password && String(body.password).length < 8) {
+          return Response.json({ success: false, error: "Password must be at least 8 characters." }, { status: 400 });
+        }
+
+        if (body.password) {
+          const salt = randomString(16);
+          const hash = await passwordHash(String(body.password), salt);
+          await env.patria_db.prepare(`
+            UPDATE users
+            SET display_name = ?, email = ?, phone = ?, password_salt = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).bind(name, email, String(body.phone || "").trim(), salt, hash, Number(current.user.id)).run();
+        } else {
+          await env.patria_db.prepare(`
+            UPDATE users
+            SET display_name = ?, email = ?, phone = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).bind(name, email, String(body.phone || "").trim(), Number(current.user.id)).run();
+        }
+
+        const updated = await getCurrentUser(request, env.patria_db);
+        return Response.json({ success: true, user: updated?.user });
       }
 
       if (request.method === "GET" && url.pathname === "/api/me") {

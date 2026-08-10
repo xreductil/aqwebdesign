@@ -26,6 +26,20 @@ export function getCurrentUser() {
   return apiRequest("/api/me");
 }
 
+export function updateMemberProfile(payload) {
+  return apiRequest("/api/me", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateMemberAddress(payload) {
+  return apiRequest("/api/address", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function logout() {
   return apiRequest("/api/logout", { method: "POST" });
 }

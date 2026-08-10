@@ -67,11 +67,26 @@
   display: none;
 }
 
+.account-save-notice {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 100001;
+  max-width: min(90vw, 420px);
+  padding: 14px 18px;
+  border-radius: 8px;
+  background: #3a1f14;
+  color: #fff;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 20%);
+}
+
 .order-overlay .order-drawer {
   width: min(100%, 440px);
   height: 100%;
   overflow-y: auto;
   background: #fff;
+  transform: translateX(0);
+  box-shadow: -12px 0 40px rgb(0 0 0 / 18%);
 }
 
 .order-overlay .order-body {
