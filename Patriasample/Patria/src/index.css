@@ -101,6 +101,42 @@
   letter-spacing: 1px;
 }
 
+#navSearchBtn[data-tooltip]::after,
+#adminOpen[data-tooltip]::after,
+#accountOpen[data-tooltip]::after,
+#orderOpen[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  z-index: 100;
+  min-width: max-content;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: rgb(27 13 5 / 92%);
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1.2;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(4px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  white-space: nowrap;
+}
+
+#navSearchBtn[data-tooltip]:hover::after,
+#navSearchBtn[data-tooltip]:focus::after,
+#adminOpen[data-tooltip]:hover::after,
+#adminOpen[data-tooltip]:focus::after,
+#accountOpen[data-tooltip]:hover::after,
+#accountOpen[data-tooltip]:focus::after,
+#orderOpen[data-tooltip]:hover::after,
+#orderOpen[data-tooltip]:focus::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 
 #orderOpen,
 #accountOv .account-side button,
