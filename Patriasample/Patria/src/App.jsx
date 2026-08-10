@@ -175,6 +175,27 @@ function OrderDrawer({ cart, user, coupons, couponCode, setCouponCode, couponMes
   );
 }
 
+function CheckoutModal({ cart, user, fulfillmentDate, total, couponCode, onConfirm, onClose, onEditCart, busy, error }) {
+  const address = user?.address || {};
+  const addressText = [address.address, address.city, address.zip].filter(Boolean).join(", ");
+  const nameParts = String(user?.name || "").trim().split(/\s+/).filter(Boolean);
+  return (
+    <div className="checkout-overlay" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle" onClick={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="checkout-page">
+        <header className="checkout-page-head"><div className="container"><h1 id="checkoutTitle">Checkout</h1><p>Complete your pickup order from our Patria kitchen.</p></div></header>
+        <div className="checkout-layout container">
+          <main className="checkout-form-column">
+            <div className="checkout-wallets"><button type="button" className="checkout-wallet" disabled><i className="fab fa-apple" />Pay <small>即將開放</small></button><button type="button" className="checkout-wallet" disabled><strong className="google-g">G</strong>Pay <small>即將開放</small></button></div>
+            <div className="checkout-or"><span>— OR —</span></div>
+            <section className="checkout-details-panel"><h2>Your Details</h2><div className="checkout-fields two-col"><label>First name *<input value={nameParts[0] || ""} readOnly /></label><label>Last name *<input value={nameParts.slice(1).join(" ")} readOnly /></label></div><label>Email address *<input type="email" value={user?.email || ""} readOnly /></label><label>Country / Region *<select defaultValue="Taiwan"><option>Taiwan</option><option>Australia</option><option>United States</option><option>Japan</option></select></label><label>Street address *<input value={address.address || ""} placeholder="House number and street name" readOnly /></label><label>Postcode *<input value={address.zip || ""} placeholder="Postcode" readOnly /></label><div className="checkout-pickup-field"><i className="fas fa-calendar-day" /><div><span>Pickup date</span><strong>{fulfillmentDate}</strong></div></div><p className="checkout-form-note">需要修改姓名、地址或電話？請返回會員中心的 Account Details／Addresses 更新。</p></section>
+          </main>
+          <aside className="checkout-order-column"><section className="checkout-order-panel"><div className="checkout-order-title"><h2>Your Order</h2><button type="button" onClick={onEditCart}><i className="fas fa-pen-to-square" /> Edit Cart</button></div><div className="checkout-coupon"><input value={couponCode || ""} placeholder="Coupon code" readOnly /><button type="button" onClick={onEditCart}>Apply coupon</button></div><div className="checkout-items">{cart.items.map((item) => <div className="checkout-item" key={item.id}><span>{item.title} × {item.qty}</span><strong>${(Number(item.priceValue || 0) * Number(item.qty || 0)).toFixed(2)}</strong></div>)}</div><div className="checkout-total-lines"><div><span>Subtotal</span><strong>${Number(cart.total || 0).toFixed(2)}</strong></div>{Number(cart.total || 0) !== Number(total || 0) && <div><span>Total after discount</span><strong>${Number(total || 0).toFixed(2)}</strong></div>}<div className="checkout-grand-total"><span>Total</span><strong>${Number(total || 0).toFixed(2)}</strong></div></div><section className="checkout-payment-card"><h3>Payment</h3><div className="checkout-safe"><i className="fas fa-shield-halved" /><div><strong>Secure payment</strong><span>付款資料由金流服務商處理，Patria 不會儲存信用卡敏感資料。</span></div></div><p className="checkout-note">目前會先建立訂單；正式啟用金流服務後，付款方式會在此安全完成。</p></section>{error && <p className="coupon-message error">{error}</p>}<button type="button" className="checkout-confirm" disabled={busy} onClick={onConfirm}>{busy ? "Processing..." : "確認訂單"}</button><button type="button" className="checkout-back" onClick={onClose}>返回購物車</button></section></aside>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function GalleryModal({ items, index, setIndex, onClose }) {
   if (index === null) return null;
   const item = items[index];
@@ -288,6 +309,7 @@ function App() {
   const [orders, setOrders] = useState([]);
   const [category, setCategory] = useState("ALL");
   const [cartOpen, setCartOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [coupons, setCoupons] = useState([]);
   const [couponCode, setCouponCode] = useState("");
   const [couponMessage, setCouponMessage] = useState("");
@@ -454,7 +476,7 @@ function App() {
     setProductQuantity(1);
   }
 
-  async function handleCheckout() {
+  function openCheckout() {
     if (!user) {
       setCartOpen(false);
       setAccountOpen(true);
@@ -464,6 +486,13 @@ function App() {
       setError("Please choose a pickup date.");
       return;
     }
+    setError("");
+    setCartOpen(false);
+    setCheckoutOpen(true);
+  }
+
+  async function handleCheckout() {
+    if (!user || !fulfillmentDate) return;
     setCheckoutBusy(true);
     setError("");
     try {
@@ -473,7 +502,7 @@ function App() {
       setFulfillmentDate("");
       setCouponCode("");
       setCouponMessage("");
-      setCartOpen(false);
+      setCheckoutOpen(false);
       setError("");
     } catch (requestError) {
       setError(requestError.message);
@@ -711,8 +740,9 @@ function App() {
 
       <footer><div className="container"><div className="row g-5"><div className="col-lg-4"><div className="fnm">Pat<span>ria</span></div><p className="fdesc">We bring the world's finest flavors together in a fast, friendly, and affordable experience. Every meal crafted with love.</p><div className="fsoc"><a href="#"><i className="fab fa-facebook-f" /></a><a href="#"><i className="fab fa-instagram" /></a><a href="#"><i className="fab fa-twitter" /></a><a href="#"><i className="fab fa-youtube" /></a><a href="#"><i className="fab fa-tiktok" /></a></div></div><div className="col-sm-6 col-lg-2"><div className="ftit">Quick Links</div><ul className="flinks ps-0"><li><a href="#hero"><i className="fas fa-chevron-right" />Home</a></li><li><a href="#about"><i className="fas fa-chevron-right" />About Us</a></li><li><a href="#menu"><i className="fas fa-chevron-right" />Our Menu</a></li><li><a href="#reservation"><i className="fas fa-chevron-right" />Reservation</a></li><li><a href="#contact-section"><i className="fas fa-chevron-right" />Contact</a></li></ul></div><div className="col-sm-6 col-lg-2"><div className="ftit">Our Menu</div><ul className="flinks ps-0"><li><a href="#menu"><i className="fas fa-chevron-right" />NOODLES</a></li><li><a href="#menu"><i className="fas fa-chevron-right" />DIM SUM</a></li><li><a href="#menu"><i className="fas fa-chevron-right" />RICE</a></li><li><a href="#menu"><i className="fas fa-chevron-right" />SOUP</a></li></ul></div><div className="col-lg-4"><div className="ftit">Get In Touch</div>{[["map-marker-alt", "Address", "52 Teka Street, Los Angeles, CA 90001"], ["phone-alt", "Phone", "+1 (300) 659-4381"], ["envelope", "Email", "hello@patriafood.com"], ["clock", "Hours", "Mon - Sun: 09 AM - 11 PM"]].map(([icon, title, value]) => <div className="fci" key={title}><div className="fciico"><i className={`fas fa-${icon}`} /></div><div className="fciinfo"><strong>{title}</strong>{value}</div></div>)}</div></div></div><div className="fbot"><div className="container"><div className="d-flex justify-content-between align-items-center flex-wrap gap-2"><p>&copy; 2026 <span>Patria Restaurant</span> All rights reserved.<span className="footer-credit">Design by <a href="https://www.aq-webdesign.com/index.html" target="_blank" rel="noopener">A.Q.webdesign</a></span></p><div><a href="#">Privacy Policy</a><a href="#">Terms</a><a href="#">Cookies</a></div></div></div></div></footer>
 
-      {cartOpen && <div className="order-overlay open" onClick={(event) => event.target === event.currentTarget && setCartOpen(false)}><aside className="order-drawer"><div className="order-head"><h2>Your Order</h2><button type="button" className="order-close" onClick={() => setCartOpen(false)}><i className="fas fa-times" /></button></div><div className="order-body">{cart.items.length ? <>{cart.items.map((item) => <div className="account-cart-row" key={item.id}><img src={item.img} alt="" /><span>{item.title} × {item.qty}</span></div>)}<strong>Total: ${Number(cart.total).toFixed(2)}</strong><input type="date" value={fulfillmentDate} onChange={(event) => setFulfillmentDate(event.target.value)} /><button type="button" className="account-btn filled" disabled={!user} onClick={handleCheckout}>{user ? "Checkout" : "Please log in"}</button></> : <p className="order-empty">No products in the cart.</p>}</div></aside></div>}
-      {cartOpen && <OrderDrawer cart={cart} user={user} coupons={coupons} couponCode={couponCode} setCouponCode={setCouponCode} couponMessage={couponMessage} fulfillmentDate={fulfillmentDate} setFulfillmentDate={setFulfillmentDate} onApplyCoupon={handleApplyCoupon} onRemoveCoupon={() => { setCouponCode(""); setCouponMessage("優惠碼已移除。"); }} onChangeQty={handleCartQuantity} onRemove={handleRemoveCartItem} onCheckout={handleCheckout} onClose={() => setCartOpen(false)} busy={checkoutBusy} error={error} />}
+      {cartOpen && <div className="order-overlay open" onClick={(event) => event.target === event.currentTarget && setCartOpen(false)}><aside className="order-drawer"><div className="order-head"><h2>Your Order</h2><button type="button" className="order-close" onClick={() => setCartOpen(false)}><i className="fas fa-times" /></button></div><div className="order-body">{cart.items.length ? <>{cart.items.map((item) => <div className="account-cart-row" key={item.id}><img src={item.img} alt="" /><span>{item.title} × {item.qty}</span></div>)}<strong>Total: ${Number(cart.total).toFixed(2)}</strong><input type="date" value={fulfillmentDate} onChange={(event) => setFulfillmentDate(event.target.value)} /><button type="button" className="account-btn filled" disabled={!user} onClick={openCheckout}>{user ? "Checkout" : "Please log in"}</button></> : <p className="order-empty">No products in the cart.</p>}</div></aside></div>}
+      {cartOpen && <OrderDrawer cart={cart} user={user} coupons={coupons} couponCode={couponCode} setCouponCode={setCouponCode} couponMessage={couponMessage} fulfillmentDate={fulfillmentDate} setFulfillmentDate={setFulfillmentDate} onApplyCoupon={handleApplyCoupon} onRemoveCoupon={() => { setCouponCode(""); setCouponMessage("優惠碼已移除。"); }} onChangeQty={handleCartQuantity} onRemove={handleRemoveCartItem} onCheckout={openCheckout} onClose={() => setCartOpen(false)} busy={checkoutBusy} error={error} />}
+      {checkoutOpen && <CheckoutModal cart={cart} user={user} fulfillmentDate={fulfillmentDate} total={(() => { const coupon = coupons.find((item) => String(item.code).toUpperCase() === couponCode.toUpperCase()); const subtotal = Number(cart.total || 0); const discount = coupon && subtotal >= Number(coupon.min || 0) ? Math.min(subtotal, coupon.type === "percent" ? subtotal * Number(coupon.value || 0) / 100 : Number(coupon.value || 0)) : 0; return Math.max(0, subtotal - discount); })()} onConfirm={handleCheckout} onClose={() => setCheckoutOpen(false)} busy={checkoutBusy} error={error} />}
       {selectedProduct && <ProductModal product={selectedProduct} quantity={productQuantity} setQuantity={setProductQuantity} onClose={() => { setSelectedProduct(null); setProductQuantity(1); }} onAdd={handleAdd} />}
       <GalleryModal items={galleryItems} index={galleryIndex} setIndex={setGalleryIndex} onClose={() => setGalleryIndex(null)} />
     </>
