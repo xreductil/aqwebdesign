@@ -10,6 +10,17 @@
 
   "upload_source_maps": true,
 
+  "routes": [
+    {
+      "pattern": "www.aq-webdesign.com/auth/line*",
+      "custom_domain": false
+    },
+    {
+      "pattern": "www.aq-webdesign.com/api/*",
+      "custom_domain": false
+    }
+  ],
+
   "compatibility_flags": [
     "nodejs_compat"
   ],
