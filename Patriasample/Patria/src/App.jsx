@@ -233,7 +233,7 @@ function App() {
               <a href="/admin/signin.html" className="admin-dashboard-link" title="管理後台"><i className="fas fa-table-columns" /></a>
               <button type="button" id="navSearchBtn" onClick={() => setSearchOpen(true)} title="搜尋" aria-label="搜尋"><i className="fas fa-search" /></button>
               <button type="button" id="accountOpen" className="nav-link" onClick={() => setAccountOpen(true)} title="帳戶" aria-label="帳戶"><i className="fas fa-user" /></button>
-              <button type="button" className="nav-link" onClick={() => setCartOpen(true)} title="購物車"><i className="fas fa-shopping-cart" /><span className="cart-count">{cart.items.length}</span></button>
+              <button type="button" id="orderOpen" className="nav-link" onClick={() => setCartOpen(true)} title="購物車" aria-label="購物車" data-tooltip="購物車"><i className="fas fa-shopping-cart" /><span className="cart-count">{cart.items.length}</span></button>
             </div>
           </div>
         </div>

@@ -38,9 +38,29 @@
   position: fixed;
   inset: 0;
   z-index: 2000;
+  pointer-events: auto;
   display: flex;
   justify-content: flex-end;
   background: rgb(0 0 0 / 45%);
+}
+
+#orderOpen,
+#accountOv .account-side button,
+#accountOv .account-site-links a,
+#accountOv .account-close {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+#accountOv .account-panel,
+#accountOv .account-card,
+#accountOv .account-card input,
+#accountOv .account-card button {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
 }
 
 .account-inline {
