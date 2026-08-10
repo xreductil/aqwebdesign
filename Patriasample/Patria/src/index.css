@@ -67,6 +67,34 @@
   display: none;
 }
 
+#accountOv > .account-dashboard:not(.react-account-dashboard) {
+  display: none !important;
+}
+
+.react-account-dashboard .account-form-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.react-account-dashboard .account-form-grid label {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.react-account-dashboard .account-form-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.react-account-dashboard .account-form-grid input {
+  width: 100%;
+}
+
+.react-account-dashboard .account-save-btn,
+.react-account-dashboard .account-section-head button,
+.react-account-dashboard .account-mini-card button {
+  cursor: pointer;
+}
+
 .account-save-notice {
   position: fixed;
   right: 24px;

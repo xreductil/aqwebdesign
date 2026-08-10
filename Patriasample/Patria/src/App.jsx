@@ -59,6 +59,49 @@ function ProductCard({ product, badge = "Featured", onAdd }) {
   );
 }
 
+function MemberDashboard({ user, orders, page, setPage, addressForm, setAddressForm, detailsForm, setDetailsForm, onSaveAddress, onSaveDetails, onLinkLine, onLogout, onClose, notice }) {
+  const addressLabel = addressForm.address ? [addressForm.address, addressForm.city, addressForm.zip].filter(Boolean).join(", ") : "No address saved yet.";
+  return (
+    <div className="account-dashboard open react-account-dashboard" id="accountDashboard">
+      <div className="container">
+        <div className="account-dashboard-grid">
+          <aside className="account-side">
+            <div className="account-site-links">
+              <a href="#hero" onClick={onClose}>Home</a>
+              <a href="#menu" onClick={onClose}>Menu</a>
+              <a href="#contact-section" onClick={onClose}>Contact</a>
+              <button type="button" onClick={onClose}>Back to store</button>
+            </div>
+            {[['dashboard', 'Dashboard'], ['orders', `Orders (${orders.length})`], ['addresses', 'Addresses'], ['details', 'Account Details']].map(([key, label]) => <button className={page === key ? "active" : ""} type="button" data-account-page={key} key={key} onClick={() => setPage(key)}>{label}</button>)}
+            <button type="button" id="linkLineBtn" onClick={onLinkLine}>綁定 LINE 帳號</button>
+            <button id="accountLogout" type="button" onClick={onLogout}>Logout</button>
+          </aside>
+
+          <main className="account-main">
+            {page === "dashboard" && <section className="account-page active">
+              <h2>Welcome back,<br />{user.name || "Patria member"}</h2>
+              <p className="account-main-desc">Here’s an overview of your account. View your recent orders, manage your addresses and update your account details.</p>
+              <div className="account-stat-grid">
+                <div className="account-stat"><i className="fas fa-utensils" /><div><strong>Recent Orders</strong><span>{orders.length} {orders.length === 1 ? "order" : "orders"}</span></div></div>
+                <div className="account-stat"><i className="fas fa-location-dot" /><div><strong>Saved Address</strong><span>{addressForm.address ? "Address saved" : "Add an address"}</span></div></div>
+                <div className="account-stat"><i className="fas fa-user" /><div><strong>Account Details</strong><span>{user.name || "Member"}</span></div></div>
+              </div>
+              <section className="account-section"><div className="account-section-head"><h3>Recent Orders</h3><button type="button" onClick={() => setPage("orders")}>View All Orders</button></div>{orders.length ? orders.slice(0, 3).map((order) => <div className="account-empty-row" key={order.id}><span>Order #{order.id}</span><strong>${Number(order.total || 0).toFixed(2)}</strong></div>) : <div className="account-empty-row"><span>You have not placed an order yet.</span><button type="button" className="account-start-order" onClick={onClose}>Start an order</button></div>}</section>
+              <div className="account-card-grid"><section className="account-mini-card"><i className="fas fa-location-dot" /><div><h3>Saved Address</h3><p>{addressForm.fullName || user.name || "Member"}</p><p>{addressLabel}</p><button type="button" onClick={() => setPage("addresses")}>Edit Address</button></div></section><section className="account-mini-card"><i className="fas fa-utensils" /><div><h3>Need Something Delicious?</h3><p>Your Patria favourites are only a few clicks away.</p><button type="button" className="account-start-order filled" onClick={onClose}>Start a New Order</button></div></section></div>
+            </section>}
+
+            {page === "orders" && <section className="account-page active"><h2>Orders</h2><p className="account-main-desc">Track your recent orders and start a new Patria order anytime.</p><section className="account-section"><div className="account-section-head"><h3>Recent Orders</h3><button type="button" className="account-start-order" onClick={onClose}>Start an order</button></div>{orders.length ? orders.map((order) => <div className="account-empty-row" key={order.id}><span>Order #{order.id}</span><strong>${Number(order.total || 0).toFixed(2)}</strong></div>) : <div className="account-empty-row"><span>You have not placed an order yet.</span><button type="button" className="account-start-order" onClick={onClose}>Browse Menu</button></div>}</section></section>}
+
+            {page === "addresses" && <section className="account-page active"><h2>Addresses</h2><p className="account-main-desc">Manage the address used for delivery and pickup updates.</p><section className="account-section account-form-section"><h3>Saved Address</h3><div className="account-form-grid"><label>Full Name<input type="text" value={addressForm.fullName} onChange={(event) => setAddressForm({ ...addressForm, fullName: event.target.value })} /></label><label>Phone<input type="text" value={addressForm.phone} onChange={(event) => setAddressForm({ ...addressForm, phone: event.target.value })} placeholder="Phone number" /></label><label className="wide">Address<input type="text" value={addressForm.address} onChange={(event) => setAddressForm({ ...addressForm, address: event.target.value })} placeholder="Add your delivery address" /></label><label>City<input type="text" value={addressForm.city} onChange={(event) => setAddressForm({ ...addressForm, city: event.target.value })} placeholder="Los Angeles" /></label><label>ZIP Code<input type="text" value={addressForm.zip} onChange={(event) => setAddressForm({ ...addressForm, zip: event.target.value })} placeholder="90001" /></label></div><button type="button" className="account-save-btn filled" onClick={onSaveAddress}>Save Address</button>{notice && <p className="account-error">{notice}</p>}</section></section>}
+
+            {page === "details" && <section className="account-page active"><h2>Account Details</h2><p className="account-main-desc">Update your display name, email and password.</p><section className="account-section account-form-section"><div className="account-form-grid"><label>Display Name<input type="text" value={detailsForm.name} onChange={(event) => setDetailsForm({ ...detailsForm, name: event.target.value })} /></label><label>Email Address<input type="email" value={detailsForm.email} onChange={(event) => setDetailsForm({ ...detailsForm, email: event.target.value })} /></label><label>Phone<input type="text" value={detailsForm.phone} onChange={(event) => setDetailsForm({ ...detailsForm, phone: event.target.value })} placeholder="Phone number" /></label><label>Password<input type="password" value={detailsForm.password} onChange={(event) => setDetailsForm({ ...detailsForm, password: event.target.value })} placeholder="New password" /></label><label>Confirm Password<input type="password" value={detailsForm.confirmPassword || ""} onChange={(event) => setDetailsForm({ ...detailsForm, confirmPassword: event.target.value })} placeholder="Confirm password" /></label></div><button type="button" className="account-save-btn filled" onClick={onSaveDetails}>Save Changes</button>{notice && <p className="account-error">{notice}</p>}</section></section>}
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [user, setUser] = useState(null);
   const [products, setProducts] = useState([]);
@@ -77,7 +120,7 @@ function App() {
   const [contactStatus, setContactStatus] = useState("");
   const [accountNotice, setAccountNotice] = useState("");
   const [addressForm, setAddressForm] = useState({ fullName: "", phone: "", address: "", city: "", zip: "" });
-  const [detailsForm, setDetailsForm] = useState({ name: "", email: "", phone: "", password: "" });
+  const [detailsForm, setDetailsForm] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [fulfillmentDate, setFulfillmentDate] = useState("");
@@ -97,7 +140,7 @@ function App() {
     if (!user) return;
     getOrders().then((data) => setOrders(data.orders || [])).catch(() => setOrders([]));
     setAddressForm({ fullName: user.address?.fullName || user.name || "", phone: user.address?.phone || user.phone || "", address: user.address?.address || "", city: user.address?.city || "", zip: user.address?.zip || "" });
-    setDetailsForm({ name: user.name || "", email: user.email || "", phone: user.phone || "", password: "" });
+    setDetailsForm({ name: user.name || "", email: user.email || "", phone: user.phone || "", password: "", confirmPassword: "" });
   }, [user]);
 
   useEffect(() => {
@@ -130,58 +173,6 @@ function App() {
     button.addEventListener("click", submitContact);
     return () => button.removeEventListener("click", submitContact);
   }, [loading]);
-
-  useEffect(() => {
-    if (!accountOpen || !user || !["addresses", "details"].includes(accountPage)) return undefined;
-
-    const panel = document.querySelector("#accountOv .account-form-section");
-    const saveButton = panel?.querySelector(".account-save-btn");
-    if (!panel || !saveButton) return undefined;
-
-    const addField = (labelText, type, placeholder, marker) => {
-      if (panel.querySelector(`[data-profile-field="${marker}"]`)) return;
-      const label = document.createElement("label");
-      label.dataset.profileField = marker;
-      label.textContent = labelText;
-      const input = document.createElement("input");
-      input.type = type;
-      input.placeholder = placeholder;
-      input.dataset.profileField = marker;
-      label.appendChild(input);
-      panel.querySelector(".account-form-grid")?.appendChild(label);
-    };
-
-    if (accountPage === "addresses") {
-      addField("City", "text", "Los Angeles", "city");
-      addField("ZIP Code", "text", "90001", "zip");
-    } else {
-      addField("New Password", "password", "Leave blank to keep current password", "password");
-      addField("Confirm Password", "password", "Confirm new password", "confirmPassword");
-    }
-
-    const save = async () => {
-      const inputs = [...panel.querySelectorAll("input")];
-      const values = Object.fromEntries(inputs.map((input) => [input.dataset.profileField || input.closest("label")?.textContent?.trim(), input.value.trim()]));
-      setAccountNotice("");
-      try {
-        if (accountPage === "addresses") {
-          const data = await updateMemberAddress({ fullName: inputs[0]?.value, phone: inputs[1]?.value, address: inputs[2]?.value, city: values.city || "", zip: values.zip || "" });
-          setUser(data.user);
-          setAccountNotice("Address saved.");
-        } else {
-          if (values.password && values.password !== values.confirmPassword) throw new Error("Passwords do not match.");
-          const data = await updateMemberProfile({ name: inputs[0]?.value, email: inputs[1]?.value, phone: inputs[2]?.value, password: values.password || "" });
-          setUser(data.user);
-          setAccountNotice("Account details saved.");
-        }
-      } catch (requestError) {
-        setAccountNotice(requestError.message);
-      }
-    };
-
-    saveButton.addEventListener("click", save);
-    return () => saveButton.removeEventListener("click", save);
-  }, [accountOpen, accountPage, user]);
 
   useEffect(() => {
     if (!accountOpen) return undefined;
@@ -308,10 +299,14 @@ function App() {
 
   async function handleSaveDetails() {
     setAccountNotice("");
+    if (detailsForm.password && detailsForm.password !== detailsForm.confirmPassword) {
+      setAccountNotice("Passwords do not match.");
+      return;
+    }
     try {
       const data = await updateMemberProfile(detailsForm);
       setUser(data.user);
-      setDetailsForm((current) => ({ ...current, password: "" }));
+      setDetailsForm((current) => ({ ...current, password: "", confirmPassword: "" }));
       setAccountNotice("Account details saved.");
     } catch (requestError) {
       setAccountNotice(requestError.message);
@@ -368,6 +363,7 @@ function App() {
       <div id="accountOv" className={accountOpen ? "open" : ""}>
         <div className="account-nav"><a className="account-nav-brand" href="#hero" onClick={() => setAccountOpen(false)}><span className="account-nav-icon"><i className="fas fa-utensils" /></span><span>Pat<span>ria</span></span></a></div>
         <button type="button" className="account-close" id="accountClose" onClick={() => setAccountOpen(false)}><i className="fas fa-times" /></button>
+        {user && <MemberDashboard user={user} orders={orders} page={accountPage} setPage={setAccountPage} addressForm={addressForm} setAddressForm={setAddressForm} detailsForm={detailsForm} setDetailsForm={setDetailsForm} onSaveAddress={handleSaveAddress} onSaveDetails={handleSaveDetails} onLinkLine={() => { window.location.href = "/auth/line/link"; }} onLogout={handleLogout} onClose={() => setAccountOpen(false)} notice={accountNotice} />}
         {user ? <div className="account-dashboard open" id="accountDashboard"><div className="container"><div className="account-dashboard-grid"><aside className="account-side"><div className="account-site-links"><a href="#hero" onClick={() => setAccountOpen(false)}>Home</a><a href="#menu" onClick={() => setAccountOpen(false)}>Menu</a><a href="#contact-section" onClick={() => setAccountOpen(false)}>Contact</a></div>{[["dashboard", "Dashboard"], ["orders", `Orders (${orders.length})`], ["addresses", "Addresses"], ["details", "Account Details"]].map(([page, label]) => <button className={accountPage === page ? "active" : ""} type="button" key={page} onClick={() => setAccountPage(page)}>{label}</button>)}<button type="button" id="linkLineBtn" onClick={() => window.location.href = "/auth/line/link"}>綁定 LINE 帳號</button><button id="accountLogout" type="button" onClick={handleLogout}>Logout</button></aside><main className="account-main"><section className="account-page active"><h2>{accountPage === "dashboard" ? <>Welcome back,<br />{user.name || "Patria member"}</> : accountPage === "orders" ? "Orders" : accountPage === "addresses" ? "Addresses" : "Account Details"}</h2><p className="account-main-desc">{accountPage === "orders" ? "Track your recent orders and start a new Patria order anytime." : accountPage === "addresses" ? "Manage the address used for delivery and pickup updates." : accountPage === "details" ? "Update your display name, email and password." : "Here’s an overview of your account. View your recent orders and manage your account details."}</p>{accountPage === "dashboard" && <div className="account-stat-grid"><div className="account-stat"><i className="fas fa-utensils" /><div><strong>Recent Orders</strong><span>{orders.length} orders</span></div></div><div className="account-stat"><i className="fas fa-user" /><div><strong>Account Details</strong><span>{user.email || user.name || "Member"}</span></div></div></div>}{accountPage === "orders" && <section className="account-section"><div className="account-section-head"><h3>Recent Orders</h3><button type="button" onClick={() => { setAccountOpen(false); document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" }); }}>Start an order</button></div>{orders.length ? orders.map((order) => <div className="account-empty-row" key={order.id}><span>Order #{order.id}</span><strong>${Number(order.total || 0).toFixed(2)}</strong></div>) : <div className="account-empty-row"><span>You have not placed an order yet.</span></div>}</section>}{accountPage === "addresses" && <section className="account-section account-form-section"><h3>Saved Address</h3><div className="account-form-grid"><label>Full Name<input type="text" defaultValue={user.name || ""} /></label><label>Phone<input type="text" placeholder="Phone number" /></label><label className="wide">Address<input type="text" placeholder="Add your delivery address" /></label></div><button type="button" className="account-save-btn filled">Save Address</button></section>}{accountPage === "details" && <section className="account-section account-form-section"><div className="account-form-grid"><label>Display Name<input type="text" defaultValue={user.name || ""} /></label><label>Email Address<input type="email" defaultValue={user.email || ""} /></label><label>Phone<input type="text" placeholder="Phone number" /></label></div><button type="button" className="account-save-btn filled">Save Changes</button></section>}</section></main></div></div></div> : <div className="account-panel"><div className="container"><div className="row g-4 g-lg-5"><div className="col-lg-6"><h3>Login</h3><form className="account-card" onSubmit={handleLogin}><label>Username or email address *</label><input type="text" autoComplete="username" value={loginForm.login} onChange={(event) => setLoginForm({ ...loginForm, login: event.target.value })} required /><label>Password *</label><input type="password" autoComplete="current-password" value={loginForm.password} onChange={(event) => setLoginForm({ ...loginForm, password: event.target.value })} required /><p className="account-error">{accountError}</p><button type="submit" className="account-btn">Log in</button><a className="account-btn account-line-btn" href="/auth/line"><i className="fab fa-line" /> 使用 LINE 登入</a></form></div><div className="col-lg-6"><h3>Register</h3><form className="account-card" onSubmit={handleRegister}><label>Full Name *</label><input type="text" autoComplete="name" value={registerForm.name} onChange={(event) => setRegisterForm({ ...registerForm, name: event.target.value })} required /><label>Email address *</label><input type="email" autoComplete="email" value={registerForm.email} onChange={(event) => setRegisterForm({ ...registerForm, email: event.target.value })} required /><label>Phone</label><input type="text" autoComplete="tel" value={registerForm.phone} onChange={(event) => setRegisterForm({ ...registerForm, phone: event.target.value })} /><label>Password *</label><input type="password" autoComplete="new-password" minLength="8" value={registerForm.password} onChange={(event) => setRegisterForm({ ...registerForm, password: event.target.value })} required /><p className="account-error">{accountError}</p><button type="submit" className="account-btn">Register</button></form></div></div></div></div>}
       </div>
 

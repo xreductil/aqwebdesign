@@ -1,2 +1,1 @@
-ALTER TABLE users ADD COLUMN phone TEXT;
-ALTER TABLE users ADD COLUMN address_json TEXT;
+-- Member profile columns are already created by migration 0003.
