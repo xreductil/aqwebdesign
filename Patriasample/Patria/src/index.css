@@ -43,6 +43,10 @@
   background: rgb(0 0 0 / 45%);
 }
 
+.account-inline {
+  display: none;
+}
+
 .order-overlay .order-drawer {
   width: min(100%, 440px);
   height: 100%;
