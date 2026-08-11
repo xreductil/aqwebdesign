@@ -433,6 +433,8 @@
 
 /* Keep the gallery lightbox scrollable when the image and caption exceed the viewport. */
 #galPop.open {
+  height: 100dvh;
+  box-sizing: border-box;
   align-items: flex-start;
   justify-content: center;
   padding: 72px 18px 36px;
@@ -444,6 +446,7 @@
 
 #galPop.open .gpbox {
   width: min(880px, 100%);
+  min-height: 0;
   max-height: none;
   margin: 0 auto;
   padding-bottom: 12px;
@@ -451,8 +454,9 @@
 
 #galPop.open .gallery-scroll {
   width: 100%;
-  max-height: calc(100vh - 108px);
-  overflow-y: scroll;
+  height: calc(100dvh - 108px);
+  max-height: calc(100dvh - 108px);
+  overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -468,6 +472,7 @@
 
 @media (max-width: 600px) {
   #galPop.open { padding: 62px 12px 28px; }
+  #galPop.open .gallery-scroll { height: calc(100dvh - 90px); max-height: calc(100dvh - 90px); }
   #galPop.open .gpclose { top: -48px; right: 0; }
 }
 
