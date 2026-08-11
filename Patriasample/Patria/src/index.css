@@ -431,6 +431,35 @@
   .checkout-coupon button { min-height: 46px; }
 }
 
+/* Keep the gallery lightbox scrollable when the image and caption exceed the viewport. */
+#galPop.open {
+  align-items: flex-start;
+  justify-content: center;
+  padding: 72px 18px 36px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+#galPop.open .gpbox {
+  width: min(880px, 100%);
+  max-height: none;
+  margin: 0 auto;
+  padding-bottom: 12px;
+}
+
+#galPop.open .gpbox img {
+  display: block;
+  max-height: none;
+  height: auto;
+}
+
+@media (max-width: 600px) {
+  #galPop.open { padding: 62px 12px 28px; }
+  #galPop.open .gpclose { top: -48px; right: 0; }
+}
+
 #accountOv .account-password {
   position: relative;
   width: 100%;
