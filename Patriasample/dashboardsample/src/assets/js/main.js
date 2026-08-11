@@ -14,10 +14,35 @@ loadInventory();
 loadAdminReports();
 initCreateProduct();
 
+const API_BASE = String(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
+async function authRequest(path, options = {}) {
+  const response = await fetch(API_BASE + path, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.headers || {})
+    }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'Authentication failed.');
+  return data;
+}
+
+async function assertAdminSession() {
+  await authRequest('/api/admin/summary');
+}
 
 function setupAdminAuthRedirect() {
   const page = window.location.pathname.split('/').pop();
-  if (page !== 'signin.html' && page !== 'signup.html') return;
+  if (page !== 'signin.html' && page !== 'signup.html') {
+    assertAdminSession().catch(() => {
+      window.location.href = 'signin.html';
+    });
+    return;
+  }
 
   const form = document.querySelector('form.needs-validation');
   if (!form) return;
@@ -51,23 +76,17 @@ function setupAdminAuthRedirect() {
             login: document.getElementById('email')?.value.trim(),
             password: document.getElementById('password')?.value
           };
-      const apiBase = String(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
-      const response = await fetch(apiBase + '/api/' + (page === 'signup.html' ? 'register' : 'login'), {
+      await authRequest('/api/' + (page === 'signup.html' ? 'register' : 'login'), {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(payload)
       });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || 'Unable to sign in.');
-
-      if (page === 'signin.html') {
-        const adminCheck = await fetch(apiBase + '/api/admin/summary', { credentials: 'include' });
-        if (!adminCheck.ok) throw new Error('This account is not an administrator.');
-      }
+      await assertAdminSession();
       window.location.href = 'index.html';
     } catch (authError) {
-      error.textContent = authError.message;
+      await authRequest('/api/logout', { method: 'POST' }).catch(() => {});
+      error.textContent = authError.message === 'Administrator role required.'
+        ? 'This account is not an administrator.'
+        : authError.message;
       if (button) button.disabled = false;
     }
   });

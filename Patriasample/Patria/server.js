@@ -1,11 +1,31 @@
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LOCAL_ENV_PATH = path.join(__dirname, '.env');
 const ENV_PATH = fs.existsSync(LOCAL_ENV_PATH) ? LOCAL_ENV_PATH : path.resolve(__dirname, '../../.env');
-require('dotenv').config({ path: ENV_PATH });
+
+function loadEnvFile(envPath) {
+  if (!fs.existsSync(envPath)) return;
+  const text = fs.readFileSync(envPath, 'utf8');
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const index = trimmed.indexOf('=');
+    if (index < 0) continue;
+    const key = trimmed.slice(0, index).trim();
+    let value = trimmed.slice(index + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    if (key && process.env[key] == null) process.env[key] = value;
+  }
+}
+
+loadEnvFile(ENV_PATH);
 
 const ROOT = __dirname;
 const PUBLIC_ROOT = path.join(ROOT, 'public');
@@ -17,7 +37,30 @@ const PORT = Number(process.env.PORT || 8080);
 const LINE_CHANNEL_ID = process.env.LINE_CHANNEL_ID || '';
 const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET || '';
 const LINE_CALLBACK_URL = process.env.LINE_CALLBACK_URL || 'https://www.aq-webdesign.com/auth/line/callback';
+const IS_PRODUCTION = ['production', 'prod'].includes(String(process.env.NODE_ENV || process.env.PATRIA_ENV || '').toLowerCase())
+  || String(process.env.VERCEL_ENV || '').toLowerCase() === 'production'
+  || String(process.env.CF_PAGES || '') === '1';
+if (IS_PRODUCTION && !process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET is required in production.');
+}
 const SESSION_SECRET = process.env.SESSION_SECRET || 'patria-local-session-secret';
+const SESSION_COOKIE = IS_PRODUCTION ? '__Host-patria_session' : 'patria_session';
+const GUEST_COOKIE = IS_PRODUCTION ? '__Host-patria_guest' : 'patria_guest';
+const COOKIE_SECURE = IS_PRODUCTION || process.env.COOKIE_SECURE === 'true';
+const DEFAULT_FRONTEND_ORIGIN = 'https://www.aq-webdesign.com';
+const ALLOWED_ORIGINS = new Set(
+  (process.env.ALLOWED_ORIGINS || process.env.FRONTEND_ORIGIN || process.env.VITE_API_BASE_URL || DEFAULT_FRONTEND_ORIGIN)
+    .split(',')
+    .map(origin => origin.trim().replace(/\/$/, ''))
+    .filter(Boolean)
+);
+if (!IS_PRODUCTION) {
+  ALLOWED_ORIGINS.add('http://localhost:5173');
+  ALLOWED_ORIGINS.add('http://127.0.0.1:5173');
+  ALLOWED_ORIGINS.add('http://localhost:' + PORT);
+  ALLOWED_ORIGINS.add('http://127.0.0.1:' + PORT);
+}
+const RATE_BUCKETS = new Map();
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -60,6 +103,7 @@ function readDb() {
   db.subscribers ||= [];
   db.searches ||= [];
   db.coupons ||= DEFAULT_COUPONS;
+  db.users = db.users.map(normalizeUser);
   return db;
 }
 
@@ -67,13 +111,37 @@ function writeDb(db) {
   fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
 }
 
-function send(res, status, data) {
-  res.writeHead(status, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': '*',
+function corsHeaders(req) {
+  const origin = String(req && req.headers.origin || '').replace(/\/$/, '');
+  const headers = {
     'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Guest-Id'
-  });
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Credentials': 'true',
+    Vary: 'Origin'
+  };
+  if (origin && ALLOWED_ORIGINS.has(origin)) headers['Access-Control-Allow-Origin'] = origin;
+  return headers;
+}
+
+function originAllowed(req) {
+  const origin = String(req.headers.origin || '').replace(/\/$/, '');
+  return !origin || ALLOWED_ORIGINS.has(origin);
+}
+
+function send(res, status, data, extraHeaders = {}) {
+  const req = res._patriaReq;
+  const setCookies = [
+    ...(res._patriaGuestCookie ? [res._patriaGuestCookie] : []),
+    ...(extraHeaders['Set-Cookie'] ? (Array.isArray(extraHeaders['Set-Cookie']) ? extraHeaders['Set-Cookie'] : [extraHeaders['Set-Cookie']]) : [])
+  ];
+  const headers = {
+    'Content-Type': 'application/json; charset=utf-8',
+    ...corsHeaders(req),
+    ...extraHeaders
+  };
+  delete headers['Set-Cookie'];
+  if (setCookies.length) headers['Set-Cookie'] = setCookies;
+  res.writeHead(status, headers);
   res.end(JSON.stringify(data));
 }
 
@@ -94,6 +162,51 @@ function readBody(req) {
 
 function token() {
   return crypto.randomBytes(32).toString('hex');
+}
+
+function hmac(value) {
+  return crypto.createHmac('sha256', SESSION_SECRET).update(value).digest('hex');
+}
+
+function signedCookieValue(value) {
+  return 's:' + value + '.' + hmac(value);
+}
+
+function unsignCookieValue(value) {
+  const raw = decodeURIComponent(String(value || ''));
+  if (!raw.startsWith('s:')) return null;
+  const dot = raw.lastIndexOf('.');
+  if (dot < 3) return null;
+  const payload = raw.slice(2, dot);
+  const signature = raw.slice(dot + 1);
+  const expected = hmac(payload);
+  if (signature.length !== expected.length) return null;
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected)) ? payload : null;
+}
+
+function parseCookies(req) {
+  return String(req.headers.cookie || '').split(';').reduce((cookies, part) => {
+    const index = part.indexOf('=');
+    if (index < 0) return cookies;
+    cookies[part.slice(0, index).trim()] = part.slice(index + 1).trim();
+    return cookies;
+  }, {});
+}
+
+function cookieOptions(maxAge) {
+  return 'HttpOnly; Path=/; SameSite=Lax; Max-Age=' + maxAge + (COOKIE_SECURE ? '; Secure' : '');
+}
+
+function sessionCookie(sessionToken) {
+  return SESSION_COOKIE + '=' + encodeURIComponent(signedCookieValue(sessionToken)) + '; ' + cookieOptions(30 * 24 * 60 * 60);
+}
+
+function clearSessionCookie() {
+  return SESSION_COOKIE + '=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0' + (COOKIE_SECURE ? '; Secure' : '');
+}
+
+function guestCookie(guestId) {
+  return GUEST_COOKIE + '=' + encodeURIComponent(signedCookieValue(guestId)) + '; ' + cookieOptions(180 * 24 * 60 * 60);
 }
 
 function lineConfigured() {
@@ -158,12 +271,88 @@ function verifyPassword(password, user) {
 }
 
 function getAuth(req, db) {
-  const header = req.headers.authorization || '';
-  const sessionToken = header.startsWith('Bearer ') ? header.slice(7) : '';
+  const cookies = parseCookies(req);
+  let sessionToken = unsignCookieValue(cookies[SESSION_COOKIE]);
+  if (!sessionToken && !IS_PRODUCTION) {
+    const header = req.headers.authorization || '';
+    sessionToken = header.startsWith('Bearer ') ? header.slice(7) : '';
+  }
   const session = sessionToken && db.sessions[sessionToken];
   if (!session) return null;
   const user = db.users.find(u => u.id === session.userId);
   return user ? { user, sessionToken } : null;
+}
+
+function getGuestId(req, res) {
+  const cookies = parseCookies(req);
+  const existing = unsignCookieValue(cookies[GUEST_COOKIE]);
+  if (existing) return existing;
+  const guestId = token();
+  res._patriaGuestCookie = guestCookie(guestId);
+  return guestId;
+}
+
+function normalizeUser(user) {
+  const role = user.role || (user.isAdmin === true ? 'admin' : 'customer');
+  return {
+    ...user,
+    role,
+    isAdmin: user.isAdmin === true || role === 'admin'
+  };
+}
+
+function isAdminUser(user) {
+  return Boolean(user && (user.isAdmin === true || user.role === 'admin'));
+}
+
+function requireAdmin(res, auth) {
+  if (!auth) {
+    send(res, 401, { error: 'Admin login required.' });
+    return false;
+  }
+  if (!isAdminUser(auth.user)) {
+    send(res, 403, { error: 'Administrator role required.' });
+    return false;
+  }
+  return true;
+}
+
+function clientIp(req) {
+  return String(req.headers['cf-connecting-ip'] || req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '')
+    .split(',')[0]
+    .trim() || 'unknown';
+}
+
+function rateLimit(req, key, limit, windowMs) {
+  const now = Date.now();
+  const bucketKey = key + ':' + clientIp(req);
+  const bucket = (RATE_BUCKETS.get(bucketKey) || []).filter(timestamp => now - timestamp < windowMs);
+  if (bucket.length >= limit) {
+    RATE_BUCKETS.set(bucketKey, bucket);
+    return false;
+  }
+  bucket.push(now);
+  RATE_BUCKETS.set(bucketKey, bucket);
+  if (RATE_BUCKETS.size > 10000) {
+    for (const [entryKey, entries] of RATE_BUCKETS.entries()) {
+      if (!entries.some(timestamp => now - timestamp < 60 * 60 * 1000)) RATE_BUCKETS.delete(entryKey);
+    }
+  }
+  return true;
+}
+
+function checkRateLimit(req, res, pathName) {
+  const rules = {
+    '/api/login': [8, 15 * 60 * 1000],
+    '/api/register': [5, 60 * 60 * 1000],
+    '/api/contact': [6, 10 * 60 * 1000],
+    '/api/newsletter': [6, 10 * 60 * 1000]
+  };
+  const rule = rules[pathName];
+  if (!rule) return true;
+  if (rateLimit(req, pathName, rule[0], rule[1])) return true;
+  send(res, 429, { error: 'Too many requests. Please try again later.' });
+  return false;
 }
 
 function publicUser(user) {
@@ -172,7 +361,9 @@ function publicUser(user) {
     name: user.name,
     email: user.email,
     phone: user.phone || '',
-    address: user.address || null
+    address: user.address || null,
+    role: user.role || 'customer',
+    isAdmin: isAdminUser(user)
   };
 }
 
@@ -275,15 +466,19 @@ function mergeGuestCart(db, userId, guestId) {
 }
 
 async function handleApi(req, res) {
+  res._patriaReq = req;
+  if (!originAllowed(req)) return send(res, 403, { error: 'Origin is not allowed.' });
   if (req.method === 'OPTIONS') return send(res, 200, { ok: true });
   const url = new URL(req.url, 'http://localhost');
   const db = readDb();
   const products = productsWithOverrides(db);
   const auth = getAuth(req, db);
-  const guestId = req.headers['x-guest-id'];
+  const guestId = getGuestId(req, res);
 
   try {
     const body = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) ? await readBody(req) : {};
+    if (!checkRateLimit(req, res, url.pathname)) return;
+    if (url.pathname.startsWith('/api/admin/') && !requireAdmin(res, auth)) return;
     if (req.method === 'GET' && url.pathname === '/api/products') return send(res, 200, { products });
 
     if (req.method === 'GET' && url.pathname === '/api/coupons') {
@@ -448,13 +643,13 @@ async function handleApi(req, res) {
       if (!email || !password) return send(res, 400, { error: 'Email and password are required.' });
       if (db.users.some(u => u.email === email)) return send(res, 409, { error: 'Email already registered.' });
       const pw = hashPassword(password);
-      const user = { id: token(), name, email, phone, salt: pw.salt, passwordHash: pw.hash, address: null, createdAt: new Date().toISOString() };
+      const user = { id: token(), name, email, phone, salt: pw.salt, passwordHash: pw.hash, address: null, role: 'customer', isAdmin: false, createdAt: new Date().toISOString() };
       db.users.push(user);
       const sessionToken = token();
       db.sessions[sessionToken] = { userId: user.id, createdAt: new Date().toISOString() };
-      mergeGuestCart(db, user.id, body.guestId || guestId);
+      mergeGuestCart(db, user.id, guestId);
       writeDb(db);
-      return send(res, 201, { token: sessionToken, user: publicUser(user), cart: cartSummary(db.userCarts[user.id] || []) });
+      return send(res, 201, { user: publicUser(user), cart: cartSummary(db.userCarts[user.id] || []) }, { 'Set-Cookie': sessionCookie(sessionToken) });
     }
 
     if (req.method === 'POST' && url.pathname === '/api/login') {
@@ -464,9 +659,9 @@ async function handleApi(req, res) {
       if (!user || !verifyPassword(password, user)) return send(res, 401, { error: 'Invalid login or password.' });
       const sessionToken = token();
       db.sessions[sessionToken] = { userId: user.id, createdAt: new Date().toISOString() };
-      mergeGuestCart(db, user.id, body.guestId || guestId);
+      mergeGuestCart(db, user.id, guestId);
       writeDb(db);
-      return send(res, 200, { token: sessionToken, user: publicUser(user), cart: cartSummary(db.userCarts[user.id] || []) });
+      return send(res, 200, { user: publicUser(user), cart: cartSummary(db.userCarts[user.id] || []) }, { 'Set-Cookie': sessionCookie(sessionToken) });
     }
 
     if (req.method === 'POST' && url.pathname === '/api/auth/line/exchange') {
@@ -476,15 +671,15 @@ async function handleApi(req, res) {
       delete db.lineTickets[ticket];
       const user = db.users.find(item => item.id === entry.userId);
       if (!user || !db.sessions[entry.sessionToken]) return send(res, 401, { error: 'LINE session is no longer available.' });
-      mergeGuestCart(db, user.id, body.guestId || guestId);
+      mergeGuestCart(db, user.id, guestId);
       writeDb(db);
-      return send(res, 200, { token: entry.sessionToken, user: publicUser(user), cart: cartSummary(db.userCarts[user.id] || []) });
+      return send(res, 200, { user: publicUser(user), cart: cartSummary(db.userCarts[user.id] || []) }, { 'Set-Cookie': sessionCookie(entry.sessionToken) });
     }
 
     if (req.method === 'POST' && url.pathname === '/api/logout') {
       if (auth) delete db.sessions[auth.sessionToken];
       writeDb(db);
-      return send(res, 200, { ok: true });
+      return send(res, 200, { ok: true }, { 'Set-Cookie': clearSessionCookie() });
     }
 
     if (req.method === 'GET' && url.pathname === '/api/me') {
@@ -518,7 +713,7 @@ async function handleApi(req, res) {
       const product = products.find(p => p.id === body.productId || p.title === body.title);
       const qty = Math.max(1, Number(body.qty || 1));
       if (!product) return send(res, 404, { error: 'Product not found.' });
-      const cart = getCart(db, auth, body.guestId || guestId);
+      const cart = getCart(db, auth, guestId);
       const existing = cart.find(item => item.id === product.id);
       if (existing) existing.qty += qty;
       else cart.push({ ...product, qty });
@@ -527,7 +722,7 @@ async function handleApi(req, res) {
     }
 
     if (req.method === 'PATCH' && url.pathname === '/api/cart/item') {
-      const cart = getCart(db, auth, body.guestId || guestId);
+      const cart = getCart(db, auth, guestId);
       const item = cart.find(x => x.id === body.productId);
       if (!item) return send(res, 404, { error: 'Cart item not found.' });
       item.qty = Math.max(0, Number(body.qty || 0));
@@ -537,7 +732,7 @@ async function handleApi(req, res) {
     }
 
     if (req.method === 'DELETE' && url.pathname === '/api/cart/item') {
-      const cart = getCart(db, auth, body.guestId || guestId);
+      const cart = getCart(db, auth, guestId);
       const idx = cart.findIndex(x => x.id === body.productId);
       if (idx >= 0) cart.splice(idx, 1);
       writeDb(db);
@@ -757,6 +952,8 @@ async function handleLineCallback(req, res) {
     const lineUser = await lineVerifyIdToken(lineTokens.id_token, lineState.nonce);
     if (lineUser.nonce !== lineState.nonce) return lineCallbackPage(res, 'LINE Login nonce verification failed.');
     if (lineUser.aud !== LINE_CHANNEL_ID) return lineCallbackPage(res, 'LINE Login client verification failed.');
+    if (lineUser.iss !== 'https://access.line.me') return lineCallbackPage(res, 'LINE Login issuer verification failed.');
+    if (!lineUser.exp || Number(lineUser.exp) * 1000 <= Date.now()) return lineCallbackPage(res, 'LINE Login token is expired.');
     const lineProfile = {
       lineUserId: lineUser.sub,
       name: lineUser.name ?? null,
@@ -773,6 +970,8 @@ async function handleLineCallback(req, res) {
         lineUserId: lineProfile.lineUserId,
         linePictureUrl: lineProfile.avatar || '',
         address: null,
+        role: 'customer',
+        isAdmin: false,
         createdAt: new Date().toISOString()
       };
       db.users.push(user);
@@ -826,10 +1025,23 @@ function serveFileFromRoot(baseRoot, filePath, res) {
   });
 }
 
+function adminLoginRedirect(res) {
+  res.writeHead(302, { Location: '/admin/signin.html' });
+  res.end();
+}
+
 function serveAdmin(req, res) {
   const url = new URL(req.url, 'http://localhost');
   let filePath = decodeURIComponent(url.pathname).replace(/^\/admin/, '');
   if (!filePath || filePath === '/') filePath = '/index.html';
+  const page = path.basename(filePath);
+  const isHtml = path.extname(filePath).toLowerCase() === '.html';
+  const isPublicAdminPage = page === 'signin.html' || page === 'signup.html' || page === '404-error.html';
+  if (isHtml && !isPublicAdminPage) {
+    const db = readDb();
+    const auth = getAuth(req, db);
+    if (!auth || !isAdminUser(auth.user)) return adminLoginRedirect(res);
+  }
   return serveFileFromRoot(ADMIN_ROOT, filePath, res);
 }
 

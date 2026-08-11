@@ -348,7 +348,7 @@ function App() {
   useEffect(() => {
     Promise.all([getCurrentUser().catch(() => null), getProducts(), getCart(), getCoupons().catch(() => ({ coupons: [] }))])
       .then(([me, productData, cartData, couponData]) => {
-        setUser(me?.success ? me.user : null);
+        setUser(me?.user || null);
         setProducts(productData.products || []);
         setCart({ items: cartData.items || [], total: cartData.total || 0 });
         setCoupons(couponData.coupons?.length ? couponData.coupons : fallbackCoupons);
@@ -569,7 +569,7 @@ function App() {
     setAccountError("");
     try {
       const data = await register(registerForm);
-      setUser({ id: data.user.id, name: data.user.display_name || data.user.name, email: data.user.email, avatar: data.user.avatar_url, lineUserId: data.user.line_user_id });
+      setUser(data.user);
       setRegisterForm({ name: "", email: "", phone: "", password: "" });
       setAccountPage("dashboard");
     } catch (requestError) {

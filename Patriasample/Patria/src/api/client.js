@@ -89,19 +89,12 @@ export function getCoupons() {
 }
 
 export function getCart() {
-  return apiRequest("/api/cart", {
-    headers: {
-      "X-Guest-Id": getGuestId(),
-    },
-  });
+  return apiRequest("/api/cart");
 }
 
 export function addToCart(productId, qty = 1) {
   return apiRequest("/api/cart/add", {
     method: "POST",
-    headers: {
-      "X-Guest-Id": getGuestId(),
-    },
     body: JSON.stringify({ productId, qty }),
   });
 }
@@ -109,9 +102,6 @@ export function addToCart(productId, qty = 1) {
 export function updateCartItem(productId, qty) {
   return apiRequest("/api/cart/item", {
     method: "PATCH",
-    headers: {
-      "X-Guest-Id": getGuestId(),
-    },
     body: JSON.stringify({ productId, qty }),
   });
 }
@@ -119,9 +109,6 @@ export function updateCartItem(productId, qty) {
 export function removeCartItem(productId) {
   return apiRequest("/api/cart/item", {
     method: "DELETE",
-    headers: {
-      "X-Guest-Id": getGuestId(),
-    },
     body: JSON.stringify({ productId }),
   });
 }
@@ -135,14 +122,4 @@ export function checkout(fulfillmentDate, couponCode = "") {
 
 export function getOrders() {
   return apiRequest("/api/orders");
-}
-
-function getGuestId() {
-  const key = "patriaGuestId";
-  let guestId = window.localStorage.getItem(key);
-  if (!guestId) {
-    guestId = `${Date.now().toString(36)}-${crypto.randomUUID()}`;
-    window.localStorage.setItem(key, guestId);
-  }
-  return guestId;
 }

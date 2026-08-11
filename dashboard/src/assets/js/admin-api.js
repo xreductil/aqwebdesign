@@ -7,9 +7,7 @@ const INVENTORY_PAGE_SIZE = 10;
 
 async function api(path, options = {}) {
   const headers = { ...(options.headers || {}) };
-  const token = localStorage.getItem('patriaAuthToken');
-  if (token) headers.Authorization = 'Bearer ' + token;
-  const response = await fetch(API_BASE + path, { ...options, headers });
+  const response = await fetch(API_BASE + path, { ...options, credentials: 'include', headers });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || 'API request failed.');
   return data;
@@ -20,9 +18,20 @@ function money(value) {
 }
 
 function productImage(src) {
-  if (!src) return './assets/images/product-1.webp';
-  if (/^https?:\/\//.test(src)) return src;
-  return STATIC_BASE.replace(/\/$/, '') + '/' + String(src).replace(/^\.\//, '').replace(/^\//, '');
+  const fallback = './assets/images/product-1.webp';
+  const value = String(src || '').trim();
+  if (!value || /^(?:javascript|data|vbscript):/i.test(value)) return fallback;
+  if (/^https?:\/\//i.test(value)) {
+    try {
+      const url = new URL(value);
+      return url.href;
+    } catch {
+      return fallback;
+    }
+  }
+  const safePath = value.replace(/[\u0000-\u001f"'<>`\\]/g, '').replace(/^\.\//, '').replace(/^\/+/, '');
+  if (!safePath) return fallback;
+  return STATIC_BASE.replace(/\/$/, '') + '/' + safePath;
 }
 
 function setText(selector, value) {
@@ -38,6 +47,14 @@ function escapeHtml(value) {
     '"': '&quot;',
     "'": '&#39;'
   }[char]));
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
+function productImageAttr(src) {
+  return escapeAttr(productImage(src));
 }
 
 function formatOrderDate(value) {
@@ -87,7 +104,7 @@ function renderTopProducts(products, orders = []) {
   }
   list.innerHTML = rows.map((product, index) => {
     return '<li class="list-group-item d-flex align-items-center gap-3">'
-      + '<img src="' + productImage(product.img) + '" class="rounded object-fit-cover" width="48" height="48" alt="' + escapeHtml(product.title || 'Product') + '">'
+      + '<img src="' + productImageAttr(product.img) + '" class="rounded object-fit-cover" width="48" height="48" alt="' + escapeHtml(product.title || 'Product') + '">'
       + '<div class="flex-grow-1">'
       + '<p class="mb-1">' + escapeHtml(product.title || 'Untitled product') + '</p>'
       + '<div class="d-flex align-items-center gap-2 text-muted">'
@@ -112,7 +129,7 @@ function renderLowStockProducts(products) {
   }
   list.innerHTML = rows.map(({ product, stock }) => {
     return '<li class="list-group-item d-flex align-items-center gap-3">'
-      + '<img src="' + productImage(product.img) + '" class="rounded object-fit-cover" width="48" height="48" alt="' + escapeHtml(product.title || 'Product') + '">'
+      + '<img src="' + productImageAttr(product.img) + '" class="rounded object-fit-cover" width="48" height="48" alt="' + escapeHtml(product.title || 'Product') + '">'
       + '<div class="flex-grow-1">'
       + '<p class="mb-1">' + escapeHtml(product.title || 'Untitled product') + '</p>'
       + '<small>ID: #' + escapeHtml(String(product.id || '').toUpperCase().slice(0, 8)) + '</small>'
@@ -138,7 +155,7 @@ function renderOrderDetailCard(order) {
   const itemRows = items.map(item => {
     const lineTotal = Number(item.priceValue || 0) * Number(item.qty || 0);
     return '<div class="admin-order-item">'
-      + '<img src="' + productImage(item.img) + '" alt="' + escapeHtml(item.title || 'Item') + '">'
+      + '<img src="' + productImageAttr(item.img) + '" alt="' + escapeHtml(item.title || 'Item') + '">'
       + '<div><strong>' + escapeHtml(item.title || 'Untitled item') + '</strong><span>' + escapeHtml(item.cat || 'Menu') + ' • ' + escapeHtml(item.price || money(item.priceValue)) + ' x ' + Number(item.qty || 0) + '</span></div>'
       + '<b>' + money(lineTotal) + '</b>'
       + '</div>';
@@ -214,7 +231,7 @@ function renderRecentOrders(orders) {
     const customer = order.customer && order.customer.name ? order.customer.name : 'Guest customer';
     const date = formatOrderDate(order.createdAt);
     return '<li class="list-group-item d-flex align-items-center gap-3 admin-order-row" role="button" tabindex="0" data-order-index="' + index + '">'
-      + '<img src="' + productImage(first.img) + '" class="rounded object-fit-cover" width="48" height="48" alt="' + escapeHtml(first.title || 'Order') + '">'
+      + '<img src="' + productImageAttr(first.img) + '" class="rounded object-fit-cover" width="48" height="48" alt="' + escapeHtml(first.title || 'Order') + '">'
       + '<div class="flex-grow-1">'
       + '<p class="mb-1">Order #' + escapeHtml(order.id) + '</p>'
       + '<div class="d-flex align-items-center gap-2 text-muted flex-wrap">'
@@ -300,7 +317,7 @@ function renderReportTopProducts(orders, products) {
   }
   list.innerHTML = rows.map(product => {
     return '<div class="list-group-item p-3 d-flex align-items-center">'
-      + '<div class="me-3"><img src="' + productImage(product.img) + '" alt="' + escapeHtml(product.title || 'Product') + '" class="rounded object-fit-cover" style="width:48px; height:48px;"></div>'
+      + '<div class="me-3"><img src="' + productImageAttr(product.img) + '" alt="' + escapeHtml(product.title || 'Product') + '" class="rounded object-fit-cover" style="width:48px; height:48px;"></div>'
       + '<div class="flex-grow-1"><div class="d-flex justify-content-between align-items-center gap-3">'
       + '<div><h6 class="mb-0">' + escapeHtml(product.title || 'Untitled product') + '</h6><small class="text-secondary">' + Number(product.qty || 0) + ' units sold</small></div>'
       + '<div class="text-end"><strong>' + money(product.revenue || 0) + '</strong></div>'
@@ -414,7 +431,7 @@ function renderInventory(products) {
     const index = start + pageIndex;
     return '<tr class="align-middle">'
       + '<td><a href="#" class="d-inline-flex align-items-center text-reset text-decoration-none">'
-      + '<img src="' + productImage(product.img) + '" alt="' + escapeHtml(product.title) + '" class="avatar avatar-md rounded object-fit-cover" />'
+      + '<img src="' + productImageAttr(product.img) + '" alt="' + escapeHtml(product.title) + '" class="avatar avatar-md rounded object-fit-cover" />'
       + '<span class="ms-3">' + escapeHtml(product.title) + '</span></a></td>'
       + '<td>PRD' + String(index + 1).padStart(3, '0') + '</td>'
       + '<td>' + escapeHtml(product.cat || 'Menu') + '</td>'
@@ -639,7 +656,7 @@ function openProductEditor(product, index) {
   modal.innerHTML = '<form class="admin-product-card">'
     + '<button type="button" class="admin-order-close" aria-label="Close product editor">&times;</button>'
     + '<div class="admin-order-head"><span>Edit Product</span><strong>' + escapeHtml(product.title) + '</strong></div>'
-    + '<div class="admin-product-preview"><img src="' + productImage(product.img) + '" alt="' + escapeHtml(product.title) + '"><span>PRD' + String(index + 1).padStart(3, '0') + '</span></div>'
+    + '<div class="admin-product-preview"><img src="' + productImageAttr(product.img) + '" alt="' + escapeHtml(product.title) + '"><span>PRD' + String(index + 1).padStart(3, '0') + '</span></div>'
     + '<label>Product Name<input name="title" value="' + escapeHtml(product.title) + '" required></label>'
     + '<label>Category<input name="cat" value="' + escapeHtml(product.cat || 'Menu') + '" required></label>'
     + '<label>Price<input name="priceValue" type="number" min="0" step="0.01" value="' + Number(product.priceValue || 0).toFixed(2) + '" required></label>'
