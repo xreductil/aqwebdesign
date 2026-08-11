@@ -309,6 +309,7 @@ function App() {
   const [orders, setOrders] = useState([]);
   const [category, setCategory] = useState("ALL");
   const [cartOpen, setCartOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [coupons, setCoupons] = useState([]);
   const [couponCode, setCouponCode] = useState("");
@@ -636,8 +637,8 @@ function App() {
       <nav className="navbar navbar-expand-lg" id="nav">
         <div className="container">
           <a className="navbar-brand" href="#hero"><div className="blogo"><div className="bico"><i className="fas fa-utensils" /></div><div><div className="bname">Pat<span>ria</span></div><div className="bsub">Chinese Food &amp; Restaurant</div></div></div></a>
-          <button className="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navmenu"><i className="fas fa-bars" /></button>
-          <div className="collapse navbar-collapse" id="navmenu">
+          <button className="navbar-toggler border-0" type="button" onClick={() => setNavOpen((open) => !open)} aria-expanded={navOpen} aria-controls="navmenu" aria-label="Toggle navigation"><i className={navOpen ? "fas fa-times" : "fas fa-bars"} /></button>
+          <div className={`collapse navbar-collapse${navOpen ? " show" : ""}`} id="navmenu">
             <ul className="navbar-nav mx-auto">
               {[["Home", "hero"], ["About", "about"], ["Menu", "menu"], ["Chefs", "chefs"], ["Reservation", "reservation"], ["Reviews", "testimonials"], ["Contact", "contact-section"]].map(([label, id]) => <li className="nav-item" key={id}><a className="nav-link" href={`#${id}`}>{label}</a></li>)}
             </ul>
