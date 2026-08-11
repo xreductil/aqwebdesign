@@ -199,7 +199,7 @@ function CheckoutModal({ cart, user, fulfillmentDate, total, couponCode, onConfi
 function GalleryModal({ items, index, setIndex, onClose }) {
   if (index === null) return null;
   const item = items[index];
-  return <div id="galPop" className="open" onClick={(event) => event.target === event.currentTarget && onClose()}><div className="gpbox"><button type="button" className="gpclose" onClick={onClose} aria-label="Close gallery"><i className="fas fa-times" /></button><img id="gpImg" src={item.img} alt={item.title} /><div className="gpcap"><h5 id="gpTitle">{item.title}</h5><p id="gpDesc">{item.desc}</p></div><div className="gpnav"><button type="button" onClick={() => setIndex((index - 1 + items.length) % items.length)}><i className="fas fa-chevron-left me-1" />Prev</button><button type="button" onClick={() => setIndex((index + 1) % items.length)}>Next <i className="fas fa-chevron-right ms-1" /></button></div></div></div>;
+  return <div id="galPop" className="open" onClick={(event) => event.target === event.currentTarget && onClose()}><div className="gpbox"><button type="button" className="gpclose" onClick={onClose} aria-label="Close gallery"><i className="fas fa-times" /></button><div className="gallery-scroll"><img id="gpImg" src={item.img} alt={item.title} /><div className="gpcap"><h5 id="gpTitle">{item.title}</h5><p id="gpDesc">{item.desc}</p></div><div className="gpnav"><button type="button" onClick={() => setIndex((index - 1 + items.length) % items.length)}><i className="fas fa-chevron-left me-1" />Prev</button><button type="button" onClick={() => setIndex((index + 1) % items.length)}>Next <i className="fas fa-chevron-right ms-1" /></button></div></div></div></div>;
 }
 
 function ReservationSection({ form, setForm, status, setStatus }) {

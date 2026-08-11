@@ -449,6 +449,17 @@
   padding-bottom: 12px;
 }
 
+#galPop.open .gallery-scroll {
+  width: 100%;
+  max-height: calc(100vh - 108px);
+  overflow-y: scroll;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  touch-action: pan-y;
+}
+
 #galPop.open .gpbox img {
   display: block;
   max-height: none;
