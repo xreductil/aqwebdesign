@@ -3,6 +3,10 @@
   "cleanUrls": false,
   "rewrites": [
     {
+      "source": "/Patriasample/Patria/dist/liff-login.html",
+      "destination": "/liff-login.html"
+    },
+    {
       "source": "/Patriasample/Patria/index.html",
       "destination": "/Patriasample/Patria/dist/index.html"
     },
