@@ -1145,8 +1145,7 @@ if (accountOv) {
 
 if (lineLoginBtn) {
     lineLoginBtn.addEventListener("click", function() {
-        var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-        window.location.href = isMobile ? "https://liff.line.me/2011054194-YNQIwkml" : "/auth/line";
+        window.location.href = "/auth/line";
     });
 }
 

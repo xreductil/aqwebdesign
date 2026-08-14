@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LINE 登入</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <p id="status">正在連接 LINE…</p>
+  <script>
+    const LIFF_ID = "2011054194-YNQIwkml";
+    const status = document.getElementById("status");
+
+    async function main() {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) {
+        status.textContent = "正在開啟 LINE App…";
+        liff.login({ redirectUri: window.location.href });
+        return;
+      }
+
+      const idToken = liff.getIDToken();
+      if (!idToken) throw new Error("無法取得 LINE ID Token");
+      status.textContent = "LINE 驗證中…";
+
+      const response = await fetch("/api/auth/liff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id_token: idToken })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "LINE 登入失敗");
+
+      window.location.replace("/Patriasample/Patria/dist/index.html?line_login=success");
+    }
+
+    main().catch((error) => {
+      console.error(error);
+      status.textContent = "LINE 登入失敗：" + (error.message || "未知錯誤");
+    });
+  </script>
+</body>
+</html>
