@@ -47,25 +47,22 @@
 
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) {
-        loginButton.hidden = false;
-        statusText.textContent = '請使用 LINE App 完成登入。';
-        loginButton.onclick = () => liff.login({ redirectUri: location.href });
+        statusText.textContent = '正在開啟 LINE App…';
+        await liff.login({ redirectUri: window.location.href });
         return;
       }
 
       const idToken = liff.getIDToken();
       if (!idToken) throw new Error('LINE 沒有回傳 ID Token。');
       statusText.textContent = '登入驗證中…';
-      const response = await fetch('/api/auth/line/liff', {
+      const response = await fetch('/api/auth/liff', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Guest-Id': localStorage.getItem('patriaGuestId') || ''
+          'Content-Type': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify({
-          idToken,
-          guestId: localStorage.getItem('patriaGuestId') || ''
+          id_token: idToken
         })
       });
       const data = await response.json().catch(() => ({}));
