@@ -278,11 +278,11 @@
   position: fixed;
   inset: 0;
   z-index: 2200;
-  display: grid;
-  place-items: center;
-  padding: 24px;
+  display: block;
+  padding: 0;
   background: rgba(24, 12, 8, 0.72);
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .checkout-modal {
@@ -331,7 +331,7 @@
 .checkout-back { margin-top: 10px; border: 1px solid #efd7bb; background: #fff; color: #6e5145; }
 
 @media (max-width: 720px) {
-  .checkout-overlay { padding: 12px; }
+  .checkout-overlay { padding: 0; }
   .checkout-modal { max-height: calc(100vh - 24px); padding: 20px; }
   .checkout-grid { grid-template-columns: 1fr; }
 }
@@ -339,6 +339,7 @@
 .checkout-page {
   width: 100%;
   min-height: 100%;
+  box-sizing: border-box;
   color: #3e2a22;
   background: #fffdfa;
 }

@@ -3200,7 +3200,7 @@ footer {
   .account-dashboard .container {
     position: relative;
   }
-  #accountOv.dashboard-mode .account-menu-toggle {
+  .react-account-dashboard .account-menu-toggle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -3214,6 +3214,10 @@ footer {
     border-radius: 12px;
     background: #fffdfa;
     box-shadow: 0 14px 30px rgba(58, 31, 20, 0.08);
+  }
+  .react-account-dashboard .account-menu-toggle {
+    position: relative;
+    z-index: 7;
   }
   .account-menu-toggle span {
     width: 21px;

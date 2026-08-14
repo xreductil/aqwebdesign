@@ -256,20 +256,22 @@ function DealCountdown() {
 }
 
 function MemberDashboard({ user, orders, page, setPage, addressForm, setAddressForm, detailsForm, setDetailsForm, onSaveAddress, onSaveDetails, onLinkLine, onLogout, onClose, notice }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const addressLabel = addressForm.address ? [addressForm.address, addressForm.city, addressForm.zip].filter(Boolean).join(", ") : "No address saved yet.";
   return (
     <div className="account-dashboard open react-account-dashboard" id="accountDashboard">
+      <button type="button" className={`account-menu-toggle${menuOpen ? " open" : ""}`} onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-controls="accountSideMenu" aria-label="Toggle account menu"><span /><span /><span /></button>
       <div className="container">
         <div className="account-dashboard-grid">
-          <aside className="account-side">
+          <aside className={`account-side${menuOpen ? " open" : ""}`} id="accountSideMenu">
             <div className="account-site-links">
-              <a href="#hero" onClick={onClose}>Home</a>
-              <a href="#menu" onClick={onClose}>Menu</a>
-              <a href="#contact-section" onClick={onClose}>Contact</a>
-              <button type="button" onClick={onClose}>Back to store</button>
+              <a href="#hero" onClick={() => { setMenuOpen(false); onClose(); }}>Home</a>
+              <a href="#menu" onClick={() => { setMenuOpen(false); onClose(); }}>Menu</a>
+              <a href="#contact-section" onClick={() => { setMenuOpen(false); onClose(); }}>Contact</a>
+              <button type="button" onClick={() => { setMenuOpen(false); onClose(); }}>Back to store</button>
             </div>
-            {[['dashboard', 'Dashboard'], ['orders', `Orders (${orders.length})`], ['shipping', '物流 Shipping'], ['addresses', 'Addresses'], ['payments', '金流 Payments'], ['details', 'Account Details']].map(([key, label]) => <button className={page === key ? "active" : ""} type="button" data-account-page={key} key={key} onClick={() => setPage(key)}>{label}</button>)}
-            <button type="button" id="linkLineBtn" onClick={onLinkLine}>綁定 LINE 帳號</button>
+            {[['dashboard', 'Dashboard'], ['orders', `Orders (${orders.length})`], ['shipping', '物流 Shipping'], ['addresses', 'Addresses'], ['payments', '金流 Payments'], ['details', 'Account Details']].map(([key, label]) => <button className={page === key ? "active" : ""} type="button" data-account-page={key} key={key} onClick={() => { setMenuOpen(false); setPage(key); }}>{label}</button>)}
+            <button type="button" id="linkLineBtn" onClick={() => { setMenuOpen(false); onLinkLine(); }}>綁定 LINE 帳號</button>
             <button id="accountLogout" type="button" onClick={onLogout}>Logout</button>
           </aside>
 
