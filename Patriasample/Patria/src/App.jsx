@@ -466,6 +466,13 @@ function App() {
   const localFavouriteProducts = products.slice(3, 9);
 
   async function handleAdd(productId, quantity = 1) {
+    if (!user) {
+      setSelectedProduct(null);
+      setProductQuantity(1);
+      setAccountError("請先登入後再使用購物車。");
+      setAccountOpen(true);
+      return;
+    }
     try {
       setCart(await addToCart(productId, quantity));
       setSelectedProduct(null);
@@ -479,6 +486,15 @@ function App() {
   function openProduct(product) {
     setSelectedProduct(product);
     setProductQuantity(1);
+  }
+
+  function handleOpenCart() {
+    if (!user) {
+      setAccountError("請先登入後再使用購物車。");
+      setAccountOpen(true);
+      return;
+    }
+    setCartOpen(true);
   }
 
   function openCheckout() {
@@ -650,7 +666,7 @@ function App() {
               <a href="/admin/signin.html" id="adminOpen" className="admin-dashboard-link" title="管理後台" aria-label="管理後台" data-tooltip="管理後台"><i className="fas fa-table-columns" /></a>
               <button type="button" id="navSearchBtn" onClick={() => setSearchOpen(true)} title="搜尋" aria-label="搜尋" data-tooltip="搜尋"><i className="fas fa-search" /></button>
               <button type="button" id="accountOpen" className="nav-link" onClick={() => setAccountOpen(true)} title="帳戶" aria-label="帳戶" data-tooltip="會員帳戶"><i className="fas fa-user" /></button>
-              <button type="button" id="orderOpen" className="nav-link" onClick={() => setCartOpen(true)} title="購物車" aria-label="購物車" data-tooltip="購物車"><i className="fas fa-shopping-cart" /><span className="cart-count">{cart.items.length}</span></button>
+              <button type="button" id="orderOpen" className="nav-link" onClick={handleOpenCart} title="購物車" aria-label="購物車" data-tooltip="購物車"><i className="fas fa-shopping-cart" /><span className="cart-count">{cart.items.length}</span></button>
             </div>
           </div>
         </div>
