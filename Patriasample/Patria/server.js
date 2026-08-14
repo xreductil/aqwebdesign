@@ -245,10 +245,12 @@ async function lineProfile(accessToken) {
 }
 
 async function lineVerifyIdToken(idToken, nonce) {
+  const params = new URLSearchParams({ id_token: idToken, client_id: LINE_CHANNEL_ID });
+  if (nonce) params.set('nonce', nonce);
   const response = await fetch('https://api.line.me/oauth2/v2.1/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ id_token: idToken, client_id: LINE_CHANNEL_ID, nonce })
+    body: params
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error_description || data.error || 'LINE ID token verification failed.');
@@ -662,6 +664,44 @@ async function handleApi(req, res) {
       const password = String(body.password || '');
       const user = db.users.find(u => u.email === login || u.name.toLowerCase() === login);
       if (!user || !verifyPassword(password, user)) return send(res, 401, { error: 'Invalid login or password.' });
+      const sessionToken = token();
+      db.sessions[sessionToken] = { userId: user.id, createdAt: new Date().toISOString() };
+      mergeGuestCart(db, user.id, guestId);
+      writeDb(db);
+      return send(res, 200, { user: publicUser(user), cart: cartSummary(db.userCarts[user.id] || []) }, { 'Set-Cookie': sessionCookie(sessionToken) });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/auth/liff') {
+      const idToken = String(body.id_token || '').trim();
+      if (!idToken) return send(res, 400, { error: 'LINE ID token is required.' });
+      if (!LINE_CHANNEL_ID) return send(res, 500, { error: 'LINE channel is not configured.' });
+
+      const lineUser = await lineVerifyIdToken(idToken);
+      if (lineUser.aud !== LINE_CHANNEL_ID) return send(res, 401, { error: 'LINE channel verification failed.' });
+      if (lineUser.iss !== 'https://access.line.me') return send(res, 401, { error: 'LINE issuer verification failed.' });
+      if (!lineUser.exp || Number(lineUser.exp) * 1000 <= Date.now()) return send(res, 401, { error: 'LINE ID token is expired.' });
+
+      const lineUserId = lineUser.sub;
+      let user = db.users.find(item => item.lineUserId === lineUserId);
+      if (!user) {
+        user = {
+          id: token(),
+          name: String(lineUser.name || 'LINE Customer').trim(),
+          email: 'line_' + lineUserId + '@line.local',
+          phone: '',
+          lineUserId,
+          linePictureUrl: lineUser.picture || '',
+          address: null,
+          role: 'customer',
+          isAdmin: false,
+          createdAt: new Date().toISOString()
+        };
+        db.users.push(user);
+      } else {
+        user.name = String(lineUser.name || user.name || 'LINE Customer').trim();
+        user.linePictureUrl = lineUser.picture || user.linePictureUrl || '';
+      }
+
       const sessionToken = token();
       db.sessions[sessionToken] = { userId: user.id, createdAt: new Date().toISOString() };
       mergeGuestCart(db, user.id, guestId);
