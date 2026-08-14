@@ -629,6 +629,95 @@ export default {
         );
       }
 
+      /* LIFF Login: verify the browser-provided ID token before creating a session. */
+      if (request.method === "POST" && url.pathname === "/api/auth/liff") {
+        const body = await readJson<{ id_token?: string; idToken?: string }>(request);
+        const idToken = String(body.id_token || body.idToken || "").trim();
+
+        if (!idToken) {
+          return Response.json(
+            { success: false, error: "Missing LINE ID token" },
+            { status: 400 }
+          );
+        }
+
+        const verifyResponse = await fetch("https://api.line.me/oauth2/v2.1/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            id_token: idToken,
+            client_id: env.LINE_CHANNEL_ID,
+          }),
+        });
+        const lineUser = (await verifyResponse.json()) as LineVerifyResponse;
+        const isExpired = Boolean(lineUser.exp && lineUser.exp * 1000 <= Date.now());
+
+        if (
+          !verifyResponse.ok ||
+          !lineUser.sub ||
+          lineUser.iss !== "https://access.line.me" ||
+          lineUser.aud !== env.LINE_CHANNEL_ID ||
+          isExpired
+        ) {
+          return Response.json(
+            { success: false, error: "Failed to verify LINE ID token" },
+            { status: 401 }
+          );
+        }
+
+        await env.patria_db.prepare(`
+          INSERT INTO users (line_user_id, display_name, avatar_url)
+          VALUES (?, ?, ?)
+          ON CONFLICT(line_user_id) DO UPDATE SET
+            display_name = excluded.display_name,
+            avatar_url = excluded.avatar_url,
+            updated_at = CURRENT_TIMESTAMP
+        `).bind(lineUser.sub, lineUser.name ?? null, lineUser.picture ?? null).run();
+
+        const user = await env.patria_db.prepare(`
+          SELECT id, line_user_id, display_name, avatar_url, email, phone,
+                 address_json, created_at, updated_at
+          FROM users
+          WHERE line_user_id = ?
+          LIMIT 1
+        `).bind(lineUser.sub).first<Record<string, unknown>>();
+
+        if (!user) {
+          return Response.json(
+            { success: false, error: "Unable to load LINE member" },
+            { status: 500 }
+          );
+        }
+
+        await env.patria_db
+          .prepare("DELETE FROM sessions WHERE expires_at <= CURRENT_TIMESTAMP")
+          .run();
+        const sessionToken = await createSession(env.patria_db, Number(user.id));
+        const publicUser = {
+          id: user.id,
+          lineUserId: user.line_user_id,
+          name: user.display_name,
+          avatar: user.avatar_url,
+          email: user.email,
+          phone: user.phone,
+          address: user.address_json ? JSON.parse(String(user.address_json)) : {},
+          createdAt: user.created_at,
+          updatedAt: user.updated_at,
+        };
+        const headers = new Headers({
+          "Content-Type": "application/json; charset=utf-8",
+        });
+        headers.append(
+          "Set-Cookie",
+          createCookie("patria_session", sessionToken, 30 * 24 * 60 * 60)
+        );
+
+        return new Response(
+          JSON.stringify({ success: true, token: sessionToken, user: publicUser }),
+          { status: 200, headers }
+        );
+      }
+
       if (request.method === "POST" && url.pathname === "/api/contact") {
         const body = await readJson<{
           name?: string;

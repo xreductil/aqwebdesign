@@ -13,7 +13,7 @@
     <header>
         <nav class="nav-bar">
             <a href="index.html" class="nav-brand">A.Q. webdesign</a>
-            <button class="nav-toggle" aria-label="切換選單">
+            <button class="nav-toggle" type="button" aria-label="開啟選單" aria-expanded="false">
                 <span></span>
                 <span></span>
                 <span></span>
@@ -334,39 +334,6 @@
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const navToggle = document.querySelector('.nav-toggle');
-            const navMenu = document.querySelector('.nav-menu');
-            const navBar = document.querySelector('.nav-bar');
-            if (navToggle && navMenu && navBar) {
-                navToggle.addEventListener('click', function () {
-                    navMenu.classList.toggle('active');
-                    this.classList.toggle('open');
-                    navBar.classList.toggle('open');
-                });
-                
-                // 点击菜单项后关闭菜单
-                const navLinks = navMenu.querySelectorAll('a');
-                navLinks.forEach(link => {
-                    link.addEventListener('click', function (e) {
-                        const href = this.getAttribute('href');
-                        const linkUrl = new URL(href, location.href);
-                        // 只有相同頁面且帶 hash 的連結才實現平滑滾動
-                        if (linkUrl.hash && (href.startsWith('#') || (linkUrl.pathname === location.pathname && linkUrl.search === location.search))) {
-                            e.preventDefault();
-                            const targetId = linkUrl.hash.substring(1);
-                            const target = document.getElementById(targetId);
-                            if (target) {
-                                smoothScroll(target, 800); // 800ms 滾動時間
-                            }
-                        }
-                        navMenu.classList.remove('active');
-                        navToggle.classList.remove('open');
-                        navBar.classList.remove('open');
-                    });
-                });
-            }
-            
-
             const portfolioButtons = document.querySelectorAll('.portfolio-filter-pill');
             const portfolioItems = document.querySelectorAll('.portfolio-preview > a');
             const portfolioCount = document.querySelector('.portfolio-filter-count');
@@ -511,6 +478,7 @@
         </div>
         <p class="footer-copy">&copy; 2026 A.Q. webdesign All rights reserved.</p>
     </footer>
+    <script src="nav-mobile.js"></script>
     <script src="nav-dropdown.js"></script>
     <script src="contact-modal.js"></script>
 </body>
