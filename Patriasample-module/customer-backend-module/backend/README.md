@@ -1,5 +1,9 @@
 # Customer backend contract
 
+`customer-router.js` 提供與 HTTP framework 無關的會員帳戶路由處理；host application 注入 password hashing、session cookie 與 persistence callback。
+
+目前提供的 repository contract 包含 `users`、`sessions`、`orders` 與 `carts`；JSON adapter 位於專案的 `data-adapters/json-repositories.js`。
+
 需要提供以下 API：
 
 | Method | Path | 用途 |

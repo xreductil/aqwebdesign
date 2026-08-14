@@ -2,14 +2,29 @@
  * Portable cart API client.
  * Change apiBaseUrl when the module is mounted on another site.
  */
-export function createCartApi({ apiBaseUrl = "" } = {}) {
+function createBrowserGuestId() {
+  try {
+    const storageKey = "patria_guest_id";
+    const existing = window.localStorage.getItem(storageKey);
+    if (existing) return existing;
+    const value = globalThis.crypto?.randomUUID?.() || `guest_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    window.localStorage.setItem(storageKey, value);
+    return value;
+  } catch {
+    return "guest_" + Math.random().toString(36).slice(2);
+  }
+}
+
+export function createCartApi({ apiBaseUrl = "", guestId, getGuestId = createBrowserGuestId } = {}) {
   const request = async (path, options = {}) => {
+    const resolvedGuestId = guestId || getGuestId?.();
     const response = await fetch(`${apiBaseUrl.replace(/\/$/, "")}${path}`, {
       ...options,
       credentials: "include",
       cache: "no-store",
       headers: {
         Accept: "application/json",
+        ...(resolvedGuestId ? { "X-Guest-ID": resolvedGuestId } : {}),
         ...(options.body ? { "Content-Type": "application/json" } : {}),
         ...(options.headers || {}),
       },

@@ -287,6 +287,11 @@ function getGuestId(req, res) {
   const cookies = parseCookies(req);
   const existing = unsignCookieValue(cookies[GUEST_COOKIE]);
   if (existing) return existing;
+  const headerGuestId = String(req.headers['x-guest-id'] || '').trim();
+  if (/^[A-Za-z0-9_-]{8,128}$/.test(headerGuestId)) {
+    res._patriaGuestCookie = guestCookie(headerGuestId);
+    return headerGuestId;
+  }
   const guestId = token();
   res._patriaGuestCookie = guestCookie(guestId);
   return guestId;

@@ -4,6 +4,7 @@
 import * as bootstrap from 'bootstrap';
 import './custom.js';
 import { initCreateProduct, loadAdminDashboard, loadAdminReports, loadInventory } from './admin-api.js';
+import { employeeModuleConfig } from './module-config.js';
 
 
 // Import SCSS
@@ -14,7 +15,7 @@ loadInventory();
 loadAdminReports();
 initCreateProduct();
 
-const API_BASE = String(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const API_BASE = employeeModuleConfig.apiBaseUrl;
 
 async function authRequest(path, options = {}) {
   const response = await fetch(API_BASE + path, {

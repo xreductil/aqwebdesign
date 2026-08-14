@@ -352,6 +352,10 @@ function App() {
         setProducts(productData.products || []);
         setCart({ items: cartData.items || [], total: cartData.total || 0 });
         setCoupons(couponData.coupons?.length ? couponData.coupons : fallbackCoupons);
+        if (me?.user && new URLSearchParams(window.location.search).get("line_login") === "success") {
+          setAccountOpen(true);
+          window.history.replaceState({}, document.title, `${window.location.pathname}#account`);
+        }
       })
       .catch((requestError) => setError(requestError.message))
       .finally(() => setLoading(false));

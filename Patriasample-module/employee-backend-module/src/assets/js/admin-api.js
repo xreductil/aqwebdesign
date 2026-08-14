@@ -1,6 +1,5 @@
-import patriaProducts from '../../../../Patria/data/products.json';
+import { employeeModuleConfig, resolveModuleUrl } from './module-config.js';
 
-const STATIC_BASE = '../../Patria';
 const SAMPLE_PRODUCTS_KEY = 'patriaSampleProducts';
 const SAMPLE_PRODUCTS_VERSION_KEY = 'patriaSampleProductsVersion';
 const SAMPLE_PRODUCTS_VERSION = 'patria-products-json-v2-23';
@@ -19,7 +18,7 @@ const SAMPLE_DEFAULT_COUPONS = [
   { code: 'FAMILY5', label: '$5 family order discount', type: 'fixed', value: 5, min: 40, enabled: true }
 ];
 
-const SAMPLE_DEFAULT_PRODUCTS = patriaProducts;
+const SAMPLE_DEFAULT_PRODUCTS = employeeModuleConfig.defaultProducts;
 
 function sampleRead(key, fallback) {
   try {
@@ -214,7 +213,7 @@ function productImage(src) {
   const clean = value.replace(/[\u0000-\u001f"'<>`\\]/g, '').replace(/^\.\//, '').replace(/^\//, '');
   if (!clean) return fallback;
   if (clean.startsWith('assets/')) return './' + clean;
-  if (clean.startsWith('img/')) return STATIC_BASE.replace(/\/$/, '') + '/' + clean;
+  if (clean.startsWith('img/')) return resolveModuleUrl(clean) || fallback;
   return clean;
 }
 
@@ -1002,14 +1001,14 @@ export async function loadAdminDashboard() {
       orders = ordersData.orders || [];
       latestAdminOrders = orders;
     } catch (ordersError) {
-      console.warn('Admin orders API is not available yet. Restart Patria/Patria/server.js to enable it.', ordersError);
+      console.warn('Admin orders API is not available yet. Check the configured API base URL.', ordersError);
     }
     try {
       const summaryData = await api('/api/admin/summary');
       summary = summaryData.summary || null;
       notifications = summaryData.notifications || [];
     } catch (summaryError) {
-      console.warn('Admin summary API is not available yet. Restart Patria/Patria/server.js to enable it.', summaryError);
+      console.warn('Admin summary API is not available yet. Check the configured API base URL.', summaryError);
     }
     try {
       const couponData = await api('/api/admin/coupons');

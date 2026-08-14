@@ -2,13 +2,29 @@ const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || ""
 ).replace(/\/$/, "");
 
+function getGuestId() {
+  try {
+    const storageKey = "patria_guest_id";
+    const existing = window.localStorage.getItem(storageKey);
+    if (existing) return existing;
+    const value = globalThis.crypto?.randomUUID?.()
+      || `guest_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    window.localStorage.setItem(storageKey, value);
+    return value;
+  } catch {
+    return `guest_${Math.random().toString(36).slice(2)}`;
+  }
+}
+
 export async function apiRequest(path, options = {}) {
+  const guestId = getGuestId();
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     credentials: "include",
     cache: options.cache || "no-store",
     headers: {
       Accept: "application/json",
+      "X-Guest-ID": guestId,
       ...(options.body ? { "Content-Type": "application/json" } : {}),
       ...(options.headers || {}),
     },
