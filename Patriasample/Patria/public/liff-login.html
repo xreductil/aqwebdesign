@@ -33,7 +33,7 @@
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "LINE 登入失敗");
 
-      window.location.replace("/Patriasample/Patria/dist/index.html?line_login=success");
+      window.location.replace("/Patriasample/Patria/dist/index.html");
     }
 
     main().catch((error) => {
