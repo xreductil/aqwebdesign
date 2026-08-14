@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LINE 登入</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { min-height: 100vh; margin: 0; display: grid; place-items: center; background: #f7f8fa; color: #222; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif; }
+    main { width: min(420px, calc(100% - 40px)); padding: 32px 24px; text-align: center; background: #fff; border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,.08); }
+    h1 { margin: 0 0 12px; font-size: 1.5rem; }
+    p { color: #667085; line-height: 1.7; }
+    #error { color: #c0392b; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>使用 LINE 登入</h1>
+    <p id="status">正在連接 LINE…</p>
+    <p id="error" hidden></p>
+  </main>
+
+  <script>
+    const LIFF_ID = "2011054194-YNQIwkml";
+    const status = document.getElementById("status");
+    const error = document.getElementById("error");
+
+    function showError(message) {
+      status.textContent = "LINE 登入失敗";
+      error.textContent = message;
+      error.hidden = false;
+    }
+
+    async function main() {
+      await liff.init({ liffId: LIFF_ID });
+
+      if (!liff.isLoggedIn()) {
+        status.textContent = "正在開啟 LINE App…";
+        liff.login({ redirectUri: window.location.href });
+        return;
+      }
+
+      const idToken = liff.getIDToken();
+      if (!idToken) throw new Error("無法取得 LINE ID Token");
+
+      status.textContent = "LINE 驗證中…";
+      const response = await fetch("/api/auth/liff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id_token: idToken })
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || "LINE 登入失敗");
+      }
+
+      status.textContent = "登入成功，正在返回網站…";
+      window.location.replace("/Patriasample/Patria/dist/index.html");
+    }
+
+    main().catch((err) => {
+      console.error(err);
+      showError(err.message || "LINE 登入失敗");
+    });
+  </script>
+</body>
+</html>

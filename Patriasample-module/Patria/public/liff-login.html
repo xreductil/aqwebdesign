@@ -67,7 +67,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'LINE 登入失敗。');
-      location.replace('/?line_login=success');
+      location.replace('/Patriasample/Patria/dist/index.html?line_login=success');
     }
 
     completeLogin().catch(error => showError(error.message || 'LINE 登入失敗。'));
