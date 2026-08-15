@@ -10,6 +10,8 @@ interface Env {
   LOGIN_SUCCESS_URL?: string;
 }
 
+const DEFAULT_LINE_CHANNEL_ID = "2011054194";
+
 interface LineTokenResponse {
   access_token?: string;
   expires_in?: number;
@@ -633,7 +635,7 @@ export default {
       if (request.method === "POST" && url.pathname === "/api/auth/liff") {
         const body = await readJson<{ id_token?: string; idToken?: string }>(request);
         const idToken = String(body.id_token || body.idToken || "").trim();
-        const lineChannelId = String(env.LINE_CHANNEL_ID || "").trim();
+        const lineChannelId = String(env.LINE_CHANNEL_ID || DEFAULT_LINE_CHANNEL_ID).trim();
 
         if (!idToken) {
           return Response.json(
@@ -641,17 +643,39 @@ export default {
             { status: 400 }
           );
         }
+        if (!lineChannelId) {
+          return Response.json(
+            {
+              success: false,
+              error: "LINE channel is not configured",
+              detail: "Missing LINE_CHANNEL_ID",
+            },
+            { status: 500 }
+          );
+        }
 
         const verifyResponse = await fetch("https://api.line.me/oauth2/v2.1/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
             id_token: idToken,
             client_id: lineChannelId,
           }),
         });
         const lineUser = (await verifyResponse.json()) as LineVerifyResponse;
         const isExpired = Boolean(lineUser.exp && lineUser.exp * 1000 <= Date.now());
+        const verificationDetail =
+          lineUser.error_description ||
+          lineUser.error ||
+          (lineUser.aud && lineUser.aud !== lineChannelId
+            ? `LINE ID token audience mismatch. Expected ${lineChannelId}, got ${lineUser.aud}.`
+            : isExpired
+              ? "LINE ID token expired."
+              : !lineUser.sub
+                ? "LINE ID token subject is missing."
+                : lineUser.iss !== "https://access.line.me"
+                  ? "LINE ID token issuer is invalid."
+                  : "LINE ID token claims are invalid.");
 
         if (
           !verifyResponse.ok ||
@@ -663,14 +687,18 @@ export default {
           console.warn(JSON.stringify({
             event: "line_liff_id_token_verification_failed",
             status: verifyResponse.status,
-            reason: lineUser.error_description || lineUser.error || "token_claims_invalid",
+            reason: verificationDetail,
             issuer: lineUser.iss || null,
             audience: lineUser.aud || null,
             expectedAudience: lineChannelId || null,
             expired: isExpired,
           }));
           return Response.json(
-            { success: false, error: "Failed to verify LINE ID token" },
+            {
+              success: false,
+              error: "Failed to verify LINE ID token",
+              detail: verificationDetail,
+            },
             { status: 401 }
           );
         }

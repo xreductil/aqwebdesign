@@ -39,7 +39,10 @@
         body: JSON.stringify({ id_token: idToken })
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "LINE 登入失敗");
+      if (!response.ok) {
+        const detail = data.detail ? `：${data.detail}` : "";
+        throw new Error((data.error || "LINE 登入失敗") + detail);
+      }
 
       window.location.replace("/Patriasample/Patria/dist/index.html?line_login=success#account");
     }

@@ -34,8 +34,9 @@ const DATA_DIR = path.join(ROOT, 'data');
 const DB_PATH = path.join(DATA_DIR, 'db.json');
 const PRODUCTS_PATH = path.join(DATA_DIR, 'products.json');
 const PORT = Number(process.env.PORT || 8080);
-const LINE_CHANNEL_ID = process.env.LINE_CHANNEL_ID || '';
-const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET || '';
+const DEFAULT_LINE_CHANNEL_ID = '2011054194';
+const LINE_CHANNEL_ID = String(process.env.LINE_CHANNEL_ID || DEFAULT_LINE_CHANNEL_ID).trim();
+const LINE_CHANNEL_SECRET = String(process.env.LINE_CHANNEL_SECRET || '').trim();
 const LINE_CALLBACK_URL = process.env.LINE_CALLBACK_URL || 'https://www.aq-webdesign.com/auth/line/callback';
 const IS_PRODUCTION = ['production', 'prod'].includes(String(process.env.NODE_ENV || process.env.PATRIA_ENV || '').toLowerCase())
   || String(process.env.VERCEL_ENV || '').toLowerCase() === 'production'
@@ -255,6 +256,17 @@ async function lineVerifyIdToken(idToken, nonce) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error_description || data.error || 'LINE ID token verification failed.');
   return data;
+}
+
+function lineIdTokenVerificationDetail(lineUser) {
+  if (lineUser.error_description || lineUser.error) return lineUser.error_description || lineUser.error;
+  if (lineUser.aud && lineUser.aud !== LINE_CHANNEL_ID) {
+    return 'LINE ID token audience mismatch. Expected ' + LINE_CHANNEL_ID + ', got ' + lineUser.aud + '.';
+  }
+  if (!lineUser.sub) return 'LINE ID token subject is missing.';
+  if (lineUser.iss !== 'https://access.line.me') return 'LINE ID token issuer is invalid.';
+  if (!lineUser.exp || Number(lineUser.exp) * 1000 <= Date.now()) return 'LINE ID token expired.';
+  return 'LINE ID token claims are invalid.';
 }
 
 function lineCallbackPage(res, message) {
@@ -677,9 +689,9 @@ async function handleApi(req, res) {
       if (!LINE_CHANNEL_ID) return send(res, 500, { error: 'LINE channel is not configured.' });
 
       const lineUser = await lineVerifyIdToken(idToken);
-      if (lineUser.aud !== LINE_CHANNEL_ID) return send(res, 401, { error: 'LINE channel verification failed.' });
-      if (lineUser.iss !== 'https://access.line.me') return send(res, 401, { error: 'LINE issuer verification failed.' });
-      if (!lineUser.exp || Number(lineUser.exp) * 1000 <= Date.now()) return send(res, 401, { error: 'LINE ID token is expired.' });
+      if (lineUser.aud !== LINE_CHANNEL_ID || lineUser.iss !== 'https://access.line.me' || !lineUser.exp || Number(lineUser.exp) * 1000 <= Date.now()) {
+        return send(res, 401, { error: 'Failed to verify LINE ID token', detail: lineIdTokenVerificationDetail(lineUser) });
+      }
 
       const lineUserId = lineUser.sub;
       let user = db.users.find(item => item.lineUserId === lineUserId);
