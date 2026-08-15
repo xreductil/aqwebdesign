@@ -22,6 +22,7 @@
 
   <script>
     const LIFF_ID = "2011054194-YNQIwkml";
+    const LIFF_REDIRECT_URI = "https://www.aq-webdesign.com/Patriasample/Patria/dist/liff-login.html";
     const status = document.getElementById("status");
     const error = document.getElementById("error");
 
@@ -36,7 +37,7 @@
 
       if (!liff.isLoggedIn()) {
         status.textContent = "正在開啟 LINE App…";
-        liff.login({ redirectUri: window.location.href });
+        liff.login({ redirectUri: LIFF_REDIRECT_URI });
         return;
       }
 
