@@ -20,6 +20,13 @@
         return;
       }
 
+      const grantedScopes = typeof liff.permission?.getGrantedAll === "function"
+        ? await liff.permission.getGrantedAll()
+        : [];
+      if (grantedScopes.length && !grantedScopes.includes("openid")) {
+        throw new Error("LINE LIFF 尚未啟用 openid 權限，請在 LINE Developers Console 開啟。 ");
+      }
+
       const idToken = liff.getIDToken();
       if (!idToken) throw new Error("無法取得 LINE ID Token");
       status.textContent = "LINE 驗證中…";
