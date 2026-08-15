@@ -211,6 +211,62 @@
   color: #2f7d45;
 }
 
+@media (max-width: 991px) {
+  #accountOv .account-nav .account-menu-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 5px;
+    width: 46px;
+    height: 46px;
+    margin: 0 56px 0 auto;
+    padding: 0;
+    border: 1px solid #efd7bb;
+    border-radius: 12px;
+    background: #fffdfa;
+    color: #3a1f14;
+    z-index: 5;
+  }
+
+  #accountOv .account-nav .account-menu-toggle span {
+    display: block;
+    width: 21px;
+    height: 2px;
+    border-radius: 999px;
+    background: #3a1f14;
+  }
+
+  #accountOv .react-account-dashboard .account-side {
+    display: none !important;
+  }
+
+  #accountOv .react-account-dashboard .account-side.open {
+    display: block !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .account-order-summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px 12px;
+  }
+
+  .account-order-summary .account-order-status {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .account-order-summary > strong {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    white-space: nowrap;
+  }
+}
+
 .shipping-address-card,
 .payment-method-card,
 .shipping-order-row,
