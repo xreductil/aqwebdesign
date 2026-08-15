@@ -32,6 +32,18 @@
       error.hidden = false;
     }
 
+    function refreshLineLogin() {
+      if (sessionStorage.getItem("patria_liff_refreshing") === "1") {
+        sessionStorage.removeItem("patria_liff_refreshing");
+        throw new Error("LINE ID Token 已過期，請關閉此頁後重新開啟 LINE 登入。");
+      }
+      status.textContent = "LINE 登入已過期，正在重新登入…";
+      error.hidden = true;
+      sessionStorage.setItem("patria_liff_refreshing", "1");
+      if (liff.isLoggedIn()) liff.logout();
+      liff.login({ redirectUri: LIFF_REDIRECT_URI });
+    }
+
     async function main() {
       await liff.init({ liffId: LIFF_ID });
 
@@ -50,6 +62,13 @@
 
       const idToken = liff.getIDToken();
       if (!idToken) throw new Error("無法取得 LINE ID Token");
+      const decodedIdToken = typeof liff.getDecodedIDToken === "function"
+        ? liff.getDecodedIDToken()
+        : null;
+      if (decodedIdToken?.exp && decodedIdToken.exp * 1000 <= Date.now() + 30000) {
+        refreshLineLogin();
+        return;
+      }
 
       status.textContent = "LINE 驗證中…";
       const response = await fetch("/api/auth/liff", {
@@ -61,10 +80,16 @@
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        if (String(data.detail || "").toLowerCase().includes("expired")) {
+          refreshLineLogin();
+          return;
+        }
+        sessionStorage.removeItem("patria_liff_refreshing");
         const detail = data.detail ? `：${data.detail}` : "";
         throw new Error((data.error || "LINE 登入失敗") + detail);
       }
 
+      sessionStorage.removeItem("patria_liff_refreshing");
       status.textContent = "登入成功，正在返回網站…";
       window.location.replace("/Patriasample/Patria/dist/index.html");
     }
