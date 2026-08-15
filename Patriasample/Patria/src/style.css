@@ -3200,7 +3200,7 @@ footer {
   .account-dashboard .container {
     position: relative;
   }
-  .react-account-dashboard .account-menu-toggle {
+  .account-nav .account-menu-toggle {
     display: flex !important;
     align-items: center;
     justify-content: center;
@@ -3209,15 +3209,15 @@ footer {
     gap: 5px;
     width: 46px;
     height: 46px;
-    margin: 12px 18px 12px auto;
+    margin: 0 56px 0 auto;
     border: 1px solid #efd7bb;
     border-radius: 12px;
     background: #fffdfa;
     box-shadow: 0 14px 30px rgba(58, 31, 20, 0.08);
   }
-  .react-account-dashboard .account-menu-toggle {
+  .account-nav .account-menu-toggle {
     position: relative;
-    z-index: 7;
+    z-index: 5;
   }
   .account-menu-toggle span {
     width: 21px;
