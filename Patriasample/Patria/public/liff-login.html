@@ -13,15 +13,27 @@
     const LIFF_REDIRECT_URI = "https://www.aq-webdesign.com/Patriasample/Patria/dist/liff-login.html";
     const status = document.getElementById("status");
 
-    function refreshLineLogin() {
-      if (sessionStorage.getItem("patria_liff_refreshing") === "1") {
-        sessionStorage.removeItem("patria_liff_refreshing");
-        throw new Error("LINE ID Token 已過期，請關閉此頁後重新開啟 LINE 登入。");
+    function getLineLoginRedirectUri() {
+      const params = new URLSearchParams(window.location.search);
+      const liffState = params.get("liff.state");
+      const fallbackUrl = new URL(LIFF_REDIRECT_URI);
+
+      if (liffState) {
+        const stateUrl = new URL("." + liffState, window.location.href);
+        if (stateUrl.href.startsWith(LIFF_REDIRECT_URI)) {
+          stateUrl.searchParams.set("line_refresh", String(Date.now()));
+          return stateUrl.toString();
+        }
       }
+
+      fallbackUrl.searchParams.set("line_refresh", String(Date.now()));
+      return fallbackUrl.toString();
+    }
+
+    function refreshLineLogin() {
       status.textContent = "LINE 登入已過期，正在重新登入…";
       sessionStorage.setItem("patria_liff_refreshing", "1");
-      if (liff.isLoggedIn()) liff.logout();
-      liff.login({ redirectUri: LIFF_REDIRECT_URI });
+      liff.login({ redirectUri: getLineLoginRedirectUri() });
     }
 
     async function main() {
