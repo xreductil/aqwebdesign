@@ -256,6 +256,20 @@
   }
 }
 
+@media (max-width: 991px) {
+  /* Long order IDs must not share a row with the price on tablet widths. */
+  .account-order-summary {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .account-order-meta {
+    justify-content: space-between;
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 @media (max-width: 720px) {
   .account-order-summary {
     grid-template-columns: 1fr;
