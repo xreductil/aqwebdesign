@@ -191,13 +191,32 @@
 
 .account-order-summary {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
 }
 
-.account-order-summary .account-order-status {
-  justify-self: end;
+.account-order-id {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.account-order-id span {
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.account-order-id strong {
+  overflow-wrap: anywhere;
+}
+
+.account-order-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  min-width: max-content;
 }
 
 .account-order-status.status-cancelled {
@@ -211,59 +230,46 @@
   color: #2f7d45;
 }
 
-@media (max-width: 991px) {
-  #accountOv .account-nav .account-menu-toggle {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 5px;
-    width: 46px;
-    height: 46px;
-    margin: 0 56px 0 auto;
-    padding: 0;
-    border: 1px solid #efd7bb;
-    border-radius: 12px;
-    background: #fffdfa;
-    color: #3a1f14;
-    z-index: 5;
-  }
+/* The account links are a persistent sidebar, not a collapsible mobile menu. */
+#accountOv .account-menu-toggle {
+  display: none !important;
+}
 
-  #accountOv .account-nav .account-menu-toggle span {
-    display: block;
-    width: 21px;
-    height: 2px;
-    border-radius: 999px;
-    background: #3a1f14;
+@media (min-width: 768px) and (max-width: 991px) {
+  #accountOv .react-account-dashboard .account-dashboard-grid {
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 24px;
   }
 
   #accountOv .react-account-dashboard .account-side {
-    display: none !important;
+    position: sticky;
+    top: 96px;
+    display: block !important;
   }
+}
 
+@media (max-width: 767px) {
+  #accountOv .react-account-dashboard .account-side,
   #accountOv .react-account-dashboard .account-side.open {
+    position: static;
     display: block !important;
   }
 }
 
 @media (max-width: 720px) {
   .account-order-summary {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 6px 12px;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .account-order-meta {
+    justify-content: space-between;
+    width: 100%;
+    min-width: 0;
   }
 
   .account-order-summary .account-order-status {
-    grid-column: 1;
-    grid-row: 2;
-    justify-self: start;
-  }
-
-  .account-order-summary > strong {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    align-self: center;
-    white-space: nowrap;
+    flex: 0 1 auto;
   }
 }
 
