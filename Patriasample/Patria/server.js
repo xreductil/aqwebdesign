@@ -825,7 +825,7 @@ async function handleApi(req, res) {
       const discount = coupon && coupon.valid ? coupon.discount : 0;
       const total = Math.max(0, subtotal - discount);
       const order = {
-        id: token().slice(0, 12),
+        id: token().slice(0, 15),
         userId: auth.user.id,
         items: cart,
         subtotal: Number(subtotal.toFixed(2)),

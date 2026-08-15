@@ -355,14 +355,46 @@
   gap: 4px;
 }
 
-.payment-order-row > div:last-child {
-  justify-items: end;
+.shipping-order-row > div:first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.shipping-order-row > div:first-child strong {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.shipping-order-row > div:last-child {
+  align-items: flex-end;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
   text-align: right;
+}
+
+.shipping-order-price {
+  white-space: nowrap;
+}
+
+.payment-order-row > div:last-child {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
 }
 
 .payment-order-row > div:first-child {
   min-width: 0;
   flex: 1 1 auto;
+}
+
+.payment-order-row {
+  align-items: flex-start;
+  flex-direction: column;
 }
 
 .payment-order-row > div:first-child strong {
@@ -371,18 +403,18 @@
 }
 
 @media (max-width: 1200px) {
-  .payment-order-row {
+  .shipping-order-row {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .payment-order-row > div:last-child {
+  .shipping-order-row > div:last-child {
     align-items: center;
-    display: flex;
     justify-content: space-between;
     width: 100%;
     text-align: left;
   }
+
 }
 
 .checkout-overlay {

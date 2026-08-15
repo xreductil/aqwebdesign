@@ -371,7 +371,7 @@ function cartSummary(items: Record<string, unknown>[]) {
 }
 
 function storeToken(): string {
-  return randomString(18);
+  return randomString(8).slice(0, 15);
 }
 
 async function getUserOrders(
