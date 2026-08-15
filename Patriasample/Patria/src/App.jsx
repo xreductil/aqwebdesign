@@ -295,7 +295,6 @@ function MemberDashboard({ user, orders, page, setPage, addressForm, setAddressF
               <p className="account-main-desc">Here’s an overview of your account. View your recent orders, manage your addresses and update your account details.</p>
               <div className="account-stat-grid">
                 <div className="account-stat"><i className="fas fa-utensils" /><div><strong>Recent Orders</strong><span>{orders.length} {orders.length === 1 ? "order" : "orders"}</span></div></div>
-                <div className="account-stat"><i className="fas fa-location-dot" /><div><strong>Saved Address</strong><span>{addressForm.address ? "Address saved" : "Add an address"}</span></div></div>
                 <div className="account-stat"><i className="fas fa-user" /><div><strong>Account Details</strong><span>{user.name || "Member"}</span></div></div>
               </div>
               <section className="account-section"><div className="account-section-head"><h3>Recent Orders</h3><button type="button" onClick={() => setPage("orders")}>View All Orders</button></div>{orders.length ? orders.slice(0, 3).map((order) => <OrderSummary order={order} key={order.id} />) : <div className="account-empty-row"><span>You have not placed an order yet.</span><button type="button" className="account-start-order" onClick={onClose}>Start an order</button></div>}</section>
