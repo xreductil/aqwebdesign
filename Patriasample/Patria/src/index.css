@@ -230,28 +230,37 @@
   color: #2f7d45;
 }
 
-/* The account links are a persistent sidebar, not a collapsible mobile menu. */
-#accountOv .account-menu-toggle {
-  display: none !important;
-}
+@media (max-width: 991px) {
+  #accountOv .account-nav .account-menu-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 5px;
+    width: 46px;
+    height: 46px;
+    margin: 0 56px 0 auto;
+    padding: 0;
+    border: 1px solid #efd7bb;
+    border-radius: 12px;
+    background: #fffdfa;
+    color: #3a1f14;
+    z-index: 5;
+  }
 
-@media (min-width: 768px) and (max-width: 991px) {
-  #accountOv .react-account-dashboard .account-dashboard-grid {
-    grid-template-columns: 280px minmax(0, 1fr);
-    gap: 24px;
+  #accountOv .account-nav .account-menu-toggle span {
+    display: block;
+    width: 21px;
+    height: 2px;
+    border-radius: 999px;
+    background: #3a1f14;
   }
 
   #accountOv .react-account-dashboard .account-side {
-    position: sticky;
-    top: 96px;
-    display: block !important;
+    display: none !important;
   }
-}
 
-@media (max-width: 767px) {
-  #accountOv .react-account-dashboard .account-side,
   #accountOv .react-account-dashboard .account-side.open {
-    position: static;
     display: block !important;
   }
 }
