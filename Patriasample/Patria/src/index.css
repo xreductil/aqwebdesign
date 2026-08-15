@@ -360,6 +360,31 @@
   text-align: right;
 }
 
+.payment-order-row > div:first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.payment-order-row > div:first-child strong {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 1200px) {
+  .payment-order-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .payment-order-row > div:last-child {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    text-align: left;
+  }
+}
+
 .checkout-overlay {
   position: fixed;
   inset: 0;
