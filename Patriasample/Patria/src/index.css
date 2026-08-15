@@ -230,7 +230,7 @@
   color: #2f7d45;
 }
 
-@media (max-width: 991px) {
+@media (max-width: 1200px) {
   #accountOv .account-nav .account-menu-toggle {
     display: flex !important;
     align-items: center;
@@ -245,7 +245,8 @@
     border-radius: 12px;
     background: #fffdfa;
     color: #3a1f14;
-    z-index: 5;
+    position: relative;
+    z-index: 100001;
   }
 
   #accountOv .account-nav .account-menu-toggle span {
