@@ -1,9 +1,0 @@
-{
-  "name": "@patria/data-adapters",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "exports": {
-    ".": "./json-repositories.js"
-  }
-}
