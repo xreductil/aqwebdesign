@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LINE 登入</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <p id="status">正在連接 LINE…</p>
+  <script>
+    const LIFF_ID = "2011054194-YNQIwkml";
+    const LIFF_REDIRECT_URI = "https://www.aq-webdesign.com/Patriasample/Patria/dist/liff-login.html";
+    const status = document.getElementById("status");
+
+    function getLineLoginRedirectUri() {
+      const params = new URLSearchParams(window.location.search);
+      const liffState = params.get("liff.state");
+      const fallbackUrl = new URL(LIFF_REDIRECT_URI);
+
+      if (liffState) {
+        const stateUrl = new URL("." + liffState, window.location.href);
+        if (stateUrl.href.startsWith(LIFF_REDIRECT_URI)) {
+          stateUrl.searchParams.set("line_refresh", String(Date.now()));
+          return stateUrl.toString();
+        }
+      }
+
+      fallbackUrl.searchParams.set("line_refresh", String(Date.now()));
+      return fallbackUrl.toString();
+    }
+
+    function refreshLineLogin() {
+      status.textContent = "LINE 登入已過期，正在重新登入…";
+      sessionStorage.setItem("patria_liff_refreshing", "1");
+      liff.login({ redirectUri: getLineLoginRedirectUri() });
+    }
+
+    async function main() {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) {
+        status.textContent = "正在開啟 LINE App…";
+        liff.login({ redirectUri: LIFF_REDIRECT_URI });
+        return;
+      }
+
+      const grantedScopes = typeof liff.permission?.getGrantedAll === "function"
+        ? await liff.permission.getGrantedAll()
+        : [];
+      if (grantedScopes.length && !grantedScopes.includes("openid")) {
+        throw new Error("LINE LIFF 尚未啟用 openid 權限，請在 LINE Developers Console 開啟。");
+      }
+
+      const idToken = liff.getIDToken();
+      if (!idToken) throw new Error("無法取得 LINE ID Token");
+      const decodedIdToken = typeof liff.getDecodedIDToken === "function"
+        ? liff.getDecodedIDToken()
+        : null;
+      if (decodedIdToken?.exp && decodedIdToken.exp * 1000 <= Date.now() + 30000) {
+        refreshLineLogin();
+        return;
+      }
+      status.textContent = "LINE 驗證中…";
+
+      const response = await fetch("/api/auth/liff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id_token: idToken })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (String(data.detail || "").toLowerCase().includes("expired")) {
+          refreshLineLogin();
+          return;
+        }
+        sessionStorage.removeItem("patria_liff_refreshing");
+        const detail = data.detail ? `：${data.detail}` : "";
+        throw new Error((data.error || "LINE 登入失敗") + detail);
+      }
+
+      sessionStorage.removeItem("patria_liff_refreshing");
+      window.location.replace("/Patriasample/Patria/dist/index.html?line_login=success#account");
+    }
+
+    main().catch((error) => {
+      console.error(error);
+      status.textContent = "LINE 登入失敗：" + (error.message || "未知錯誤");
+    });
+  </script>
+</body>
+</html>

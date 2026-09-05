@@ -1,0 +1,17 @@
+{
+  "name": "@patria/customer-ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Portable customer account API client and React dashboard.",
+  "exports": {
+    ".": "./frontend/customer-api.js",
+    "./api": "./frontend/customer-api.js",
+    "./dashboard": "./frontend/CustomerDashboard.jsx",
+    "./line-login": "./frontend/line-login.js",
+    "./style.css": "./frontend/customer.css"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  }
+}

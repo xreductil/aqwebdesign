@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="shortcut icon" type="image/x-icon" href="./assets/images/favicon/favicon.ico" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.46.0/tabler-icons.min.css" />
+	<link rel="stylesheet" href="./assets/css/theme.min.css" />
+	<title>客戶後台 | Every Fresh</title>
+	<style>
+		.ef-shell{display:grid;grid-template-columns:260px 1fr;gap:24px}.ef-menu-toggle,.ef-mobile-nav,.ef-sidebar-backdrop{display:none}.ef-sidebar{position:sticky;top:18px}.ef-nav a,.ef-nav button{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;border-radius:10px;color:#3d4f58;background:transparent;text-align:left}.ef-nav .active,.ef-nav a:hover,.ef-nav button:hover{background:#e8ffe6;color:#106412}.ef-card{background:#fff;border:1px solid #dfe2e1;border-radius:12px;padding:22px}.ef-notice{display:flex;gap:12px;align-items:flex-start;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;color:#166534}.ef-metric{display:flex;align-items:center;gap:14px}.ef-metric i{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:#e8ffe6;color:#0aad0a;font-size:24px}.ef-table{width:100%;border-collapse:collapse}.ef-table th,.ef-table td{padding:13px 10px;border-top:1px solid #ecf0ef;text-align:left}.ef-status{display:inline-block;padding:4px 10px;border-radius:999px;background:#e8ffe6;color:#106412;font-size:12px}.ef-status.processing{background:#fff7db;color:#9a6a00}.ef-status.cancelled{background:#fee2e2;color:#991b1b}.ef-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.ef-form label{display:flex;flex-direction:column;gap:7px;color:#21313c;font-weight:600}.ef-form input,.ef-form textarea{border:1px solid #dfe2e1;border-radius:10px;padding:10px 12px;color:#001e2b}.ef-progress{height:10px;background:#e8ffe6;border-radius:999px;overflow:hidden}.ef-progress span{display:block;height:100%;background:#0aad0a;width:0}.ef-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,30,43,.48);z-index:9999;padding:18px}.ef-modal.open{display:flex}.ef-modal-card{width:min(680px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:14px;padding:24px}.ef-hidden{display:none!important}.ef-actions{display:flex;gap:8px;flex-wrap:wrap}body.ef-menu-open{overflow:hidden}@media(max-width:900px){body>header.bg-white{display:none}.ef-shell{grid-template-columns:1fr}.ef-mobile-nav{display:flex;align-items:center;justify-content:space-between;gap:14px;position:relative;z-index:1002;min-height:68px;padding:12px 18px;background:#fff;border-bottom:1px solid #dfe2e1;box-shadow:0 10px 30px rgba(0,30,43,.08)}.ef-menu-toggle{display:grid;place-items:center;gap:4px;width:44px;height:44px;border:0;border-radius:14px;background:#0aad0a;box-shadow:none;cursor:pointer;flex:0 0 auto}.ef-mobile-brand{font-weight:700;font-size:20px;color:#0aad0a}.ef-mobile-brand span{color:#21313c}.ef-menu-toggle span{display:block;width:20px;height:2px;border-radius:999px;background:#fff;transition:transform .2s ease,opacity .2s ease}.ef-menu-toggle.is-open span:nth-child(1){transform:translateY(6px) rotate(45deg)}.ef-menu-toggle.is-open span:nth-child(2){opacity:0}.ef-menu-toggle.is-open span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}.ef-sidebar-backdrop{display:block;position:fixed;left:0;right:0;bottom:0;top:68px;z-index:1000;background:rgba(0,30,43,.46);opacity:0;pointer-events:none;transition:opacity .2s ease}.ef-sidebar-backdrop.is-open{opacity:1;pointer-events:auto}.ef-sidebar{position:fixed;top:68px;bottom:0;left:0;z-index:1001;width:min(84vw,320px);padding:18px;overflow-y:auto;background:#fff;box-shadow:18px 0 60px rgba(0,30,43,.24);transform:translateX(-105%);transition:transform .24s ease}.ef-sidebar.is-open{transform:translateX(0)}main.py-10{padding-top:24px}.ef-form{grid-template-columns:1fr}.ef-table-wrap{overflow-x:auto}}
+	</style>
+</head>
+<body class="bg-gray-100">
+	<header class="bg-white border-b">
+		<div class="container py-4 flex justify-between items-center">
+			<a href="./index.html"><span class="text-xl font-bold text-green-600">Every <span class="text-gray-800">Fresh</span></span></a>
+			<a href="./index.html" class="btn bg-green-600 text-white border-green-600 hover:bg-green-700 hover:border-green-700">返回商店</a>
+		</div>
+	</header>
+	<nav class="ef-mobile-nav"><a class="ef-mobile-brand" href="./index.html">Every <span>Fresh</span></a><button class="ef-menu-toggle" type="button" data-menu-toggle aria-label="開啟會員選單" aria-expanded="false"><span></span><span></span><span></span></button></nav>
+	<main class="py-10">
+		<div class="container ef-shell">
+			<div class="ef-sidebar-backdrop" data-sidebar-close></div>
+			<aside class="ef-sidebar">
+				<div class="ef-card">
+					<h1 class="text-lg mb-4">客戶後台</h1>
+					<nav class="ef-nav flex flex-col gap-2">
+						<button class="active" data-tab="overview"><i class="ti ti-home"></i>總覽</button>
+						<button data-tab="orders"><i class="ti ti-receipt"></i>訂單</button>
+						<button data-tab="addresses"><i class="ti ti-map-pin"></i>地址</button>
+						<button data-tab="account"><i class="ti ti-user-circle"></i>帳戶資料</button>
+						<button data-logout><i class="ti ti-logout"></i>登出</button>
+						<a href="./index.html"><i class="ti ti-arrow-left"></i>返回前台</a>
+					</nav>
+				</div>
+			</aside>
+			<section>
+				<div class="flex justify-between items-start mb-6">
+					<div>
+						<h2 class="text-xl">會員中心</h2>
+						<p class="text-gray-500" id="greeting">您好，Demo Customer，您可以在這裡管理訂單與帳戶資料。</p>
+					</div>
+				</div>
+				<div id="overview" class="panel">
+					<div class="ef-notice mb-6"><i class="ti ti-info-circle text-xl"></i><div><strong>總覽</strong><p class="mb-0">您可以在會員中心查看最近訂單、管理地址，並編輯密碼與帳戶資料。</p></div></div>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+						<div class="ef-card ef-metric"><i class="ti ti-shopping-bag"></i><div><strong id="orderCount" class="text-xl">0</strong><p>訂單總數</p></div></div>
+						<div class="ef-card ef-metric"><i class="ti ti-loader"></i><div><strong id="processingCount" class="text-xl">0</strong><p>處理中</p></div></div>
+						<div class="ef-card ef-metric"><i class="ti ti-circle-check"></i><div><strong id="completedCount" class="text-xl">0</strong><p>已完成</p></div></div>
+						<div class="ef-card ef-metric"><i class="ti ti-star"></i><div><strong id="rewardPoints" class="text-xl">0</strong><p>會員點數</p></div></div>
+					</div>
+					<div class="grid grid-cols-1 gap-4" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
+						<div class="ef-card">
+							<div class="flex justify-between items-center mb-3"><h3 class="text-lg">近期訂單</h3><button class="text-green-600" data-tab-link="orders">查看全部</button></div>
+							<div class="ef-table-wrap"><table class="ef-table"><thead><tr><th>訂單</th><th>日期</th><th>品項</th><th>合計</th><th>狀態</th><th></th></tr></thead><tbody id="recentOrders"></tbody></table></div>
+						</div>
+						<div class="ef-card">
+							<h3 class="text-lg mb-4">會員回饋</h3>
+							<strong class="text-xl" id="rewardPointsLarge">0</strong>
+							<p class="text-gray-500 mb-3">示範消費累積的點數</p>
+							<div class="ef-progress mb-3"><span id="rewardProgress"></span></div>
+							<p class="text-gray-500 mb-0">累積 100 點即可解鎖一份示範購物折扣。</p>
+						</div>
+					</div>
+				</div>
+				<div id="orders" class="panel ef-hidden">
+					<div class="ef-card">
+						<h3 class="text-lg mb-4">訂單</h3>
+						<div class="ef-table-wrap"><table class="ef-table"><thead><tr><th>訂單</th><th>日期</th><th>品項</th><th>合計</th><th>狀態</th><th>操作</th></tr></thead><tbody id="orderRows"></tbody></table></div>
+					</div>
+				</div>
+				<div id="addresses" class="panel ef-hidden">
+					<div class="grid grid-cols-1 gap-4 mb-6" id="addressCards"></div>
+					<div class="ef-card">
+						<h3 class="text-lg mb-4">新增地址</h3>
+						<form class="ef-form" id="addressForm">
+							<label>姓名<input name="name" required value="Demo Customer"></label>
+							<label>電話<input name="phone" required value="+1 300 659 4381"></label>
+							<label style="grid-column:1/-1;">地址<input name="address" required placeholder="街道、城市"></label>
+							<button class="btn bg-green-600 text-white border-green-600 hover:bg-green-700 hover:border-green-700 justify-center" type="submit">儲存地址</button>
+						</form>
+					</div>
+				</div>
+				<div id="account" class="panel ef-hidden">
+					<div class="ef-card">
+						<h3 class="text-lg mb-4">帳戶資料</h3>
+						<form class="ef-form" id="profileForm">
+							<label>名字<input name="firstName" required></label>
+							<label>姓氏<input name="lastName"></label>
+							<label>顯示名稱<input name="displayName" required></label>
+							<label>電子信箱<input name="email" type="email" required></label>
+							<label>電話<input name="phone" required></label>
+							<label>目前密碼<input name="currentPassword" type="password" placeholder="demo1234"></label>
+							<label>新密碼<input name="newPassword" type="password" placeholder="不變更請留空"></label>
+							<button class="btn bg-green-600 text-white border-green-600 hover:bg-green-700 hover:border-green-700 justify-center" type="submit">儲存變更</button>
+						</form>
+					</div>
+				</div>
+			</section>
+		</div>
+	</main>
+	<div class="ef-modal" id="detailModal"><div class="ef-modal-card"><div class="flex justify-between items-center mb-3"><h3 class="text-lg" id="modalTitle"></h3><button class="text-xl" data-close>&times;</button></div><div id="modalBody"></div></div></div>
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			var CART_KEY = "everyFreshDemoCart";
+			var ORDERS_KEY = "everyFreshDemoOrders";
+			var ADDRESS_KEY = "everyFreshDemoAddresses";
+			var CUSTOMER_KEY = "everyFreshDemoCustomer";
+			var SESSION_KEY = "everyFreshDemoCustomerLoggedIn";
+			var DEFAULT_IMAGE = "./assets/images/products/product-img-1.jpg";
+			var money = function (value) { return "$" + Number(value || 0).toFixed(2); };
+			function read(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; } }
+			function write(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+			function esc(value) {
+				return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
+					return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
+				});
+			}
+			function customer() {
+				var saved = read(CUSTOMER_KEY, null);
+				if (saved) {
+					if (!saved.password) { saved.password = "demo1234"; write(CUSTOMER_KEY, saved); }
+					return saved;
+				}
+				saved = { firstName: "Demo", lastName: "Customer", displayName: "Demo Customer", email: "customer@example.com", phone: "+1 300 659 4381", password: "demo1234" };
+				write(CUSTOMER_KEY, saved);
+				return saved;
+			}
+			function cart() { return read(CART_KEY, []); }
+			function normalizeItem(item) {
+				return {
+					id: item.id || item.code || encodeURIComponent(item.title || item.name || "product"),
+					name: item.name || item.title || "Demo Product",
+					title: item.title || item.name || "Demo Product",
+					category: item.category || "Grocery",
+					price: Number(item.price || 0),
+					qty: Number(item.qty || item.quantity || 1),
+					image: item.image || DEFAULT_IMAGE
+				};
+			}
+			function orders() {
+				var saved = read(ORDERS_KEY, []);
+				if (saved.length) return saved;
+				var items = cart().map(normalizeItem);
+				var seed = items.length ? [{ id: "EF-" + Date.now().toString().slice(-5), status: "Processing", time: new Date().toISOString(), total: items.reduce(function (s, i) { return s + i.price * i.qty; }, 0), items: items }] : [
+					{ id: "EF-1026", status: "Processing", time: new Date().toISOString(), total: 42.5, items: [{ name: "有機香蕉", category: "水果", price: 4.5, qty: 2, image: DEFAULT_IMAGE }, { name: "鮮奶", category: "乳製品", price: 6.5, qty: 1, image: DEFAULT_IMAGE }, { name: "酪梨組", category: "水果", price: 27, qty: 1, image: DEFAULT_IMAGE }] },
+					{ id: "EF-1019", status: "Completed", time: new Date(Date.now() - 86400000).toISOString(), total: 31, items: [{ name: "全麥吐司", category: "烘焙", price: 8, qty: 1, image: DEFAULT_IMAGE }, { name: "希臘優格", category: "乳製品", price: 11.5, qty: 2, image: DEFAULT_IMAGE }] }
+				];
+				write(ORDERS_KEY, seed);
+				return seed;
+			}
+			function addresses() {
+				var saved = read(ADDRESS_KEY, []);
+				if (saved.length) return saved;
+				saved = [{ name: "Demo Customer", phone: "+1 300 659 4381", address: "100 Market Street, San Francisco, CA" }];
+				write(ADDRESS_KEY, saved);
+				return saved;
+			}
+			function statusLabel(status) { return { Processing: "處理中", Completed: "已完成", Cancelled: "已取消" }[status] || status; }
+			function actionButtons(order) {
+				var cancel = order.status === "Processing" ? '<button class="text-red-600" data-cancel-order="' + esc(order.id) + '">取消</button>' : "";
+				return '<div class="ef-actions"><button class="text-green-600" data-order="' + esc(order.id) + '">查看</button><button class="text-green-600" data-reorder="' + esc(order.id) + '">再次訂購</button>' + cancel + '</div>';
+			}
+			function orderRow(order) {
+				var count = (order.items || []).reduce(function (sum, item) { return sum + Number(item.qty || item.quantity || 1); }, 0);
+				return '<tr><td>' + esc(order.id) + '</td><td>' + new Date(order.time).toLocaleDateString() + '</td><td>' + count + '</td><td>' + money(order.total) + '</td><td><span class="ef-status ' + esc(String(order.status).toLowerCase()) + '">' + statusLabel(order.status) + '</span></td><td>' + actionButtons(order) + '</td></tr>';
+			}
+			function renderOrders() {
+				var list = orders();
+				var completed = list.filter(function (order) { return order.status === "Completed"; }).length;
+				var processing = list.filter(function (order) { return order.status === "Processing"; }).length;
+				var points = Math.round(list.filter(function (order) { return order.status !== "Cancelled"; }).reduce(function (sum, order) { return sum + Number(order.total || 0); }, 0));
+				document.getElementById("orderCount").textContent = list.length;
+				document.getElementById("processingCount").textContent = processing;
+				document.getElementById("completedCount").textContent = completed;
+				document.getElementById("rewardPoints").textContent = points;
+				document.getElementById("rewardPointsLarge").textContent = points;
+				document.getElementById("rewardProgress").style.width = Math.min(100, points % 100 || (points ? 100 : 0)) + "%";
+				document.getElementById("recentOrders").innerHTML = list.slice(0, 4).map(orderRow).join("") || '<tr><td colspan="6">目前沒有訂單。</td></tr>';
+				document.getElementById("orderRows").innerHTML = list.map(orderRow).join("") || '<tr><td colspan="6">目前沒有訂單。</td></tr>';
+			}
+			function renderAddresses() {
+				document.getElementById("addressCards").innerHTML = addresses().map(function (address, index) {
+					return '<div class="ef-card"><div class="flex justify-between"><div><h3 class="text-base">' + esc(address.name) + '</h3><p>' + esc(address.phone) + '</p><p class="text-gray-500">' + esc(address.address) + '</p></div><button class="text-red-600" data-address-delete="' + index + '">刪除</button></div></div>';
+				}).join("");
+			}
+			function renderProfile() {
+				var data = customer();
+				var form = document.getElementById("profileForm");
+				Object.keys(data).forEach(function (key) { if (form.elements[key] && key !== "password") form.elements[key].value = data[key]; });
+				form.elements.currentPassword.value = "";
+				form.elements.newPassword.value = "";
+				document.getElementById("greeting").textContent = "您好，" + data.displayName + "，您可以在這裡管理訂單與帳戶資料。";
+			}
+			function setTab(id) {
+				document.querySelectorAll(".panel").forEach(function (panel) { panel.classList.toggle("ef-hidden", panel.id !== id); });
+				document.querySelectorAll("[data-tab]").forEach(function (button) { button.classList.toggle("active", button.dataset.tab === id); });
+			}
+			function setMobileMenu(open) {
+				var sidebar = document.querySelector(".ef-sidebar");
+				var toggle = document.querySelector("[data-menu-toggle]");
+				var backdrop = document.querySelector("[data-sidebar-close]");
+				if (!sidebar || !toggle || !backdrop) return;
+				sidebar.classList.toggle("is-open", open);
+				toggle.classList.toggle("is-open", open);
+				backdrop.classList.toggle("is-open", open);
+				toggle.setAttribute("aria-expanded", open ? "true" : "false");
+				document.body.classList.toggle("ef-menu-open", open);
+			}
+			function showModal(title, body) {
+				document.getElementById("modalTitle").textContent = title;
+				document.getElementById("modalBody").innerHTML = body;
+				document.getElementById("detailModal").classList.add("open");
+			}
+			function viewOrder(orderId) {
+				var order = orders().find(function (item) { return item.id === orderId; });
+				if (!order) return;
+				var lines = (order.items || []).map(normalizeItem).map(function (item) {
+					return '<div class="flex justify-between border-t py-3"><span>' + esc(item.name) + ' x ' + item.qty + '</span><strong>' + money(item.price * item.qty) + '</strong></div>';
+				}).join("");
+				showModal("訂單 " + order.id, lines + '<div class="flex justify-between border-t py-3"><strong>狀態</strong><strong>' + statusLabel(order.status) + '</strong></div><div class="flex justify-between border-t py-3"><strong>合計</strong><strong>' + money(order.total) + '</strong></div><div class="ef-actions mt-4">' + actionButtons(order) + '</div>');
+			}
+			function reorder(orderId) {
+				var order = orders().find(function (item) { return item.id === orderId; });
+				if (!order) return;
+				write(CART_KEY, (order.items || []).map(normalizeItem));
+				showModal("已加入購物車", '<p>已將訂單 ' + esc(order.id) + ' 的商品放回購物車。</p><a class="btn bg-green-600 text-white border-green-600 hover:bg-green-700 hover:border-green-700" href="./index.html">回商店結帳</a>');
+			}
+			function cancelOrder(orderId) {
+				var list = orders();
+				var order = list.find(function (item) { return item.id === orderId; });
+				if (!order || order.status !== "Processing") return;
+				if (!window.confirm("確定要取消這筆處理中的訂單嗎？")) return;
+				order.status = "Cancelled";
+				write(ORDERS_KEY, list);
+				renderOrders();
+				showModal("訂單已取消", '<p>訂單 ' + esc(order.id) + ' 已更新為已取消。</p>');
+			}
+			document.addEventListener("click", function (event) {
+				var menuToggle = event.target.closest("[data-menu-toggle]");
+				if (menuToggle) {
+					event.preventDefault();
+					setMobileMenu(!menuToggle.classList.contains("is-open"));
+					return;
+				}
+				if (event.target.closest("[data-sidebar-close]")) {
+					event.preventDefault();
+					setMobileMenu(false);
+					return;
+				}
+				var tab = event.target.closest("[data-tab], [data-tab-link]");
+				if (tab) { setTab(tab.dataset.tab || tab.dataset.tabLink); setMobileMenu(false); }
+				var view = event.target.closest("[data-order]");
+				if (view) viewOrder(view.dataset.order);
+				var reorderButton = event.target.closest("[data-reorder]");
+				if (reorderButton) reorder(reorderButton.dataset.reorder);
+				var cancelButton = event.target.closest("[data-cancel-order]");
+				if (cancelButton) cancelOrder(cancelButton.dataset.cancelOrder);
+				var del = event.target.closest("[data-address-delete]");
+				if (del && window.confirm("確定要刪除這個地址嗎？")) {
+					var list = addresses();
+					list.splice(Number(del.dataset.addressDelete), 1);
+					write(ADDRESS_KEY, list);
+					renderAddresses();
+				}
+				if (event.target.closest("[data-close]")) document.getElementById("detailModal").classList.remove("open");
+				if (event.target.closest("[data-logout]")) {
+					write(SESSION_KEY, false);
+					setMobileMenu(false);
+					showModal("已登出", '<p>這是純前端示範，已將登入狀態標記為登出。</p><a class="btn bg-green-600 text-white border-green-600 hover:bg-green-700 hover:border-green-700" href="./index.html">返回商店</a>');
+				}
+			});
+			document.addEventListener("keydown", function (event) {
+				if (event.key === "Escape") setMobileMenu(false);
+			});
+			window.addEventListener("resize", function () {
+				if (window.innerWidth > 900) setMobileMenu(false);
+			});
+			document.getElementById("addressForm").addEventListener("submit", function (event) {
+				event.preventDefault();
+				var form = event.target;
+				var list = addresses();
+				list.push({ name: form.name.value, phone: form.phone.value, address: form.address.value });
+				write(ADDRESS_KEY, list);
+				form.reset();
+				renderAddresses();
+				showModal("地址已儲存", "<p>新的配送地址已加入帳戶。</p>");
+			});
+			document.getElementById("profileForm").addEventListener("submit", function (event) {
+				event.preventDefault();
+				var form = event.target;
+				var data = customer();
+				if (form.newPassword.value && form.currentPassword.value !== data.password) {
+					showModal("密碼未更新", "<p>目前密碼不正確。示範預設密碼為 demo1234。</p>");
+					return;
+				}
+				data.firstName = form.firstName.value;
+				data.lastName = form.lastName.value;
+				data.displayName = form.displayName.value;
+				data.email = form.email.value;
+				data.phone = form.phone.value;
+				if (form.newPassword.value) data.password = form.newPassword.value;
+				write(CUSTOMER_KEY, data);
+				renderProfile();
+				showModal("帳戶資料已儲存", "<p>您的會員資料已更新。</p>");
+			});
+			customer();
+			renderOrders();
+			renderAddresses();
+			renderProfile();
+		});
+	</script>
+</body>
+</html>
