@@ -1,24 +1,46 @@
 {
-  "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "site",
-  "installCommand": "npm install",
+  "buildCommand": "npm run vercel-build",
+  "cleanUrls": false,
+  "headers": [
+    {
+      "source": "/Patriasample/Patria/dist/liff-login.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/liff-login.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
-      "source": "/latest-news/article/:path*",
-      "destination": "https://sensen.jinfeng8605.workers.dev/latest-news/article/:path*"
+      "source": "/Patriasample/Patria/dist/liff-login.html",
+      "destination": "/liff-login.html"
     },
     {
-      "source": "/api/:path*",
-      "destination": "https://sensen.jinfeng8605.workers.dev/api/:path*"
+      "source": "/Patriasample/Patria/index.html",
+      "destination": "/Patriasample/Patria/dist/index.html"
     },
     {
-      "source": "/images/:path*",
-      "destination": "https://sensen.jinfeng8605.workers.dev/images/:path*"
+      "source": "/admin",
+      "destination": "/Patriasample/dashboardsample/dist/signin.html"
     },
     {
-      "source": "/health",
-      "destination": "https://sensen.jinfeng8605.workers.dev/health"
+      "source": "/admin/",
+      "destination": "/Patriasample/dashboardsample/dist/signin.html"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/Patriasample/dashboardsample/dist/:path*"
     }
   ]
 }

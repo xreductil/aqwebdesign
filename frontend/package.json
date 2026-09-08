@@ -1,8 +1,0 @@
-{
-  "name": "sensen-frontend",
-  "private": true,
-  "scripts": {
-    "build": "node ../scripts/build-site.js",
-    "start": "node server.js"
-  }
-}

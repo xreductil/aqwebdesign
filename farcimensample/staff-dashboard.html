@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Farcimen 員工管理後台</title>
+  <link rel="shortcut icon" href="images/favicon.webp" type="">
+  <link href="css/font-awesome.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="css/demo-dashboard.css" rel="stylesheet">
+</head>
+<body class="demo-dashboard" data-dashboard="staff">
+  <header class="demo-mobile-nav staff-mobile-nav">
+    <button class="demo-menu-toggle" type="button" data-demo-menu-toggle aria-label="開啟選單" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <a class="demo-brand staff-mobile-brand" href="index.html">
+      <strong>Farcimen</strong>
+    </a>
+    <div class="demo-notifications demo-mobile-notifications">
+      <button class="demo-icon-button" type="button" data-demo-notification-toggle aria-label="通知">
+        <i class="fa fa-bell-o"></i>
+        <span data-demo-notification-count>0</span>
+      </button>
+      <div class="demo-notification-menu" data-demo-notifications></div>
+    </div>
+  </header>
+  <div class="demo-shell">
+    <div class="demo-sidebar-backdrop" data-demo-sidebar-close></div>
+    <aside class="demo-sidebar">
+      <a class="demo-brand" href="index.html">
+        <span class="demo-brand-mark"><i class="fa fa-cutlery"></i></span>
+        <span><strong>Farcimen</strong><span>員工後台</span></span>
+      </a>
+      <nav class="demo-nav">
+        <button class="active" data-demo-tab="overview"><i class="fa fa-home"></i> 總覽</button>
+        <button data-demo-tab="inventory"><i class="fa fa-cube"></i> 庫存管理</button>
+        <button data-demo-tab="add-product"><i class="fa fa-plus"></i> 新增商品</button>
+        <button data-demo-tab="orders"><i class="fa fa-list-alt"></i> 訂單</button>
+        <button data-demo-tab="reports"><i class="fa fa-bar-chart"></i> 報表</button>
+        <button data-demo-tab="reservations"><i class="fa fa-calendar"></i> 訂位管理</button>
+        <a href="index.html"><i class="fa fa-arrow-left"></i> 返回前台</a>
+      </nav>
+    </aside>
+    <main class="demo-main">
+      <header class="demo-topbar">
+        <div>
+          <h1>員工後台 總覽</h1>
+        </div>
+        <div class="demo-topbar-actions">
+          <div class="demo-notifications">
+            <button class="demo-icon-button" type="button" data-demo-notification-toggle aria-label="通知">
+              <i class="fa fa-bell-o"></i>
+              <span data-demo-notification-count>0</span>
+            </button>
+            <div class="demo-notification-menu" data-demo-notifications></div>
+          </div>
+        </div>
+      </header>
+
+      <section class="demo-section active" id="overview" data-demo-panel>
+        <div class="demo-grid cards">
+          <div class="demo-card metric sales"><i class="fa fa-credit-card"></i><strong data-demo-total-sales>$0.00</strong><span>總銷售額</span></div>
+          <div class="demo-card metric products"><i class="fa fa-cutlery"></i><strong data-demo-product-count>0</strong><span>商品數</span></div>
+          <div class="demo-card metric orders"><i class="fa fa-file-text-o"></i><strong data-demo-order-count>0</strong><span>訂單</span></div>
+          <div class="demo-card metric sold"><i class="fa fa-shopping-basket"></i><strong data-demo-items-sold>0</strong><span>售出品項</span></div>
+        </div>
+
+        <div class="demo-grid two-columns">
+          <div class="demo-panel">
+            <div class="demo-panel-head">
+              <h2>近期訂單</h2>
+              <button class="demo-link-button" data-demo-tab="orders">查看全部</button>
+            </div>
+            <table class="demo-table">
+              <thead><tr><th>訂單</th><th>顧客</th><th>合計</th><th>狀態</th><th></th></tr></thead>
+              <tbody data-demo-recent-orders></tbody>
+            </table>
+          </div>
+          <div class="demo-panel">
+            <div class="demo-panel-head">
+              <h2>銷售與進貨</h2>
+              <div class="demo-segment">
+                <button class="active" data-report-range="week">週</button>
+                <button data-report-range="month">月</button>
+                <button data-report-range="year">年</button>
+              </div>
+            </div>
+            <div class="demo-chart" data-demo-sales-chart></div>
+          </div>
+        </div>
+
+        <div class="demo-grid three-columns">
+          <div class="demo-card compact"><i class="fa fa-check"></i><strong data-demo-completed-sales>$0.00</strong><span>已完成銷售</span><button class="demo-link-button" data-demo-tab="orders">查看</button></div>
+          <div class="demo-card compact"><i class="fa fa-clock-o"></i><strong data-demo-processing-sales>$0.00</strong><span>處理中銷售</span><button class="demo-link-button" data-demo-tab="orders">查看</button></div>
+          <div class="demo-card compact"><i class="fa fa-map-marker"></i><strong data-demo-address-count>0</strong><span>已儲存地址</span></div>
+        </div>
+        <div class="demo-panel demo-top-products-panel">
+          <div class="demo-panel-head">
+            <h2>熱銷商品</h2>
+            <button class="demo-link-button" data-demo-tab="reports">查看報表</button>
+          </div>
+          <div class="demo-list" data-demo-top-products></div>
+        </div>
+      </section>
+
+      <section class="demo-section" id="inventory" data-demo-panel>
+        <div class="demo-panel">
+          <div class="demo-panel-head">
+            <h2>庫存管理</h2>
+            <span class="demo-muted" data-inventory-showing>顯示 0-0，共 0 筆</span>
+          </div>
+          <div class="demo-toolbar">
+            <label class="demo-search"><i class="fa fa-search"></i><input type="search" placeholder="搜尋商品" data-inventory-search></label>
+            <select data-inventory-filter>
+              <option value="all">全部分類</option>
+              <option value="Burger">漢堡</option>
+              <option value="Pizza">披薩</option>
+              <option value="Pasta">義大利麵</option>
+              <option value="Fries">薯條</option>
+              <option value="Dessert">甜點</option>
+            </select>
+            <button class="demo-button dark" type="button" data-inventory-import><i class="fa fa-upload"></i> 匯入 CSV</button>
+            <button class="demo-button" type="button" data-inventory-export><i class="fa fa-download"></i> 匯出 CSV</button>
+            <button class="demo-button ghost" type="button" data-inventory-pdf><i class="fa fa-file-pdf-o"></i> PDF</button>
+            <input type="file" accept=".csv,text/csv" data-inventory-file hidden>
+          </div>
+          <p class="demo-muted demo-toolbar-note" data-inventory-excel-status>CSV 欄位：id、title、category、day、price、quantity、image、description、sku。</p>
+          <div class="demo-grid" data-demo-products></div>
+          <div class="demo-pagination" data-inventory-pagination></div>
+        </div>
+      </section>
+
+      <section class="demo-section" id="add-product" data-demo-panel>
+        <div class="demo-panel">
+          <h2>新增商品</h2>
+          <form class="demo-form product-form" data-demo-product-form>
+            <label>商品名稱<input name="title" required placeholder="招牌漢堡"></label>
+            <label>SKU<input name="sku" placeholder="FAR-1001"></label>
+            <label>分類<select name="category"><option value="Burger">漢堡</option><option value="Pizza">披薩</option><option value="Pasta">義大利麵</option><option value="Fries">薯條</option><option value="Dessert">甜點</option></select></label>
+            <label>價格<input name="price" type="number" min="0" step="0.01" required placeholder="12.99"></label>
+            <label>單位<input name="unit" value="份" placeholder="份"></label>
+            <label>庫存<input name="stock" type="number" min="0" required value="10"></label>
+            <label>備貨天數<input name="day" type="number" min="0" required value="5"></label>
+            <label>圖片<select name="img"><option value="images/f1.webp">images/f1.webp</option><option value="images/f2.webp">images/f2.webp</option><option value="images/f3.webp">images/f3.webp</option><option value="images/f4.webp">images/f4.webp</option><option value="images/f5.webp">images/f5.webp</option><option value="images/f7.webp">images/f7.webp</option></select></label>
+            <label>上傳圖片<input name="imageFile" type="file" accept="image/*"></label>
+            <label class="demo-form-wide">描述<textarea name="description" rows="4" placeholder="用於菜單與後台預覽的簡短商品描述。"></textarea></label>
+            <div class="demo-image-preview demo-form-wide">
+              <img src="images/f1.webp" alt="" data-demo-image-preview>
+              <span class="demo-muted">圖片預覽</span>
+            </div>
+            <div class="demo-form-actions">
+              <button class="demo-button" type="submit">新增商品</button>
+              <button class="demo-button ghost" type="reset" data-demo-clear-product>清除</button>
+            </div>
+            <p class="demo-muted demo-form-wide" data-add-product-status></p>
+          </form>
+        </div>
+      </section>
+
+      <section class="demo-section" id="orders" data-demo-panel>
+        <div class="demo-panel">
+          <div class="demo-panel-head">
+            <h2>訂單</h2>
+            <div class="demo-segment">
+              <button class="active" data-order-filter="all">全部</button>
+              <button data-order-filter="Processing">處理中</button>
+              <button data-order-filter="Completed">已完成</button>
+              <button data-order-filter="Picked Up">已取貨</button>
+            </div>
+          </div>
+          <table class="demo-table">
+            <thead><tr><th>訂單</th><th>顧客</th><th>品項</th><th>合計</th><th>狀態</th><th></th></tr></thead>
+            <tbody data-demo-orders></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="demo-section" id="reports" data-demo-panel>
+        <div class="demo-grid cards report-cards">
+          <div class="demo-card metric sales"><i class="fa fa-line-chart"></i><strong data-report-stat="revenue">$0.00</strong><span>總營收</span></div>
+          <div class="demo-card metric sold"><i class="fa fa-shopping-bag"></i><strong data-report-stat="sold">0</strong><span>售出品項</span></div>
+          <div class="demo-card metric products"><i class="fa fa-exclamation-triangle"></i><strong data-report-stat="low-stock">0</strong><span>低庫存品項</span></div>
+          <div class="demo-card metric orders"><i class="fa fa-ban"></i><strong data-report-stat="out-stock">0</strong><span>缺貨品項</span></div>
+        </div>
+        <div class="demo-grid two-columns">
+          <div class="demo-panel">
+            <div class="demo-panel-head">
+              <h2>整體資訊</h2>
+              <div class="demo-segment">
+                <button class="active" data-overall-range="week">週</button>
+                <button data-overall-range="month">月</button>
+                <button data-overall-range="year">年</button>
+              </div>
+            </div>
+            <div class="demo-info-grid" data-demo-overall></div>
+          </div>
+          <div class="demo-panel">
+            <div class="demo-panel-head">
+              <h2>顧客概況</h2>
+              <div class="demo-segment">
+                <button class="active" data-customer-range="week">週</button>
+                <button data-customer-range="month">月</button>
+                <button data-customer-range="year">年</button>
+              </div>
+            </div>
+            <div class="demo-donut" data-demo-customer-chart></div>
+          </div>
+        </div>
+        <div class="demo-grid two-columns">
+          <div class="demo-panel">
+            <h2>熱銷商品</h2>
+            <div class="demo-list" data-demo-top-products></div>
+          </div>
+          <div class="demo-panel">
+            <h2>商品銷售與營收</h2>
+            <div class="demo-info-grid" data-demo-product-revenue></div>
+          </div>
+        </div>
+        <div class="demo-grid two-columns">
+          <div class="demo-panel">
+            <h2>低庫存品項</h2>
+            <div data-demo-low-stock></div>
+          </div>
+          <div class="demo-panel">
+            <h2>缺貨品項</h2>
+            <div data-demo-out-stock></div>
+          </div>
+        </div>
+        <div class="demo-grid three-columns">
+          <div class="demo-panel">
+            <h2>聯絡訊息</h2>
+            <div class="demo-mini-table" data-engagement-table="messages"></div>
+          </div>
+          <div class="demo-panel">
+            <h2>電子報訂閱</h2>
+            <div class="demo-mini-table" data-engagement-table="subscribers"></div>
+          </div>
+          <div class="demo-panel">
+            <h2>搜尋紀錄</h2>
+            <div class="demo-mini-table" data-engagement-table="searches"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="demo-section" id="reservations" data-demo-panel>
+        <div class="demo-panel">
+          <h2>訂位管理</h2>
+          <table class="demo-table">
+            <thead><tr><th>姓名</th><th>電話</th><th>人數</th><th>日期</th></tr></thead>
+            <tbody data-demo-bookings></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="demo-modal">
+    <div class="demo-modal-card">
+      <div class="demo-modal-head"><h3></h3><button class="demo-modal-close" type="button">&times;</button></div>
+      <div class="demo-modal-body"></div>
+    </div>
+  </div>
+  <script src="js/demo-dashboard.js"></script>
+</body>
+</html>

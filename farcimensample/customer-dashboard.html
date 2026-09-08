@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Farcimen 會員中心</title>
+  <link rel="shortcut icon" href="images/favicon.webp" type="">
+  <link href="css/font-awesome.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="css/demo-dashboard.css" rel="stylesheet">
+  </head>
+<body class="demo-dashboard customer-account" data-dashboard="customer">
+  <header class="demo-mobile-nav customer-mobile-nav">
+    <button class="demo-menu-toggle" type="button" data-demo-menu-toggle aria-label="開啟選單" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <a class="demo-brand staff-mobile-brand" href="index.html">
+      <strong>Farcimen</strong>
+    </a>
+    <div class="demo-notifications demo-mobile-notifications">
+      <button class="demo-icon-button" type="button" data-demo-notification-toggle aria-label="通知">
+        <i class="fa fa-bell-o"></i>
+        <span data-demo-notification-count>0</span>
+      </button>
+      <div class="demo-notification-menu" data-demo-notifications></div>
+    </div>
+  </header>
+  <div class="demo-shell" data-customer-portal>
+    <div class="demo-sidebar-backdrop" data-demo-sidebar-close></div>
+    <aside class="demo-sidebar">
+      <a class="demo-brand" href="index.html">
+        <span class="demo-brand-mark"><i class="fa fa-cutlery"></i></span>
+        <span><strong>Farcimen</strong><span>會員中心</span></span>
+      </a>
+      <nav class="demo-nav">
+        <button class="active" data-demo-tab="overview"><i class="fa fa-home"></i> 總覽</button>
+        <button data-demo-tab="orders"><i class="fa fa-list"></i> 訂單</button>
+        <button data-demo-tab="addresses"><i class="fa fa-map-marker"></i> 地址</button>
+        <button data-demo-tab="account"><i class="fa fa-user"></i> 帳戶資料</button>
+        <button data-demo-logout><i class="fa fa-sign-out"></i> 登出</button>
+        <a href="index.html"><i class="fa fa-arrow-left"></i> 返回前台</a>
+      </nav>
+    </aside>
+    <main class="demo-main">
+      <header class="demo-topbar">
+        <div>
+          <h1>會員中心</h1>
+          <p data-customer-greeting>您好，訪客顧客，您可以在這裡管理示範訂單與帳戶資料。</p>
+        </div>
+        <div class="demo-topbar-actions">
+          <div class="demo-notifications">
+            <button class="demo-icon-button" type="button" data-demo-notification-toggle aria-label="通知">
+              <i class="fa fa-bell-o"></i>
+              <span data-demo-notification-count>0</span>
+            </button>
+            <div class="demo-notification-menu" data-demo-notifications></div>
+          </div>
+        </div>
+      </header>
+
+      <section class="demo-section active" id="overview" data-demo-panel>
+        <div class="demo-notice">
+          <strong>總覽</strong>
+          <span>您可以在會員中心查看最近訂單、管理地址，並編輯密碼與帳戶資料。</span>
+        </div>
+        <div class="demo-grid cards">
+          <div class="demo-card"><i class="fa fa-shopping-bag"></i><strong data-demo-order-count>0</strong><span>訂單總數</span></div>
+          <div class="demo-card"><i class="fa fa-spinner"></i><strong data-demo-processing-count>0</strong><span>處理中</span></div>
+          <div class="demo-card"><i class="fa fa-check"></i><strong data-demo-completed-count>0</strong><span>已完成</span></div>
+          <div class="demo-card"><i class="fa fa-star"></i><strong data-demo-reward-points>0</strong><span>會員點數</span></div>
+        </div>
+        <div class="demo-grid two-columns">
+          <div class="demo-panel">
+            <div class="demo-panel-head">
+              <h2>近期訂單</h2>
+              <button class="demo-link-button" data-demo-tab="orders">查看全部</button>
+            </div>
+            <table class="demo-table">
+              <thead><tr><th>訂單</th><th>日期</th><th>合計</th><th>狀態</th><th></th></tr></thead>
+              <tbody data-demo-customer-orders></tbody>
+            </table>
+          </div>
+          <div class="demo-panel">
+            <h2>會員回饋</h2>
+            <div class="demo-reward-card">
+              <strong data-demo-reward-points>0</strong>
+              <span>示範消費累積的點數</span>
+              <div class="demo-progress"><span data-demo-reward-progress></span></div>
+              <p class="demo-muted">累積 100 點即可解鎖一份示範飲品招待。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="demo-section" id="orders" data-demo-panel>
+        <div class="demo-panel">
+          <h2>訂單</h2>
+          <table class="demo-table">
+            <thead><tr><th>訂單</th><th>日期</th><th>合計</th><th>狀態</th><th>操作</th></tr></thead>
+            <tbody data-demo-customer-orders></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="demo-section" id="addresses" data-demo-panel>
+        <div class="demo-notice">
+          <strong>地址</strong>
+          <span>以下地址會作為結帳時的預設地址。</span>
+        </div>
+        <div class="demo-grid cards" data-demo-addresses></div>
+        <div class="demo-panel" style="margin-top:18px;">
+          <h2>新增地址</h2>
+          <form class="demo-form" data-demo-address-form>
+            <label>姓名<input name="name" required value="訪客顧客"></label>
+            <label>電話<input name="phone" required value="+1 300 659 4381"></label>
+            <label>地址<input name="address" required placeholder="街道、城市"></label>
+            <button class="demo-button" type="submit">儲存地址</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="demo-section" id="account" data-demo-panel>
+        <div class="demo-panel">
+          <h2>帳戶資料</h2>
+          <form class="demo-form product-form" data-demo-profile-form>
+            <label>名字<input name="firstName" required></label>
+            <label>姓氏<input name="lastName"></label>
+            <label>顯示名稱<input name="displayName" required></label>
+            <label>電子信箱<input name="email" type="email" required></label>
+            <label>電話<input name="phone" required></label>
+            <label>目前密碼<input name="currentPassword" type="password" placeholder="demo1234"></label>
+            <label>新密碼<input name="newPassword" type="password" placeholder="不變更請留空"></label>
+            <button class="demo-button" type="submit">儲存變更</button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="demo-modal">
+    <div class="demo-modal-card">
+      <div class="demo-modal-head"><h3></h3><button class="demo-modal-close" type="button">&times;</button></div>
+      <div class="demo-modal-body"></div>
+    </div>
+  </div>
+  <script src="js/demo-dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>論文指導實例 - 論文指導網</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="website-style.css">
+    <link rel="icon" type="image/png" href="A.Q. webdesign logo展示.webp">
+
+</head>
+<body>
+    <header>
+        <nav class="nav-bar">
+            <a href="index.html" class="nav-brand">A.Q. webdesign</a>
+            <button class="nav-toggle" aria-label="切換選單">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="nav-menu">
+                <li><a href="index.html">首頁</a></li>
+                <li><a href="index.html#service-flow">關於我們</a></li>
+                <li class="dropdown">
+                    <button class="dropdown-toggle" type="button" aria-expanded="false">服務項目</button>
+                    <div class="dropdown-content">
+                        <a href="corporate-website-design.html">企業官網設計</a>
+                        <a href="corporate-website-design.html?scroll=complete-modules-hero">電商開店陪跑服務</a>
+                        <a href="corporate-website-design.html">SEO服務</a>
+                        <a href="corporate-website-design.html">品牌定位與溝通策略</a>
+                        <a href="corporate-website-design.html">使用者介面設計</a>
+                    </div>
+                </li>
+                <li><a href="index.html#service-flow">作品集</a></li>
+                <li><a href="index.html#service-features">部落格</a></li>
+                <li><a href="#" data-contact-modal>聯絡我們</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero" class="with-bg-image">
+            <div class="hero-content">
+                <h1>論文指導實例</h1>
+            </div>
+        </section>
+
+        <section class="process-section">
+            <h2>成功案例分享</h2>
+            <p style="text-align: center; color: #666; max-width: 800px; margin: 0 auto;">協助多位學生完成環境工程與環境科學相關論文。</p>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const navToggle = document.querySelector('.nav-toggle');
+            const navMenu = document.querySelector('.nav-menu');
+            const navBar = document.querySelector('.nav-bar');
+            if (navToggle && navMenu && navBar) {
+                navToggle.addEventListener('click', function () {
+                    navMenu.classList.toggle('active');
+                    this.classList.toggle('open');
+                    navBar.classList.toggle('open');
+                });
+                
+                // 点击菜单项后关闭菜单
+                const navLinks = navMenu.querySelectorAll('a');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', function (e) {
+                        const href = this.getAttribute('href');
+                        const linkUrl = new URL(href, location.href);
+                        // 只有相同頁面且帶 hash 的連結才實現平滑滾动
+                        if (linkUrl.hash && (href.startsWith('#') || (linkUrl.pathname === location.pathname && linkUrl.search === location.search))) {
+                            e.preventDefault();
+                            const targetId = linkUrl.hash.substring(1);
+                            const target = document.getElementById(targetId);
+                            if (target) {
+                                smoothScroll(target, 800); // 800ms 滚动时间
+                            }
+                        }
+                        navMenu.classList.remove('active');
+                        navToggle.classList.remove('open');
+                        navBar.classList.remove('open');
+                    });
+                });
+                
+                // 平滑滚动函数
+                function smoothScroll(target, duration) {
+                    const start = window.scrollY;
+                    const targetPosition = target.getBoundingClientRect().top + start - 80; // 80px 是 header 高度
+                    const distance = targetPosition - start;
+                    let currentTime = 0;
+                    
+                    function ease(t) {
+                        // easeInOutQuad 缓动函数
+                        return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+                    }
+                    
+                    function animateScroll() {
+                        currentTime += 16; // 约60fps
+                        const progress = Math.min(currentTime / duration, 1);
+                        window.scrollTo(0, start + distance * ease(progress));
+                        
+                        if (progress < 1) {
+                            requestAnimationFrame(animateScroll);
+                        }
+                    }
+                    
+                    animateScroll();
+                }
+            }
+        });
+    </script>
+
+    <footer>
+        <div class="footer-inner">
+            <div class="footer-column footer-brand-col">
+                <h3>A.Q. webdesign</h3>
+                <ul class="footer-links">
+                    <li><a href="index.html">首頁</a></li>
+                    <li><a href="index.html#service-flow">關於我們</a></li>
+                    <li><a href="index.html#service-features">服務項目</a></li>
+                    <li><a href="index.html#service-flow">作品集</a></li>
+                    <li><a href="index.html#service-features">部落格</a></li>
+                    <li><a href="#" data-contact-modal>聯絡我們</a></li>
+                </ul>
+            </div>
+            <div class="footer-column footer-contact-col">
+                <h3>聯絡我們</h3>
+                <p>服務時間：週一至週五 9:00-18:00</p>
+                <p>信箱：aq.webdesign@example.com</p>
+                <p>電話：0906-843-286</p>
+            </div>
+        </div>
+        <p class="footer-copy">&copy; 2026 A.Q. webdesign All rights reserved.</p>
+    </footer>
+    <script src="nav-dropdown.js"></script>
+    <script src="contact-modal.js"></script>
+</body>
+</html>

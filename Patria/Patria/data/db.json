@@ -1,0 +1,383 @@
+{
+  "users": [
+    {
+      "id": "6e351042aab2f8387e5a72e9ca5e3ed8851c1f74f3dcc2f7d2ffe46c00c9cf4b",
+      "name": "Test User",
+      "email": "test1785317734967@example.com",
+      "phone": "123",
+      "salt": "4bb9b84915322932b8638c427fdaf9c5",
+      "passwordHash": "b25a63e18aafaf8c9b2bddb56d3bf4e75bbef369e31102641146edc89dcfdbc05dbd8ac9e70f150a26c41b98dc79b95c76aacc4978da47fea9489c8eb5587e64",
+      "address": null,
+      "createdAt": "2026-07-29T09:35:35.070Z"
+    },
+    {
+      "id": "23d5457a62a1980c3e75f31d2704329b2e60fc6314491c70ab4872076bf76d41",
+      "name": "Test User",
+      "email": "codex-test-1785321129@example.com",
+      "phone": "123",
+      "salt": "91d234e91fe9b1aa4280f7d5a9b705a9",
+      "passwordHash": "4593ede316052453c0322de5af8769e38e2d034bc8a8871c8a830b2631b2a1c8d1860f57854f8dfc8ee1cc427f9270025ce37aba6618b7dca8d2fa9acfab88b7",
+      "address": null,
+      "createdAt": "2026-07-29T10:32:09.940Z"
+    },
+    {
+      "id": "f5a7d19b30560cc00b6b635f7c9520b78a778c178399aa977b6d2e1635639bdf",
+      "name": "Browser Test",
+      "email": "browser-test-1785321231@example.com",
+      "phone": "123",
+      "salt": "482fdda229ee1c948b4534b67b6f8298",
+      "passwordHash": "35873318d950c1744e0cd3e1c1a948269903bd66215a8cefa96b4d1595c30a4d75fbc3243840dfdf5aaec41afbb0a2a4dc61616cb5874d80950b191b5b05fca8",
+      "address": null,
+      "createdAt": "2026-07-29T10:33:51.986Z"
+    },
+    {
+      "id": "af6a671ffdc4474cdc7d8dfdc37ab0a4cdb76984440d7b5fe86c46c61588a907",
+      "name": "kao",
+      "email": "jinfeng8605@gmail.com",
+      "phone": "0906843286",
+      "salt": "f6bf2c5292e2a078f349502690b32ecb",
+      "passwordHash": "ea8456f8f4e41d0910074258256d62d59bbb345e3323d5b7ab20ddc168f0e71fad1d51510a9f50b5518425a0e4ca346e57a9fdabfb0ce91330ae287f9cb2c8cd",
+      "address": null,
+      "createdAt": "2026-07-29T10:35:04.202Z"
+    }
+  ],
+  "sessions": {
+    "7c7054a352e6b57fd26bae9da182ecf0477842287c132fefa7fbb761e40336be": {
+      "userId": "6e351042aab2f8387e5a72e9ca5e3ed8851c1f74f3dcc2f7d2ffe46c00c9cf4b",
+      "createdAt": "2026-07-29T09:35:35.070Z"
+    },
+    "3c80aa318e2241c26e702ba2eed6f3ddd0d93924700f0323255005f7e1966e69": {
+      "userId": "23d5457a62a1980c3e75f31d2704329b2e60fc6314491c70ab4872076bf76d41",
+      "createdAt": "2026-07-29T10:32:09.943Z"
+    },
+    "17e201c6ee2f4d2f50a1086c809d40e32de48dfcf11feada9b993716de0bc312": {
+      "userId": "f5a7d19b30560cc00b6b635f7c9520b78a778c178399aa977b6d2e1635639bdf",
+      "createdAt": "2026-07-29T10:33:51.992Z"
+    },
+    "b6e6043ead6af3e5603081d4a5e589c50c2c6f3be0574b066afac2c09a34a723": {
+      "userId": "af6a671ffdc4474cdc7d8dfdc37ab0a4cdb76984440d7b5fe86c46c61588a907",
+      "createdAt": "2026-07-31T18:30:21.935Z"
+    },
+    "031bbf6f2aaa865e13896df89b02d9f0800e98720392ac6211b3d8ec806a1c76": {
+      "userId": "af6a671ffdc4474cdc7d8dfdc37ab0a4cdb76984440d7b5fe86c46c61588a907",
+      "createdAt": "2026-08-02T10:20:09.472Z"
+    },
+    "227477788b4387e0a0c4cc0988ccbb176fb77bc76121213b3ed9c8b4a6b92ff5": {
+      "userId": "af6a671ffdc4474cdc7d8dfdc37ab0a4cdb76984440d7b5fe86c46c61588a907",
+      "createdAt": "2026-08-02T13:47:03.735Z"
+    }
+  },
+  "guestCarts": {},
+  "userCarts": {
+    "6e351042aab2f8387e5a72e9ca5e3ed8851c1f74f3dcc2f7d2ffe46c00c9cf4b": [],
+    "af6a671ffdc4474cdc7d8dfdc37ab0a4cdb76984440d7b5fe86c46c61588a907": []
+  },
+  "orders": [
+    {
+      "id": "e68624460f77",
+      "userId": "6e351042aab2f8387e5a72e9ca5e3ed8851c1f74f3dcc2f7d2ffe46c00c9cf4b",
+      "items": [
+        {
+          "id": "chicken-rice-lunch-set",
+          "title": "Chicken Rice Lunch Set",
+          "cat": "RICE",
+          "price": "$13.99",
+          "priceValue": 13.99,
+          "img": "img/QuickMeals/1.webp",
+          "desc": "A quick lunch set with steamed rice, saucy chicken, broccoli, baby corn, mushrooms and cabbage.",
+          "qty": 2
+        }
+      ],
+      "total": 27.98,
+      "status": "created",
+      "createdAt": "2026-07-29T09:35:35.072Z"
+    },
+    {
+      "id": "05fcc7df804d",
+      "userId": "af6a671ffdc4474cdc7d8dfdc37ab0a4cdb76984440d7b5fe86c46c61588a907",
+      "items": [
+        {
+          "id": "chicken-noodle-lunch-set",
+          "title": "Chicken Noodle Lunch Set",
+          "cat": "NOODLES",
+          "price": "$11.99",
+          "priceValue": 11.99,
+          "img": "img/QuickMeals/2.webp",
+          "desc": "A fast lunch set with stir-fried noodles, chicken, broccoli, peppers, onions and shiitake mushrooms.",
+          "qty": 3
+        },
+        {
+          "id": "chicken-fried-rice-set",
+          "title": "Chicken Fried Rice Set",
+          "cat": "RICE",
+          "price": "$12.99",
+          "priceValue": 12.99,
+          "img": "img/QuickMeals/3.webp",
+          "desc": "A satisfying fried rice lunch set with egg, peas, carrots, scallions, chicken and broccoli.",
+          "qty": 1
+        }
+      ],
+      "total": 48.96,
+      "status": "completed",
+      "createdAt": "2026-07-29T13:05:00.377Z",
+      "updatedAt": "2026-07-29T17:48:10.483Z"
+    },
+    {
+      "id": "346df7eb85be",
+      "userId": "af6a671ffdc4474cdc7d8dfdc37ab0a4cdb76984440d7b5fe86c46c61588a907",
+      "items": [
+        {
+          "id": "chicken-rice-lunch-set",
+          "title": "Chicken Rice Lunch Set",
+          "cat": "RICE",
+          "price": "$13.99",
+          "priceValue": 13.99,
+          "img": "img/QuickMeals/1.webp",
+          "desc": "A quick lunch set with steamed rice, saucy chicken, broccoli, baby corn, mushrooms and cabbage.",
+          "qty": 1
+        }
+      ],
+      "total": 13.99,
+      "status": "completed",
+      "createdAt": "2026-07-30T09:59:39.845Z",
+      "updatedAt": "2026-07-30T10:16:50.344Z"
+    },
+    {
+      "id": "24ca9c95bbdc",
+      "userId": "af6a671ffdc4474cdc7d8dfdc37ab0a4cdb76984440d7b5fe86c46c61588a907",
+      "items": [
+        {
+          "id": "chicken-rice-lunch-set",
+          "title": "Chicken Rice Lunch Set",
+          "cat": "RICE",
+          "price": "$13.99",
+          "priceValue": 13.99,
+          "img": "img/QuickMeals/1.webp",
+          "desc": "A quick lunch set with steamed rice, saucy chicken, broccoli, baby corn, mushrooms and cabbage.",
+          "qty": 1
+        }
+      ],
+      "total": 13.99,
+      "status": "picked_up",
+      "createdAt": "2026-07-30T10:00:04.658Z",
+      "updatedAt": "2026-07-30T14:14:52.207Z"
+    },
+    {
+      "id": "8d3d3ac0581b",
+      "userId": "af6a671ffdc4474cdc7d8dfdc37ab0a4cdb76984440d7b5fe86c46c61588a907",
+      "items": [
+        {
+          "id": "chicken-rice-lunch-set",
+          "title": "Chicken Rice Lunch Set",
+          "cat": "RICE",
+          "price": "$13.99",
+          "priceValue": 13.99,
+          "img": "img/QuickMeals/1.webp",
+          "desc": "A quick lunch set with steamed rice, saucy chicken, broccoli, baby corn, mushrooms and cabbage.",
+          "quantity": 80,
+          "updatedAt": "2026-07-30T10:02:19.213Z",
+          "qty": 2
+        }
+      ],
+      "total": 27.98,
+      "status": "picked_up",
+      "createdAt": "2026-07-30T10:19:26.521Z",
+      "updatedAt": "2026-07-30T14:14:43.796Z"
+    },
+    {
+      "id": "e0f9311d4e4f",
+      "userId": "af6a671ffdc4474cdc7d8dfdc37ab0a4cdb76984440d7b5fe86c46c61588a907",
+      "items": [
+        {
+          "id": "chicken-rice-lunch-set",
+          "source": "static",
+          "title": "Chicken Rice Lunch Set",
+          "cat": "RICE",
+          "price": "$13.99",
+          "priceValue": 13.99,
+          "img": "img/QuickMeals/1.webp",
+          "desc": "A quick lunch set with steamed rice, saucy chicken, broccoli, baby corn, mushrooms and cabbage.",
+          "quantity": 80,
+          "day": "5",
+          "updatedAt": "2026-07-30T15:11:49.588Z",
+          "qty": 2
+        }
+      ],
+      "total": 27.98,
+      "fulfillmentDate": "2026-08-08",
+      "leadDays": 5,
+      "status": "created",
+      "createdAt": "2026-07-30T15:25:03.798Z"
+    },
+    {
+      "id": "aa56dd2709d3",
+      "userId": "af6a671ffdc4474cdc7d8dfdc37ab0a4cdb76984440d7b5fe86c46c61588a907",
+      "items": [
+        {
+          "id": "house-comfort-soup",
+          "source": "static",
+          "title": "House Comfort Soup",
+          "cat": "SOUP",
+          "price": "$12.99",
+          "old": "",
+          "priceValue": 12.99,
+          "img": "img/menu/64.webp",
+          "desc": "A cozy soup pot simmered slowly for deep, clean flavor.",
+          "rating": "4.9",
+          "reviews": "88",
+          "cal": "520",
+          "time": "15",
+          "tags": "SOUP,House Favorite,Shareable",
+          "quantity": 25,
+          "day": "5",
+          "qty": 1
+        }
+      ],
+      "total": 12.99,
+      "fulfillmentDate": "2026-08-14",
+      "leadDays": 5,
+      "status": "created",
+      "createdAt": "2026-07-31T18:30:21.948Z"
+    },
+    {
+      "id": "fe48d1608758",
+      "userId": "af6a671ffdc4474cdc7d8dfdc37ab0a4cdb76984440d7b5fe86c46c61588a907",
+      "items": [
+        {
+          "id": "herbal-chicken-soup",
+          "source": "static",
+          "title": "Herbal Chicken Soup",
+          "cat": "SOUP",
+          "price": "$13.99",
+          "old": "",
+          "priceValue": 13.99,
+          "img": "img/menu/6.webp",
+          "desc": "Slow-simmered chicken soup with mushrooms, red dates and goji berries.",
+          "rating": "4.9",
+          "reviews": "88",
+          "cal": "560",
+          "time": "20",
+          "tags": "SOUP,Slow-Simmered,Comfort",
+          "quantity": 25,
+          "day": "5",
+          "qty": 1
+        }
+      ],
+      "total": 13.99,
+      "fulfillmentDate": "2026-08-20",
+      "leadDays": 5,
+      "status": "created",
+      "createdAt": "2026-08-01T18:38:06.213Z"
+    },
+    {
+      "id": "650af7c4fe0c",
+      "userId": "af6a671ffdc4474cdc7d8dfdc37ab0a4cdb76984440d7b5fe86c46c61588a907",
+      "items": [
+        {
+          "id": "seafood-fried-noodles",
+          "source": "static",
+          "title": "Seafood Fried Noodles",
+          "cat": "NOODLES",
+          "price": "$14.99",
+          "old": "$18.99",
+          "priceValue": 14.99,
+          "img": "img/menu/1.webp",
+          "desc": "Wok-tossed noodles with shrimp, char siu, greens and house soy sauce.",
+          "rating": "4.9",
+          "reviews": "128",
+          "cal": "620",
+          "time": "12",
+          "tags": "NOODLES,Local Favourite,Seafood",
+          "quantity": 25,
+          "day": "5",
+          "qty": 1
+        }
+      ],
+      "total": 14.99,
+      "fulfillmentDate": "2026-08-20",
+      "leadDays": 5,
+      "status": "created",
+      "createdAt": "2026-08-02T13:47:12.412Z"
+    }
+  ],
+  "productOverrides": {
+    "chicken-rice-lunch-set": {
+      "title": "Chicken Rice Lunch Set",
+      "cat": "RICE",
+      "img": "img/QuickMeals/1.webp",
+      "desc": "A quick lunch set with steamed rice, saucy chicken, broccoli, baby corn, mushrooms and cabbage.",
+      "quantity": 80,
+      "day": "5",
+      "priceValue": 13.99,
+      "price": "$13.99",
+      "updatedAt": "2026-07-30T15:11:49.588Z"
+    },
+    "chicken-fried-rice-set": {
+      "title": "Chicken Fried Rice Set",
+      "cat": "RICE",
+      "img": "img/QuickMeals/3.webp",
+      "desc": "A satisfying fried rice lunch set with egg, peas, carrots, scallions, chicken and broccoli.",
+      "quantity": 28,
+      "day": "5",
+      "priceValue": 12.99,
+      "price": "$12.99",
+      "updatedAt": "2026-07-31T18:29:30.827Z"
+    }
+  },
+  "productAdditions": [
+    {
+      "id": "123",
+      "source": "admin",
+      "title": "123",
+      "sku": "123",
+      "cat": "NOODLES",
+      "priceValue": 11,
+      "price": "$11.00",
+      "quantity": 14,
+      "img": "img/menu/20267095717.webp",
+      "desc": "123",
+      "rating": "4.8",
+      "reviews": "24",
+      "cal": "520",
+      "time": "15",
+      "createdAt": "2026-07-30T13:47:51.288Z",
+      "updatedAt": "2026-07-30T13:47:51.290Z",
+      "day": "5"
+    },
+    {
+      "id": "codex-excel-test",
+      "source": "admin",
+      "title": "Codex Excel Test",
+      "sku": "",
+      "cat": "NOODLES",
+      "priceValue": 9.99,
+      "price": "$9.99",
+      "quantity": 6,
+      "day": "5",
+      "img": "img/menu/1.webp",
+      "desc": "Temporary import test",
+      "rating": "4.8",
+      "reviews": "24",
+      "cal": "520",
+      "time": "15",
+      "createdAt": "2026-07-30T15:09:12.771Z",
+      "updatedAt": "2026-07-30T15:09:12.784Z"
+    }
+  ],
+  "deletedProducts": [
+    "123",
+    "codex-excel-test",
+    "chicken-herbal-soup"
+  ],
+  "reservations": [],
+  "messages": [],
+  "subscribers": [
+    {
+      "id": "f285a9612f91",
+      "email": "123@gmail.com",
+      "status": "active",
+      "createdAt": "2026-07-30T15:01:10.496Z"
+    }
+  ],
+  "searches": []
+}
