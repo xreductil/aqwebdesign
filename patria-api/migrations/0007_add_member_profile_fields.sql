@@ -1,1 +1,0 @@
--- Member profile columns are already created by migration 0003.
