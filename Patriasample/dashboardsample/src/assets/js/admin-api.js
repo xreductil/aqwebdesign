@@ -1,6 +1,11 @@
 import patriaProducts from '../../../../Patria/data/products.json';
 
-const STATIC_BASE = '../../Patria';
+const R2_IMAGE_BASE = 'https://www.aq-webdesign.com/images';
+const PRODUCT_IMAGE_KEYS = new Map(
+  patriaProducts
+    .filter(product => product && product.img && product.id)
+    .map(product => [String(product.img), String(product.id)])
+);
 const SAMPLE_PRODUCTS_KEY = 'patriaSampleProducts';
 const SAMPLE_PRODUCTS_VERSION_KEY = 'patriaSampleProductsVersion';
 const SAMPLE_PRODUCTS_VERSION = 'patria-products-json-v2-23';
@@ -49,7 +54,7 @@ function normalizeProduct(product, index = 0) {
     price: product.price || money(priceValue),
     priceValue,
     quantity: Number.isFinite(Number(product.quantity)) ? Number(product.quantity) : 10,
-    img: product.img || product.image || 'img/menu/1.webp',
+    img: product.img || product.image || 'img/products/1.webp',
     desc: product.desc || product.description || ''
   };
 }
@@ -182,12 +187,13 @@ function sampleBody(options) {
 
 async function api(path, options = {}) {
   const apiBase = String(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const response = await fetch(`${apiBase}${path}`, {
     ...options,
     credentials: 'include',
     headers: {
       Accept: 'application/json',
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
       ...(options.headers || {})
     }
   });
@@ -214,7 +220,11 @@ function productImage(src) {
   const clean = value.replace(/[\u0000-\u001f"'<>`\\]/g, '').replace(/^\.\//, '').replace(/^\//, '');
   if (!clean) return fallback;
   if (clean.startsWith('assets/')) return './' + clean;
-  if (clean.startsWith('img/')) return STATIC_BASE.replace(/\/$/, '') + '/' + clean;
+  if (clean.startsWith('img/')) {
+    const productId = PRODUCT_IMAGE_KEYS.get(clean);
+    if (productId) return `${R2_IMAGE_BASE}/products/${encodeURIComponent(productId)}/main.webp`;
+    return `${R2_IMAGE_BASE}/${clean.slice('img/'.length)}`;
+  }
   return clean;
 }
 
@@ -843,6 +853,7 @@ function openProductEditor(product, index) {
     + '<label>Quantity<input name="quantity" type="number" min="0" step="1" value="' + inventoryQuantity(product, index) + '" required></label>'
     + '<label>day<input name="day" value="' + escapeHtml(product.day || '5') + '"></label>'
     + '<label class="wide">Image Path<input name="img" value="' + escapeHtml(product.img || '') + '"></label>'
+    + '<label class="wide">Replace Image<input name="image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>'
     + '<label class="wide">Description<textarea name="desc" rows="3">' + escapeHtml(product.desc || '') + '</textarea></label>'
     + '<p class="admin-product-error" data-product-error></p>'
     + '<button type="submit" class="btn btn-primary w-100">Save Changes</button>'
@@ -861,20 +872,18 @@ function openProductEditor(product, index) {
     button.textContent = 'Saving...';
     if (error) error.textContent = '';
     try {
-      const data = await api('/api/admin/products', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: product.id,
-          title: formData.get('title'),
-          cat: formData.get('cat'),
-          priceValue: Number(formData.get('priceValue')),
-          quantity: Number(formData.get('quantity')),
-          day: formData.get('day'),
-          img: formData.get('img'),
-          desc: formData.get('desc')
-        })
-      });
+      const payload = new FormData();
+      payload.append('id', product.id);
+      payload.append('title', String(formData.get('title') || ''));
+      payload.append('cat', String(formData.get('cat') || ''));
+      payload.append('priceValue', String(Number(formData.get('priceValue') || 0)));
+      payload.append('quantity', String(Number(formData.get('quantity') || 0)));
+      payload.append('day', String(formData.get('day') || '5'));
+      payload.append('img', String(formData.get('img') || ''));
+      payload.append('desc', String(formData.get('desc') || ''));
+      const image = formData.get('image');
+      if (image instanceof File && image.size > 0) payload.append('image', image);
+      const data = await api('/api/admin/products', { method: 'PATCH', body: payload });
       latestInventoryProducts = latestInventoryProducts.map(item => item.id === product.id ? data.product : item);
       renderInventory(latestInventoryProducts);
       modal.remove();
@@ -1113,9 +1122,6 @@ export function initCreateProduct() {
 
   form.addEventListener('submit', async event => {
     event.preventDefault();
-    const imageInput = document.getElementById('productImage');
-    const imageFile = imageInput && imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
-    const imagePath = imageFile ? 'img/menu/' + imageFile.name : '';
     if (status) {
       status.className = 'small mt-3 mb-0 text-secondary';
       status.textContent = '';
@@ -1126,19 +1132,8 @@ export function initCreateProduct() {
     }
 
     try {
-      const data = await api('/api/admin/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: document.getElementById('productName').value,
-          sku: document.getElementById('productSKU').value,
-          priceValue: Number(document.getElementById('productPrice').value),
-          quantity: Number(document.getElementById('productStock').value),
-          cat: document.getElementById('productCategory').value,
-          img: imagePath,
-          desc: document.getElementById('productDescription').value
-        })
-      });
+      const payload = new FormData(form);
+      const data = await api('/api/admin/products', { method: 'POST', body: payload });
       form.reset();
       if (status) {
         status.className = 'small mt-3 mb-0 text-success';

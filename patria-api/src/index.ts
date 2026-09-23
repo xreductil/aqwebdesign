@@ -6,6 +6,7 @@ interface Env {
   LINE_CHANNEL_SECRET: string;
   LINE_CALLBACK_URL: string;
   ADMIN_EMAILS?: string;
+  IMAGE_BASE_URL?: string;
 
   LOGIN_SUCCESS_URL?: string;
 }
@@ -268,6 +269,103 @@ function productIdFromTitle(title: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80) || `product-${randomString(6)}`;
+}
+
+const IMAGE_CONTENT_TYPES: Record<string, string> = {
+  ".gif": "image/gif",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+};
+
+function imageBaseUrl(env: Env): string {
+  return String(env.IMAGE_BASE_URL || "https://www.aq-webdesign.com/images").replace(/\/$/, "");
+}
+
+function imageUrlForKey(env: Env, key: string): string {
+  return `${imageBaseUrl(env)}/${key.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+function normalizeImageUrl(env: Env, value: unknown): string {
+  const input = String(value || "").trim();
+  if (!input) return "";
+  if (/^https?:\/\//i.test(input)) return input;
+
+  const key = input
+    .replace(/^\.\//, "")
+    .replace(/^\//, "")
+    .replace(/^images\//, "")
+    .replace(/^img\//, "");
+  return imageUrlForKey(env, key);
+}
+
+function imageFileDetails(file: File): { extension: string; contentType: string } | null {
+  const contentType = String(file.type || "").toLowerCase();
+  const extensionFromType = Object.entries(IMAGE_CONTENT_TYPES).find(([, type]) => type === contentType)?.[0];
+  const extensionFromName = file.name.match(/\.[a-z0-9]+$/i)?.[0]?.toLowerCase();
+  const extension = extensionFromType || extensionFromName || "";
+  const normalizedType = IMAGE_CONTENT_TYPES[extension] || contentType;
+
+  if (!normalizedType || !Object.values(IMAGE_CONTENT_TYPES).includes(normalizedType)) {
+    return null;
+  }
+
+  return {
+    extension: extension === ".jpeg" ? ".jpg" : extension,
+    contentType: normalizedType,
+  };
+}
+
+async function readProductInput(request: Request): Promise<{
+  values: Record<string, unknown>;
+  image: File | null;
+}> {
+  const contentType = request.headers.get("Content-Type") || "";
+  if (!contentType.toLowerCase().startsWith("multipart/form-data")) {
+    return { values: await readJson<Record<string, unknown>>(request), image: null };
+  }
+
+  const form = await request.formData();
+  const values: Record<string, unknown> = {};
+  for (const [key, value] of form.entries()) {
+    if (typeof value === "string") values[key] = value;
+  }
+
+  const image = form.get("image");
+  return {
+    values,
+    image: image instanceof File && image.size > 0 ? image : null,
+  };
+}
+
+async function storeProductImage(
+  env: Env,
+  productId: string,
+  image: File
+): Promise<string> {
+  if (image.size > 10 * 1024 * 1024) {
+    throw new Error("Product image must be 10 MB or smaller.");
+  }
+
+  const details = imageFileDetails(image);
+  if (!details) {
+    throw new Error("Product image must be JPG, PNG, WebP, or GIF.");
+  }
+
+  const key = `products/${productId}/main${details.extension}`;
+  await env.patria_images.put(key, image.stream(), {
+    httpMetadata: {
+      contentType: details.contentType,
+      cacheControl: "public, max-age=31536000, immutable",
+    },
+    customMetadata: {
+      productId,
+      originalName: image.name.slice(0, 200),
+    },
+  });
+
+  return imageUrlForKey(env, key);
 }
 
 async function getAdminOrders(
@@ -927,35 +1025,50 @@ export default {
         }
 
         if (request.method === "POST" && url.pathname === "/api/admin/products") {
-          const body = await readJson<Record<string, unknown>>(request);
+          const { values: body, image } = await readProductInput(request);
           const title = String(body.title || "").trim();
           if (!title) return Response.json({ success: false, error: "Product title is required." }, { status: 400 });
           const id = String(body.id || productIdFromTitle(title));
           const priceValue = Number(body.priceValue || 0);
-          await env.patria_db.prepare(`
-            INSERT INTO products (id, title, category, price_value, price, old_price, image_url, description, quantity, lead_days)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `).bind(
-            id, title, String(body.cat || "MENU"), priceValue,
-            String(body.price || `$${priceValue.toFixed(2)}`), String(body.old || ""),
-            String(body.img || ""), String(body.desc || ""),
-            Math.max(0, Math.floor(Number(body.quantity || 0))), Math.max(0, Math.floor(Number(body.day || 5)))
-          ).run();
+          const imageUrl = image
+            ? await storeProductImage(env, id, image)
+            : normalizeImageUrl(env, body.img);
+
+          try {
+            await env.patria_db.prepare(`
+              INSERT INTO products (id, title, category, price_value, price, old_price, image_url, description, quantity, lead_days)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).bind(
+              id, title, String(body.cat || "MENU"), priceValue,
+              String(body.price || `$${priceValue.toFixed(2)}`), String(body.old || ""),
+              imageUrl, String(body.desc || ""),
+              Math.max(0, Math.floor(Number(body.quantity || 0))), Math.max(0, Math.floor(Number(body.day || 5)))
+            ).run();
+          } catch (error) {
+            if (image) {
+              const details = imageFileDetails(image);
+              if (details) await env.patria_images.delete(`products/${id}/main${details.extension}`);
+            }
+            throw error;
+          }
           const product = (await getProducts(env.patria_db, id))[0];
           return Response.json({ success: true, product }, { status: 201 });
         }
 
         if (request.method === "PATCH" && url.pathname === "/api/admin/products") {
-          const body = await readJson<Record<string, unknown>>(request);
+          const { values: body, image } = await readProductInput(request);
           const id = String(body.id || "");
           if (!id) return Response.json({ success: false, error: "Product id is required." }, { status: 400 });
+          const imageUrl = image
+            ? await storeProductImage(env, id, image)
+            : normalizeImageUrl(env, body.img);
           await env.patria_db.prepare(`
             UPDATE products SET title = ?, category = ?, price_value = ?, price = ?,
               image_url = ?, description = ?, quantity = ?, lead_days = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
           `).bind(
             String(body.title || ""), String(body.cat || "MENU"), Number(body.priceValue || 0),
-            String(body.price || `$${Number(body.priceValue || 0).toFixed(2)}`), String(body.img || ""),
+            String(body.price || `$${Number(body.priceValue || 0).toFixed(2)}`), imageUrl,
             String(body.desc || ""), Math.max(0, Math.floor(Number(body.quantity || 0))),
             Math.max(0, Math.floor(Number(body.day || 5))), id
           ).run();

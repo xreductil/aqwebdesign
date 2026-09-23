@@ -187,27 +187,27 @@
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label for="productName" class="form-label">Product Name</label>
-                    <input type="text" class="form-control" id="productName" placeholder="Enter product name" required>
+                    <input type="text" class="form-control" id="productName" name="title" placeholder="Enter product name" required>
                   </div>
                   <div class="col-md-6 mb-3">
                     <label for="productSKU" class="form-label">SKU</label>
-                    <input type="text" class="form-control" id="productSKU" placeholder="Enter SKU" required>
+                    <input type="text" class="form-control" id="productSKU" name="sku" placeholder="Enter SKU" required>
                   </div>
                 </div>
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label for="productPrice" class="form-label">Price</label>
-                    <input type="number" class="form-control" id="productPrice" placeholder="0.00" step="0.01" required>
+                    <input type="number" class="form-control" id="productPrice" name="priceValue" placeholder="0.00" step="0.01" required>
                   </div>
                   <div class="col-md-6 mb-3">
                     <label for="productStock" class="form-label">Stock Quantity</label>
-                    <input type="number" class="form-control" id="productStock" placeholder="0" required>
+                    <input type="number" class="form-control" id="productStock" name="quantity" placeholder="0" required>
                   </div>
                 </div>
 
                 <div class="mb-3">
                   <label for="productCategory" class="form-label">Category</label>
-                  <select class="form-select" id="productCategory" required>
+                  <select class="form-select" id="productCategory" name="cat" required>
                     <option value="">Select category</option>
                     <option value="NOODLES">NOODLES</option>
                     <option value="DIM SUM">DIM SUM</option>
@@ -217,11 +217,11 @@
                 </div>
                 <div class="mb-3">
                   <label for="productImage" class="form-label">Product Image</label>
-                  <input type="file" class="form-control" id="productImage" accept="image/*" required>
+                  <input type="file" class="form-control" id="productImage" name="image" accept="image/png,image/jpeg,image/webp,image/gif" required>
                 </div>
                 <div class="mb-3">
                   <label for="productDescription" class="form-label">Description</label>
-                  <textarea class="form-control" id="productDescription" rows="4"
+                  <textarea class="form-control" id="productDescription" name="desc" rows="4"
                     placeholder="Enter product description"></textarea>
                 </div>
                 <div class="d-flex gap-2">

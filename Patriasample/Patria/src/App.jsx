@@ -22,11 +22,11 @@ import {
 const imageBase = "https://www.aq-webdesign.com/images";
 
 const categories = [
-  { name: "ALL", image: "./img/products/1.webp" },
-  { name: "NOODLES", image: "./img/products/2.webp" },
-  { name: "DIM SUM", image: "./img/products/4.webp" },
-  { name: "RICE", image: "./img/products/5.webp" },
-  { name: "SOUP", image: "./img/products/6.webp" },
+  { name: "ALL", image: `${imageBase}/products/seafood-fried-noodles/main.webp` },
+  { name: "NOODLES", image: `${imageBase}/products/crispy-spring-rolls/main.webp` },
+  { name: "DIM SUM", image: `${imageBase}/products/bbq-pork-dim-sum-platter/main.webp` },
+  { name: "RICE", image: `${imageBase}/products/house-egg-fried-rice/main.webp` },
+  { name: "SOUP", image: `${imageBase}/products/herbal-chicken-soup/main.webp` },
 ];
 
 const fallbackCoupons = [
@@ -354,11 +354,11 @@ function App() {
   const [error, setError] = useState("");
   const [fulfillmentDate, setFulfillmentDate] = useState("");
   const galleryItems = [
-    { img: "./img/products/1.webp", title: "Gourmet Burgers", desc: "Our award-winning smash burgers, hand-crafted with 100% premium beef, aged cheddar and house-made sauces." },
-    { img: "./img/products/2.webp", title: "Wood-Fired Pizza", desc: "Authentic Neapolitan-style pizzas fired at 900°F in our wood-burning stone oven for the perfect char." },
-    { img: "./img/products/4.webp", title: "Crispy Fried Chicken", desc: "Double-brined, hand-battered chicken fried to golden perfection using our 15-spice secret blend." },
-    { img: "./img/products/5.webp", title: "Sweet Desserts", desc: "Handcrafted desserts—from molten lava cakes to artisan ice cream sundaes and seasonal pastries." },
-    { img: "./img/products/6.webp", title: "Fresh Wraps & Rolls", desc: "Loaded fresh wraps packed with grilled proteins, crunchy vegetables and our house-made sauces." },
+    { img: `${imageBase}/products/seafood-fried-noodles/main.webp`, title: "Gourmet Burgers", desc: "Our award-winning smash burgers, hand-crafted with 100% premium beef, aged cheddar and house-made sauces." },
+    { img: `${imageBase}/products/crispy-spring-rolls/main.webp`, title: "Wood-Fired Pizza", desc: "Authentic Neapolitan-style pizzas fired at 900°F in our wood-burning stone oven for the perfect char." },
+    { img: `${imageBase}/products/bbq-pork-dim-sum-platter/main.webp`, title: "Crispy Fried Chicken", desc: "Double-brined, hand-battered chicken fried to golden perfection using our 15-spice secret blend." },
+    { img: `${imageBase}/products/house-egg-fried-rice/main.webp`, title: "Sweet Desserts", desc: "Handcrafted desserts—from molten lava cakes to artisan ice cream sundaes and seasonal pastries." },
+    { img: `${imageBase}/products/herbal-chicken-soup/main.webp`, title: "Fresh Wraps & Rolls", desc: "Loaded fresh wraps packed with grilled proteins, crunchy vegetables and our house-made sauces." },
   ];
 
   useEffect(() => {

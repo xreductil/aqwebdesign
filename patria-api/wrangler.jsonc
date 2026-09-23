@@ -10,7 +10,8 @@
 	"vars": {
 		"LINE_CHANNEL_ID": "2011054194",
 		"LINE_CALLBACK_URL": "https://www.aq-webdesign.com/auth/line/callback",
-		"LOGIN_SUCCESS_URL": "https://www.aq-webdesign.com/Patriasample/Patria/dist/index.html"
+		"LOGIN_SUCCESS_URL": "https://www.aq-webdesign.com/Patriasample/Patria/dist/index.html",
+		"IMAGE_BASE_URL": "https://www.aq-webdesign.com/images"
 	},
 	"routes": [
 		{
