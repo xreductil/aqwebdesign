@@ -1,4 +1,4 @@
-import ogImageSrc from '@images/social.png';
+import ogImageSrc from '@images/social.webp';
 
 export const SITE = {
   title: 'ScrewFast',
