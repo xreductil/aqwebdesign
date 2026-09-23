@@ -1506,7 +1506,7 @@ function renderMenuProducts(products) {
         var cat = product.cat || 'NOODLES';
         var price = product.price || formatMoney(product.priceValue);
         var old = product.old || '';
-        var img = product.img || 'img/menu/1.webp';
+        var img = product.img || 'img/products/1.webp';
         var desc = product.desc || 'Freshly prepared Patria Chinese food.';
         var rating = product.rating || '4.8';
         var reviews = product.reviews || '24';

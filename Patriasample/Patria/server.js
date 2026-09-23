@@ -580,7 +580,7 @@ async function handleApi(req, res) {
       const title = String(body.title || '').trim();
       const cat = String(body.cat || 'NOODLES').trim().toUpperCase();
       const sku = String(body.sku || '').trim();
-      const img = String(body.img || 'img/menu/1.webp').trim();
+      const img = String(body.img || 'img/products/1.webp').trim();
       const desc = String(body.desc || '').trim();
       const day = String(body.day || '5').trim();
       const quantity = Math.max(0, Number(body.quantity ?? 0));
