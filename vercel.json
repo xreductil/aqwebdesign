@@ -23,6 +23,22 @@
   ],
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://www.aq-webdesign.com/api/:path*"
+    },
+    {
+      "source": "/auth/line",
+      "destination": "https://www.aq-webdesign.com/auth/line"
+    },
+    {
+      "source": "/auth/line/:path*",
+      "destination": "https://www.aq-webdesign.com/auth/line/:path*"
+    },
+    {
+      "source": "/images/:path*",
+      "destination": "https://www.aq-webdesign.com/images/:path*"
+    },
+    {
       "source": "/Patriasample/Patria/dist/liff-login.html",
       "destination": "/liff-login.html"
     },
