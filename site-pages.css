@@ -1,0 +1,362 @@
+.site-page {
+    background: #fff;
+}
+
+.site-page main {
+    margin-top: 60px;
+}
+
+.page-hero {
+    max-width: none;
+    padding: 7rem 2rem 5rem;
+    background: linear-gradient(135deg, #f1eee8 0%, #e8eef4 100%);
+    text-align: center;
+}
+
+.page-hero h1 {
+    max-width: 900px;
+    margin: 0 auto 1rem;
+    color: #333;
+    font-size: clamp(2rem, 5vw, 4.2rem);
+    line-height: 1.2;
+}
+
+.page-hero p {
+    max-width: 760px;
+    margin: 0 auto;
+    color: #555;
+    font-size: 1.1rem;
+}
+
+.page-container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+}
+
+.page-container > h2,
+.page-container > p {
+    max-width: 820px;
+}
+
+.page-container > h2 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.page-container > p {
+    color: #555;
+    line-height: 1.9;
+}
+
+.breadcrumb {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 1.25rem 2rem 0;
+    color: #777;
+    font-size: .9rem;
+}
+
+.breadcrumb a {
+    color: #555;
+}
+
+.page-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.page-card,
+.case-card,
+.contact-card,
+.article-card {
+    display: block;
+    height: 100%;
+    padding: 1.75rem;
+    border: 1px solid #e7e2dc;
+    border-radius: 12px;
+    background: #fff;
+    color: #333;
+    box-shadow: 0 8px 24px rgba(43, 39, 33, .06);
+}
+
+.page-card h2,
+.page-card h3,
+.case-card h2,
+.case-card h3,
+.contact-card h2,
+.contact-card h3,
+.article-card h2,
+.article-card h3 {
+    margin: 0 0 .75rem;
+    color: #333;
+}
+
+.page-card p,
+.case-card p,
+.contact-card p,
+.article-card p {
+    color: #5d5d5d;
+    line-height: 1.8;
+}
+
+a.page-card,
+a.case-card,
+a.article-card {
+    text-decoration: none;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+a.page-card:hover,
+a.case-card:hover,
+a.article-card:hover {
+    transform: translateY(-4px);
+    border-color: #c5b9ab;
+    box-shadow: 0 14px 30px rgba(43, 39, 33, .1);
+}
+
+.page-card-kicker,
+.article-card-kicker {
+    margin-bottom: .75rem;
+    color: #8a7560;
+    font-size: .82rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.page-card ul,
+.service-detail ul {
+    margin: 1rem 0 0;
+    padding-left: 1.2rem;
+    color: #555;
+    line-height: 1.9;
+}
+
+.service-detail {
+    margin-top: 3rem;
+    padding: 2.25rem;
+    border-top: 1px solid #e7e2dc;
+    background: #faf9f7;
+    scroll-margin-top: 90px;
+}
+
+.service-detail:first-of-type {
+    margin-top: 2rem;
+}
+
+.service-detail h2 {
+    margin-bottom: .75rem;
+    color: #333;
+}
+
+.service-detail p {
+    max-width: 820px;
+    color: #555;
+    line-height: 1.9;
+}
+
+.service-detail .cta-button,
+.page-actions .cta-button {
+    display: inline-block;
+    margin-top: 1.5rem;
+}
+
+.page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-top: 2rem;
+}
+
+.case-grid,
+.article-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.case-card img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    margin-bottom: 1.25rem;
+    border-radius: 8px;
+}
+
+.case-card .case-type {
+    margin-bottom: .5rem;
+    color: #8a7560;
+    font-size: .85rem;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.contact-card a {
+    color: #6f5d4d;
+}
+
+.site-page .contact-form {
+    display: grid;
+    gap: .8rem;
+    margin-top: 1rem;
+}
+
+.site-page .contact-form label {
+    color: #444;
+    font-weight: 600;
+}
+
+.site-page .contact-form input,
+.site-page .contact-form textarea {
+    width: 100%;
+    padding: .85rem 1rem;
+    border: 1px solid #d9d1c7;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.site-page .contact-form textarea {
+    min-height: 150px;
+    resize: vertical;
+}
+
+.site-page .contact-form button {
+    justify-self: start;
+    padding: .8rem 1.4rem;
+    border: 0;
+    border-radius: 999px;
+    background: #333;
+    color: #fff;
+    cursor: pointer;
+}
+
+.site-page .footer-links a {
+    text-decoration: none;
+}
+
+.article-detail {
+    max-width: 900px;
+}
+
+.article-detail .article-lead {
+    margin-top: 1.25rem;
+    color: #444;
+    font-size: 1.08rem;
+    font-weight: 600;
+    line-height: 1.9;
+}
+
+.article-detail p,
+.article-detail li {
+    color: #555;
+    line-height: 1.95;
+}
+
+.article-detail section {
+    margin-top: 3rem;
+    scroll-margin-top: 90px;
+}
+
+.article-detail h2 {
+    margin-bottom: 1rem;
+    color: #333;
+    line-height: 1.45;
+}
+
+.article-detail h3 {
+    margin: 1.75rem 0 .6rem;
+    color: #444;
+    line-height: 1.5;
+}
+
+.article-detail ol {
+    margin: 1rem 0 0;
+    padding-left: 1.5rem;
+}
+
+.article-detail li + li {
+    margin-top: .45rem;
+}
+
+.article-figure {
+    margin: 2rem 0;
+}
+
+.article-figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid #e7e2dc;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.article-figure figcaption {
+    margin-top: .75rem;
+    color: #766b61;
+    font-size: .92rem;
+    line-height: 1.7;
+}
+
+.article-toc {
+    margin-top: 2.5rem;
+    padding: 1.5rem 1.75rem;
+    border: 1px solid #e7e2dc;
+    border-radius: 12px;
+    background: #faf9f7;
+}
+
+.article-toc h2 {
+    margin-bottom: .75rem;
+    font-size: 1.35rem;
+}
+
+.article-toc a {
+    color: #6f5d4d;
+}
+
+.article-detail code {
+    padding: .1rem .35rem;
+    border-radius: 4px;
+    background: #f1eee8;
+    color: #5d4f43;
+    font-size: .92em;
+}
+
+.article-actions {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e7e2dc;
+}
+
+@media (max-width: 800px) {
+    .page-grid,
+    .case-grid,
+    .article-grid,
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-hero {
+        padding: 5rem 1.25rem 3.5rem;
+    }
+
+    .page-container,
+    .breadcrumb {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+
+    .service-detail {
+        padding: 1.5rem;
+    }
+}

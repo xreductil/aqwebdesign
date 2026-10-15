@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 是什麼？API Key 外洩的資安風險與防護方法｜A.Q. webdesign</title>
+    <meta name="description" content="從 API 基本運作、LINE 登入、金流與 AI 串接，到 API Key 外洩風險與應變方式，整理網站開發者需要知道的 API 資安觀念。">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="https://www.aq-webdesign.com/blog-api-key-security.html">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="A.Q. webdesign">
+    <meta property="og:locale" content="zh_TW">
+    <meta property="og:title" content="API 是什麼？API Key 外洩的資安風險與防護方法｜A.Q. webdesign">
+    <meta property="og:description" content="從 API 基本運作、LINE 登入、金流與 AI 串接，到 API Key 外洩風險與應變方式，整理網站開發者需要知道的 API 資安觀念。">
+    <meta property="og:url" content="https://www.aq-webdesign.com/blog-api-key-security.html">
+    <meta property="og:image" content="https://www.aq-webdesign.com/A.Q.%20webdesign%20logo%E5%B1%95%E7%A4%BA.webp">
+    <meta property="og:image:alt" content="A.Q. webdesign 標誌">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="API 是什麼？API Key 外洩的資安風險與防護方法">
+    <meta name="twitter:description" content="整理 API 的運作原理、網站常見應用、API Key 外洩風險，以及五項基本防護措施。">
+    <meta name="twitter:image" content="https://www.aq-webdesign.com/A.Q.%20webdesign%20logo%E5%B1%95%E7%A4%BA.webp">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "@id": "https://www.aq-webdesign.com/blog-api-key-security.html#article",
+      "url": "https://www.aq-webdesign.com/blog-api-key-security.html",
+      "headline": "API 是什麼？API Key 外洩的資安風險與防護方法",
+      "description": "從 API 基本運作、LINE 登入、金流與 AI 串接，到 API Key 外洩風險與應變方式，整理網站開發者需要知道的 API 資安觀念。",
+      "image": "https://www.aq-webdesign.com/A.Q.%20webdesign%20logo%E5%B1%95%E7%A4%BA.webp",
+      "inLanguage": "zh-Hant-TW",
+      "articleSection": "網站資安",
+      "keywords": ["API", "API Key", "OpenAI API", "OAuth 2.0", "PKCE", "JWT", "網站資安", "API 金鑰管理"],
+      "author": {
+        "@type": "Organization",
+        "@id": "https://www.aq-webdesign.com/#organization",
+        "name": "A.Q. webdesign",
+        "url": "https://www.aq-webdesign.com/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "@id": "https://www.aq-webdesign.com/#organization",
+        "name": "A.Q. webdesign",
+        "url": "https://www.aq-webdesign.com/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.aq-webdesign.com/A.Q.%20webdesign%20logo%E5%B1%95%E7%A4%BA.webp"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://www.aq-webdesign.com/blog-api-key-security.html"
+      },
+      "isPartOf": {
+        "@type": "Blog",
+        "@id": "https://www.aq-webdesign.com/blog.html#blog"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "首頁", "item": "https://www.aq-webdesign.com/"},
+        {"@type": "ListItem", "position": 2, "name": "部落格", "item": "https://www.aq-webdesign.com/blog.html"},
+        {"@type": "ListItem", "position": 3, "name": "API 是什麼？API Key 外洩的資安風險與防護方法", "item": "https://www.aq-webdesign.com/blog-api-key-security.html"}
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {"@type":"Question","name":"API 是什麼？一般人需要了解嗎？","acceptedAnswer":{"@type":"Answer","text":"API 是讓不同軟體與系統之間進行資料交換及功能整合的介面。了解 API 有助於理解 LINE 登入、線上付款、地圖及 AI 等網站功能的運作方式。"}},
+        {"@type":"Question","name":"API Key 是什麼？和密碼一樣嗎？","acceptedAnswer":{"@type":"Answer","text":"API Key 是用來識別 API 請求來源的憑證。雖然與密碼具有部分相似用途，但驗證機制與權限範圍不一定相同，需要保密的 API Key 應避免公開。"}},
+        {"@type":"Question","name":"ChatGPT Plus 有包含 OpenAI API 費用嗎？","acceptedAnswer":{"@type":"Answer","text":"沒有。ChatGPT 訂閱服務與 OpenAI API 是不同的產品及計費系統，使用付費 API 時仍可能產生額外費用。"}},
+        {"@type":"Question","name":"API Key 外洩後，只要刪除程式碼就安全了嗎？","acceptedAnswer":{"@type":"Answer","text":"不一定。如果金鑰曾經上傳到公開的 GitHub Repository，過去的提交紀錄可能仍保留相關資訊，建議立即撤銷外洩金鑰並重新建立。"}},
+        {"@type":"Question","name":"如何確認 OpenAI API 是否產生異常費用？","acceptedAnswer":{"@type":"Answer","text":"可以登入 OpenAI API 平台，檢查使用量與帳務資訊。若發現不明費用，應保留交易紀錄，確認是否涉及未經授權的 API 使用，並聯繫官方客服處理。"}}
+      ]
+    }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="website-style.css">
+    <link rel="stylesheet" href="site-pages.css">
+</head>
+<body class="site-page">
+    <header><nav class="nav-bar"><a href="index.html" class="nav-brand">A.Q. webdesign</a><button class="nav-toggle" type="button" aria-label="開啟選單" aria-expanded="false"><span></span><span></span><span></span></button><ul class="nav-menu"><li><a href="index.html">首頁</a></li><li><a href="about.html">關於我們</a></li><li class="dropdown"><button class="dropdown-toggle" type="button" aria-expanded="false">服務項目</button><div class="dropdown-content"><a href="enterprise-website-design.html">企業網站設計</a><a href="ecommerce-website-design.html">電商網站設計</a><a href="seo.html">SEO 網站優化</a><a href="brand-strategy.html">品牌定位與溝通策略</a><a href="ui-ux-design.html">UI/UX 設計</a></div></li><li><a href="portfolio.html">作品集</a></li><li><a href="blog.html" aria-current="page">部落格</a></li><li><a href="contact.html">聯絡我們</a></li></ul></nav></header>
+    <main>
+        <section class="page-hero">
+            <h1>API 是什麼？API Key 外洩的資安風險與防護方法</h1>
+            <p>從 API 基本運作、常見網站應用，到 API Key 的安全管理與外洩應變。</p>
+        </section>
+        <div class="breadcrumb"><a href="index.html">首頁</a>／<a href="blog.html">部落格</a>／API 是什麼？API Key 外洩的資安風險與防護方法</div>
+        <article class="page-container article-detail">
+            <div class="article-card-kicker">網站資安／API 基礎</div>
+            <p class="article-lead">上一篇文章跟大家分享，我的 OpenAI 帳號出現了未經授權的扣款，經過一番折騰，終於成功收到退款！😁</p>
+            <p>這次的經驗也讓我想探討平常開發網站時容易忽略的資安問題。相信很多人在使用 ChatGPT 時，都曾經聽過「API」這個名詞，但不一定真正了解它的用途。</p>
+            <p>甚至有人可能會以為，只要訂閱了 ChatGPT Plus，就能免費使用 OpenAI 的 API。其實，這是兩件不同的事情！</p>
+            <p>今天就從基本概念開始，帶大家了解 API 的運作原理、實際應用，以及 API Key 外洩可能造成的資安問題。</p>
+
+            <nav class="article-toc" aria-label="文章目錄">
+                <h2>文章目錄</h2>
+                <ol>
+                    <li><a href="#what-is-api">API 是什麼？為什麼網站需要 API？</a></li>
+                    <li><a href="#how-api-works">API 是如何運作的？</a></li>
+                    <li><a href="#api-use-cases">API 在日常生活中的應用</a></li>
+                    <li><a href="#api-key">什麼是 API Key？</a></li>
+                    <li><a href="#api-key-risks">API Key 外洩可能造成的風險</a></li>
+                    <li><a href="#api-key-protection">五項 API Key 安全防護措施</a></li>
+                    <li><a href="#incident-response">API Key 外洩後的處理方式</a></li>
+                    <li><a href="#faq">常見問題 FAQ</a></li>
+                </ol>
+            </nav>
+
+            <section id="what-is-api">
+                <h2>一、API 是什麼？為什麼網站需要 API？</h2>
+                <p>API 的全名為 Application Programming Interface，中文稱為「應用程式介面」。</p>
+                <p>簡單來說，<strong>API 就是讓不同軟體、網站或系統之間，可以互相溝通、交換資料及使用功能的橋樑。</strong></p>
+                <figure class="article-figure">
+                    <img src="images/blog/api-guide/api-guide-page-02.webp" alt="API 連接使用者端、API 介面與伺服器資料庫的資料流程示意圖" width="2064" height="1152" loading="lazy" decoding="async">
+                    <figcaption>API 介於使用者端與伺服器資料庫之間，負責身分驗證、資料交換與權限控管。</figcaption>
+                </figure>
+                <p>我們可以把 API 想像成餐廳裡的服務生。假設今天你到餐廳吃飯，想要點一份義大利麵，你不需要自己走進廚房料理，而是透過服務生將需求傳達給廚房。當廚房完成餐點後，服務生再將料理送到你面前。</p>
+                <p>API 的運作概念也是如此。當網站需要使用另一個系統的功能時，就能透過 API 發送請求，由對方系統處理後，再將結果回傳。</p>
+                <p>因此，開發者不需要重新建立每一項功能，就能使用其他平台提供的技術服務。這也是為什麼 API 已經成為現代網站與應用程式開發中不可或缺的重要工具。</p>
+            </section>
+
+            <section id="how-api-works">
+                <h2>二、API 是如何運作的？</h2>
+                <p>了解 API 是什麼之後，接下來就要認識 API 的基本運作方式。一般而言，API 的資料交換可以分成兩個階段：<strong>Request（請求）與 Response（回應）。</strong></p>
+                <p>例如，當你進入購物網站，想查看某項商品的價格與庫存資訊時，網站會向伺服器發送請求。伺服器收到請求後，會依照指定的內容進行處理，再將商品資訊回傳至網站。</p>
+                <p>整個流程可以簡單理解為：</p>
+                <ol>
+                    <li>使用者操作網站，提出資料需求。</li>
+                    <li>網站透過 API 向伺服器發送請求。</li>
+                    <li>伺服器接收請求並進行處理。</li>
+                    <li>伺服器將結果回傳給網站。</li>
+                    <li>網站呈現資料，讓使用者查看。</li>
+                </ol>
+                <figure class="article-figure">
+                    <img src="images/blog/api-guide/api-guide-page-03.webp" alt="API 呼叫結構包含 Endpoint、HTTP Method、Headers、Status Code 與 JSON Response 的示意圖" width="2064" height="1152" loading="lazy" decoding="async">
+                    <figcaption>一次 API 呼叫通常包含請求端的端點、方法與標頭，以及回應端的狀態碼與資料內容。</figcaption>
+                </figure>
+                <p>透過這樣的方式，不同系統即使使用不同的程式語言或技術架構，仍然可以依照約定好的介面進行資料交換。</p>
+            </section>
+
+            <section id="api-use-cases">
+                <h2>三、API 在日常生活中有哪些應用？</h2>
+                <p>API 並不是只有工程師才會接觸的技術，我們每天使用的許多網站與 APP，背後都有 API 的應用。以下整理四種常見的 API 使用情境。</p>
+                <figure class="article-figure">
+                    <img src="images/blog/api-guide/api-guide-page-04.webp" alt="API 支援節省開發成本、流程自動化、開拓新市場與提升客戶體驗的四項價值" width="2064" height="1152" loading="lazy" decoding="async">
+                    <figcaption>API 的價值不只在資料串接，也包括降低重複開發、串接內部流程與改善使用者體驗。</figcaption>
+                </figure>
+                <h3>1. LINE 快速登入</h3>
+                <p>當你進入購物網站，看到「使用 LINE 登入」的按鈕時，背後就涉及 LINE 提供的登入授權服務。網站在取得使用者授權後，可以透過相關介面完成身分驗證，讓使用者不必重新註冊另一組帳號密碼。</p>
+                <h3>2. Google Maps 地圖服務</h3>
+                <p>許多餐廳、旅館與企業網站，都會整合 Google Maps 地圖功能。透過 Google Maps Platform 提供的 API，開發者可以將地圖、地點搜尋等功能整合進網站，不必自行建立完整的地圖系統。</p>
+                <h3>3. 電商金流與訂單管理</h3>
+                <p>當消費者在購物網站完成付款後，網站可以透過第三方金流服務提供的 API 或通知機制，取得付款結果並更新訂單狀態。如此一來，就能減少人工核對付款資訊的時間，提高訂單處理效率。</p>
+                <h3>4. AI 智慧客服</h3>
+                <p>隨著 AI 技術發展，越來越多企業開始將 AI 功能整合進網站。例如，開發者可以透過 OpenAI API，讓顧客直接在網站上詢問商品問題，並由 AI 協助提供回覆。</p>
+                <p>這也是 API 的主要價值之一：<strong>降低開發成本、整合不同服務，並提升使用者體驗。</strong></p>
+            </section>
+
+            <section id="api-key">
+                <h2>四、什麼是 API Key？為什麼需要妥善保護？</h2>
+                <p>當開發者需要串接第三方 API 時，部分服務會要求提供 API Key，也就是「API 金鑰」。</p>
+                <p>你可以將 API Key 想像成一把數位鑰匙。當程式向 API 服務發送請求時，系統可以透過金鑰識別呼叫者，並根據相關權限設定，決定是否提供服務。</p>
+                <h3>API Key、OAuth 2.0 與 JWT 有什麼差別？</h3>
+                <p>API Key 常用於系統對系統的服務識別；OAuth 2.0 著重於授權第三方應用程式取得有限權限；JWT 則是一種可攜帶簽章資訊的 Token 格式。實際選擇仍應依照使用情境、資料敏感程度與權限需求決定。</p>
+                <figure class="article-figure">
+                    <img src="images/blog/api-guide/api-guide-page-09.webp" alt="API Key、OAuth 2.0 與 JWT 三種 API 驗證與授權機制的比較圖" width="2064" height="1152" loading="lazy" decoding="async">
+                    <figcaption>API Key、OAuth 2.0 與 JWT 的用途不同，不能將三者視為完全相同的驗證方式。</figcaption>
+                </figure>
+                <h3>OAuth 2.0 與 PKCE 授權流程</h3>
+                <p>在公開客戶端的 OAuth 2.0 流程中，PKCE 會搭配一次性的授權碼與 <code>code_verifier</code>，降低授權碼遭攔截後被直接交換 Token 的風險。實際部署仍需依照授權伺服器與客戶端類型完成安全設定。</p>
+                <figure class="article-figure">
+                    <img src="images/blog/api-guide/api-guide-page-10.webp" alt="OAuth 2.0 搭配 PKCE 的授權流程，包含使用者、第三方應用程式、授權伺服器與資源伺服器" width="2064" height="1152" loading="lazy" decoding="async">
+                    <figcaption>PKCE 透過 code challenge 與 code verifier 配對授權流程，適合需要保護公開客戶端的 OAuth 2.0 情境。</figcaption>
+                </figure>
+                <p>例如，當開發者使用 OpenAI API 時，可以透過 API Key 驗證請求，讓自己的程式使用特定的 AI 模型服務。</p>
+                <p>需要注意的是，ChatGPT 訂閱服務與 OpenAI API 採用不同的計費方式。即使已經訂閱 ChatGPT Plus，也不代表可以免費使用付費的 OpenAI API。</p>
+                <p>API 的費用通常會受到模型種類、使用量與計費規則影響。因此，<strong>如果付費 API Key 不小心外洩，其他人就可能利用這組金鑰發送請求，進而產生非預期的費用。</strong></p>
+                <p>不過，未授權扣款不一定代表 API Key 遭到外洩，也可能涉及帳號遭存取、付款資訊遭冒用或其他帳務問題，仍需進一步確認原因。</p>
+            </section>
+
+            <section id="api-key-risks">
+                <h2>五、如果 API Key 外洩，會發生什麼事？</h2>
+                <p>API Key 外洩的情況，可能比我們想像中更加常見。尤其對經常使用 GitHub、第三方服務或多人協作工具的開發者而言，更需要留意以下三種常見情境。</p>
+                <figure class="article-figure">
+                    <img src="images/blog/api-guide/api-guide-page-11.webp" alt="API Key 以硬編碼、版本控制外洩或通訊軟體分享等方式進入資安風險區的示意圖" width="2064" height="1152" loading="lazy" decoding="async">
+                    <figcaption>硬編碼、版本控制紀錄與團隊訊息分享，都是 API Key 可能進入公開或不當存取範圍的情境。</figcaption>
+                </figure>
+                <h3>1. 直接將 API Key 寫在程式碼中（Hardcoding）</h3>
+                <p>部分開發者為了方便測試，可能直接將 API Key 寫在 JavaScript 程式碼，或其他未受到妥善保護的設定檔中。如果這些程式碼被公開，其他人就可能取得金鑰，並使用相關 API 服務。</p>
+                <h3>2. 不小心將 API Key 上傳至 GitHub</h3>
+                <p>當開發者透過 Git Push 上傳程式碼時，如果沒有設定好 <code>.gitignore</code>，就可能不小心將包含 API Key 的 <code>.env</code> 檔案一起上傳。</p>
+                <p>更需要注意的是，即使後來刪除了檔案中的金鑰，過去的 Git 提交紀錄仍可能保留相關資訊。因此，一旦發現金鑰曾經公開，應立即撤銷並重新建立，而不是單純刪除檔案。</p>
+                <h3>3. 在 Slack 或 Notion 等平台分享金鑰</h3>
+                <p>除了程式碼之外，團隊協作平台也可能成為金鑰外洩的途徑。例如，直接在 Slack 群組中貼上 API Key，或將金鑰存放在多人共用的 Notion 頁面。</p>
+                <p>如果存取權限沒有妥善管理，就可能讓不應取得金鑰的人接觸到敏感資訊。</p>
+                <h3>API Key 外洩可能造成的三大後果</h3>
+                <p><strong>第一，帳單突然暴漲。</strong>如果外洩的是付費 API Key，攻擊者可能大量呼叫 API，使帳號在短時間內產生高額使用費用。</p>
+                <p><strong>第二，敏感資料遭到存取。</strong>如果金鑰具備讀取敏感資料的權限，攻擊者就可能利用這組金鑰取得原本受到保護的資訊。實際影響取決於金鑰的權限範圍。</p>
+                <p><strong>第三，網站或系統服務中斷。</strong>當大量異常請求耗盡 API 使用額度，或觸發 Rate Limit（速率限制）時，可能使正常使用者無法順利取得服務。</p>
+                <p>因此，API Key 不應只是被視為普通的設定參數，而是需要妥善管理的重要安全憑證。</p>
+            </section>
+
+            <section id="api-key-protection">
+                <h2>六、如何避免 API Key 外洩？五項安全防護措施</h2>
+                <p>為了降低 API Key 外洩造成的風險，開發者可以從以下五個方向建立基本防護機制。</p>
+                <figure class="article-figure">
+                    <img src="images/blog/api-guide/api-guide-page-12.webp" alt="API Key 五項安全防護措施：環境變數、IP 限制、最小權限、金鑰輪換與即時監控" width="2064" height="1152" loading="lazy" decoding="async">
+                    <figcaption>API Key 防護可從密鑰儲存、來源限制、最小權限、輪換與異常監控五個方向建立。</figcaption>
+                </figure>
+                <h3>1. 使用環境變數管理金鑰</h3>
+                <p>避免直接將 API Key 寫在公開的前端程式碼中。可以透過環境變數與可信任的後端環境管理金鑰，正式環境則可以使用主機平台提供的 Secrets 管理功能。</p>
+                <h3>2. 設定 IP 白名單與速率限制</h3>
+                <p>如果 API 服務支援，可以限制允許呼叫的來源 IP，以及一定時間內能夠發送的請求數量。即使金鑰不幸外洩，也能在一定程度上降低遭到濫用的風險。</p>
+                <h3>3. 遵循最小權限原則</h3>
+                <p>不同網站、專案與系統，應盡量使用獨立的 API Key。同時只開放實際需要的存取權限，避免單一金鑰具備過多功能。</p>
+                <h3>4. 定期檢查與更換金鑰</h3>
+                <p>除了依照風險與服務政策定期檢查金鑰之外，一旦懷疑金鑰遭到外洩，就應立即撤銷並更換。</p>
+                <h3>5. 建立 API 使用量監控</h3>
+                <p>定期檢查 API 的使用量、請求頻率與費用變化，並設定異常警示。需要注意的是，部分平台的預算提醒不一定會自動停止 API 使用，因此仍需確認服務提供者的實際限制機制。</p>
+            </section>
+
+            <section id="incident-response">
+                <h2>七、如果 API Key 真的外洩，該怎麼辦？</h2>
+                <p>如果發現 API Key 疑似遭到濫用，可以參考以下四個階段進行緊急處理。</p>
+                <h3>第一階段：立即止血（0～5 分鐘）</h3>
+                <p>立即撤銷或停用疑似外洩的 API Key，避免持續產生未經授權的請求。</p>
+                <h3>第二階段：檢查異常紀錄（5～15 分鐘）</h3>
+                <p>檢查 API 使用量、呼叫紀錄與相關帳務資訊，確認是否出現異常請求。</p>
+                <h3>第三階段：更換金鑰（15～60 分鐘）</h3>
+                <p>重新建立 API Key，更新後端環境變數及相關服務設定，並確認系統恢復正常。</p>
+                <h3>第四階段：調查與加固（1～24 小時）</h3>
+                <p>檢查 GitHub、程式碼、設定檔及團隊協作平台，找出可能的外洩來源，並補強金鑰管理與權限控制措施。</p>
+                <p>以上時間屬於建議性的應變目標，實際處理順序與所需時間仍應依事件嚴重程度調整。</p>
+                <p>如果涉及 OpenAI 未授權扣款，也應保留交易紀錄，並透過 OpenAI 官方客服及發卡銀行處理相關帳務問題。</p>
+            </section>
+
+            <section id="conclusion">
+                <h2>八、結語：API 不只是開發工具，更需要安全管理</h2>
+                <p>經過這次 OpenAI 未授權扣款事件，我開始重新思考，自己在網站開發過程中，是否真的有妥善管理每一項第三方服務。</p>
+                <p>以前在開發網站時，可能比較在意網站能不能正常運作、功能是否完整，以及使用者操作是否方便。但隨著接觸的第三方服務越來越多，我也逐漸發現：</p>
+                <p><strong>一個好的網站，不只是功能能夠正常運作，更必須具備安全、穩定與可管理的系統架構。</strong></p>
+                <p>API 確實能夠提升開發效率，讓我們不需要從零開始，就能整合會員登入、金流、物流及 AI 等功能。</p>
+                <p>但在享受便利的同時，開發者也需要重視金鑰管理、存取權限與使用成本。</p>
+                <p>你有使用過 API 嗎？曾經遇過 API Key 外洩、API 費用突然增加，或其他資訊安全問題嗎？歡迎分享你的經驗，也希望這篇文章能幫助更多正在學習網站開發的人，提前建立正確的 API 安全觀念。</p>
+            </section>
+
+            <section id="faq">
+                <h2>常見問題 FAQ</h2>
+                <h3>Q1：API 是什麼？一般人需要了解嗎？</h3>
+                <p>API 是讓不同軟體與系統之間進行資料交換及功能整合的介面。即使不會寫程式，了解 API 也有助於理解 LINE 登入、線上付款、地圖及 AI 等網站功能的運作方式。</p>
+                <h3>Q2：API Key 是什麼？和密碼一樣嗎？</h3>
+                <p>API Key 是用來識別 API 請求來源的憑證。雖然與密碼具有部分相似用途，但兩者的驗證機制與權限範圍不一定相同。需要保密的 API Key 應避免公開。</p>
+                <h3>Q3：ChatGPT Plus 有包含 OpenAI API 費用嗎？</h3>
+                <p>沒有。ChatGPT 訂閱服務與 OpenAI API 是不同的產品及計費系統。即使已經訂閱 ChatGPT Plus，使用付費 API 時仍可能產生額外費用。</p>
+                <h3>Q4：API Key 外洩後，只要刪除程式碼就安全了嗎？</h3>
+                <p>不一定。如果金鑰曾經上傳到公開的 GitHub Repository，過去的提交紀錄可能仍保留相關資訊。建議立即撤銷外洩金鑰並重新建立。</p>
+                <h3>Q5：如何確認 OpenAI API 是否產生異常費用？</h3>
+                <p>可以登入 OpenAI API 平台，檢查使用量與帳務資訊。如果發現不明費用，應保留交易紀錄，確認是否涉及未經授權的 API 使用，並聯繫官方客服處理。</p>
+            </section>
+
+            <div class="page-actions article-actions">
+                <a class="cta-button" href="seo.html">了解 SEO 網站優化</a>
+                <a class="cta-button cta-secondary" href="contact.html">討論網站與資安需求</a>
+                <a class="cta-button cta-secondary" href="blog.html">回到部落格</a>
+            </div>
+        </article>
+    </main>
+    <footer><div class="footer-inner"><div class="footer-column footer-brand-col"><h3>A.Q. webdesign</h3><ul class="footer-links"><li><a href="index.html">首頁</a></li><li><a href="about.html">關於我們</a></li><li><a href="services.html">服務項目</a></li><li><a href="portfolio.html">作品集</a></li><li><a href="blog.html">部落格</a></li><li><a href="contact.html">聯絡我們</a></li></ul></div><div class="footer-column footer-contact-col"><h3>聯絡我們</h3><p>服務時間：週一至週五 9:00-18:00</p><p>信箱：aq.webdesign@example.com</p><p>電話：0906-843-286</p></div></div><p class="footer-copy">&copy; 2026 A.Q. webdesign All rights reserved.</p></footer>
+    <script src="nav-mobile.js"></script><script src="nav-dropdown.js"></script>
+</body>
+</html>

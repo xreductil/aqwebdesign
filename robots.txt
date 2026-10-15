@@ -1,0 +1,24 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /Dashai/
+Disallow: /Patria/
+Disallow: /Patriasample-module/
+Disallow: /dashboardsample/
+Disallow: /liff-login.html
+Disallow: /Everyfresh/dist/customer-dashboard.html
+Disallow: /Everyfresh/dist/staff-dashboard.html
+Disallow: /Everyfresh/src/
+Disallow: /Foodie/customer-dashboard.html
+Disallow: /Foodie/staff-dashboard.html
+Disallow: /farcimensample/customer-dashboard.html
+Disallow: /farcimensample/staff-dashboard.html
+Disallow: /Patriasample/Documentation/
+Disallow: /Patriasample/Patria-backup/
+Disallow: /Patriasample/Patria/dist/admin/
+Disallow: /Patriasample/Patria/public/admin/
+Disallow: /Patriasample/dashboardsample/
+
+Sitemap: https://www.aq-webdesign.com/sitemap.xml
+Sitemap: https://www.aq-webdesign.com/sitemap-templates.xml
