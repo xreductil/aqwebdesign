@@ -1,0 +1,4 @@
+# GitHub Pages publishes the root static HTML site.
+# The ScrewFast folder is Astro source code, not a built static output.
+exclude:
+  - screwfast-1.0.0
