@@ -9,16 +9,26 @@
     if (!toc || !links.length || !sections.length) return;
 
     if (toggle) {
+        const closeToc = () => {
+            toc.classList.remove('is-open');
+            toggle.setAttribute('aria-expanded', 'false');
+        };
+
         toggle.addEventListener('click', () => {
             const isOpen = toc.classList.toggle('is-open');
             toggle.setAttribute('aria-expanded', String(isOpen));
         });
 
         links.forEach((link) => {
-            link.addEventListener('click', () => {
-                toc.classList.remove('is-open');
-                toggle.setAttribute('aria-expanded', 'false');
-            });
+            link.addEventListener('click', closeToc);
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!toc.contains(event.target)) closeToc();
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeToc();
         });
     }
 
