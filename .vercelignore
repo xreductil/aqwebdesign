@@ -1,0 +1,12 @@
+.git
+.github
+.vscode
+.vercel
+.vercel-site
+node_modules
+**/node_modules
+.env
+.env.*
+patria-api
+Patriasample-module
+libwebp-1.6.0-mac-arm64
