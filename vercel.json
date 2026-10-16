@@ -36,10 +36,6 @@
       "destination": "https://www.aq-webdesign.com/auth/line/:path*"
     },
     {
-      "source": "/images/:path*",
-      "destination": "https://www.aq-webdesign.com/images/:path*"
-    },
-    {
       "source": "/Patriasample/Patria/dist/liff-login.html",
       "destination": "/liff-login.html"
     },
