@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://www.aq-webdesign.com/</loc></url>
-  <url><loc>https://www.aq-webdesign.com/about.html</loc></url>
-  <url><loc>https://www.aq-webdesign.com/services.html</loc></url>
-  <url><loc>https://www.aq-webdesign.com/enterprise-website-design.html</loc></url>
-  <url><loc>https://www.aq-webdesign.com/ecommerce-website-design.html</loc></url>
-  <url><loc>https://www.aq-webdesign.com/seo.html</loc></url>
-  <url><loc>https://www.aq-webdesign.com/brand-strategy.html</loc></url>
-  <url><loc>https://www.aq-webdesign.com/ui-ux-design.html</loc></url>
-  <url><loc>https://www.aq-webdesign.com/portfolio.html</loc></url>
-  <url><loc>https://www.aq-webdesign.com/blog.html</loc></url>
+  <url><loc>https://www.aq-webdesign.com/about/</loc></url>
+  <url><loc>https://www.aq-webdesign.com/services/</loc></url>
+  <url><loc>https://www.aq-webdesign.com/enterprise-website-design/</loc></url>
+  <url><loc>https://www.aq-webdesign.com/ecommerce-website-design/</loc></url>
+  <url><loc>https://www.aq-webdesign.com/seo/</loc></url>
+  <url><loc>https://www.aq-webdesign.com/brand-strategy/</loc></url>
+  <url><loc>https://www.aq-webdesign.com/ui-ux-design/</loc></url>
+  <url><loc>https://www.aq-webdesign.com/portfolio/</loc></url>
+  <url><loc>https://www.aq-webdesign.com/blog/</loc></url>
   <url><loc>https://www.aq-webdesign.com/blog-api-key-security/</loc></url>
-  <url><loc>https://www.aq-webdesign.com/contact.html</loc></url>
+  <url><loc>https://www.aq-webdesign.com/contact/</loc></url>
 </urlset>

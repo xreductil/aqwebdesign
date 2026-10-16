@@ -4,8 +4,73 @@
   "cleanUrls": false,
   "redirects": [
     {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/about.html",
+      "destination": "/about/",
+      "permanent": true
+    },
+    {
+      "source": "/services.html",
+      "destination": "/services/",
+      "permanent": true
+    },
+    {
+      "source": "/enterprise-website-design.html",
+      "destination": "/enterprise-website-design/",
+      "permanent": true
+    },
+    {
+      "source": "/ecommerce-website-design.html",
+      "destination": "/ecommerce-website-design/",
+      "permanent": true
+    },
+    {
+      "source": "/seo.html",
+      "destination": "/seo/",
+      "permanent": true
+    },
+    {
+      "source": "/brand-strategy.html",
+      "destination": "/brand-strategy/",
+      "permanent": true
+    },
+    {
+      "source": "/ui-ux-design.html",
+      "destination": "/ui-ux-design/",
+      "permanent": true
+    },
+    {
+      "source": "/portfolio.html",
+      "destination": "/portfolio/",
+      "permanent": true
+    },
+    {
+      "source": "/portfolio-examples.html",
+      "destination": "/portfolio/",
+      "permanent": true
+    },
+    {
+      "source": "/blog.html",
+      "destination": "/blog/",
+      "permanent": true
+    },
+    {
       "source": "/blog-api-key-security.html",
       "destination": "/blog-api-key-security/",
+      "permanent": true
+    },
+    {
+      "source": "/contact.html",
+      "destination": "/contact/",
+      "permanent": true
+    },
+    {
+      "source": "/corporate-website-design.html",
+      "destination": "/enterprise-website-design/",
       "permanent": true
     }
   ],
@@ -73,8 +138,48 @@
   ],
   "rewrites": [
     {
+      "source": "/about/",
+      "destination": "/about.html"
+    },
+    {
+      "source": "/services/",
+      "destination": "/services.html"
+    },
+    {
+      "source": "/enterprise-website-design/",
+      "destination": "/enterprise-website-design.html"
+    },
+    {
+      "source": "/ecommerce-website-design/",
+      "destination": "/ecommerce-website-design.html"
+    },
+    {
+      "source": "/seo/",
+      "destination": "/seo.html"
+    },
+    {
+      "source": "/brand-strategy/",
+      "destination": "/brand-strategy.html"
+    },
+    {
+      "source": "/ui-ux-design/",
+      "destination": "/ui-ux-design.html"
+    },
+    {
+      "source": "/portfolio/",
+      "destination": "/portfolio.html"
+    },
+    {
+      "source": "/blog/",
+      "destination": "/blog.html"
+    },
+    {
       "source": "/blog-api-key-security/",
       "destination": "/blog-api-key-security.html"
+    },
+    {
+      "source": "/contact/",
+      "destination": "/contact.html"
     },
     {
       "source": "/api/:path*",
