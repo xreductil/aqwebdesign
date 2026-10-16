@@ -265,8 +265,12 @@
                 </div>
 
                 <aside class="article-toc" aria-label="章節內容">
+                    <button class="article-toc-toggle" type="button" aria-expanded="false" aria-controls="article-toc-list">
+                        <span>章節內容</span>
+                        <span class="article-toc-toggle-icon" aria-hidden="true">⌄</span>
+                    </button>
                     <h2>章節內容</h2>
-                    <ol>
+                    <ol id="article-toc-list">
                         <li><a href="#what-is-api">API 是什麼？為什麼網站需要 API？</a></li>
                         <li><a href="#how-api-works">API 是如何運作的？</a></li>
                         <li><a href="#api-use-cases">API 在日常生活中的應用</a></li>

@@ -339,6 +339,10 @@ a.article-card:hover {
     box-shadow: 0 12px 28px rgba(43, 39, 33, .08);
 }
 
+.article-toc-toggle {
+    display: none;
+}
+
 .article-toc h2 {
     display: block;
     float: none;
@@ -451,9 +455,59 @@ a.article-card:hover {
     }
 
     .article-toc {
-        position: static;
-        order: -1;
-        width: 100%;
+        position: fixed;
+        top: 72px;
+        right: 1rem;
+        left: 1rem;
+        z-index: 950;
+        order: 0;
+        width: auto;
         max-height: none;
+        padding: .65rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 26px rgba(43, 39, 33, .16);
+    }
+
+    .article-toc-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: .65rem .75rem;
+        border: 0;
+        background: transparent;
+        color: #333;
+        font: inherit;
+        font-weight: 700;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .article-toc-toggle-icon {
+        color: #9a806b;
+        font-size: 1.2rem;
+        line-height: 1;
+        transition: transform .2s ease;
+    }
+
+    .article-toc.is-open .article-toc-toggle-icon {
+        transform: rotate(180deg);
+    }
+
+    .article-toc h2 {
+        display: none;
+    }
+
+    .article-toc ol {
+        display: none;
+        max-height: calc(100vh - 170px);
+        overflow-y: auto;
+        margin-top: .35rem;
+        padding-top: .35rem;
+        border-top: 1px solid #f1eee8;
+    }
+
+    .article-toc.is-open ol {
+        display: block;
     }
 }
