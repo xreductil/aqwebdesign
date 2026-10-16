@@ -438,6 +438,12 @@ a.article-card:hover {
         display: block;
     }
 
+    .service-detail {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 700px) {
     .article-layout {
         display: flex;
         flex-direction: column;
@@ -449,9 +455,5 @@ a.article-card:hover {
         order: -1;
         width: 100%;
         max-height: none;
-    }
-
-    .service-detail {
-        padding: 1.5rem;
     }
 }
