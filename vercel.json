@@ -2,6 +2,13 @@
   "buildCommand": "npm run vercel-build",
   "outputDirectory": ".vercel-site",
   "cleanUrls": false,
+  "redirects": [
+    {
+      "source": "/blog-api-key-security.html",
+      "destination": "/blog-api-key-security/",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/Patriasample/Patria/dist/liff-login.html",
@@ -45,9 +52,30 @@
           "value": "0"
         }
       ]
+    },
+    {
+      "source": "/blog-api-key-security/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ],
   "rewrites": [
+    {
+      "source": "/blog-api-key-security/",
+      "destination": "/blog-api-key-security.html"
+    },
     {
       "source": "/api/:path*",
       "destination": "https://www.aq-webdesign.com/api/:path*"
