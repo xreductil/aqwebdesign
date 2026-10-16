@@ -35,6 +35,7 @@ for (const entry of fs.readdirSync(repoRoot, { withFileTypes: true })) {
 
 copy('images');
 copyIfExists('uploads');
+copy('images/blog/api-guide', 'blog-api-key-security-assets');
 
 // Public portfolio/demo paths currently linked from the website.
 for (const directory of [

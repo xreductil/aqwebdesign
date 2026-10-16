@@ -122,7 +122,7 @@
                 <p>API 的全名為 Application Programming Interface，中文稱為「應用程式介面」。</p>
                 <p>簡單來說，<strong>API 就是讓不同軟體、網站或系統之間，可以互相溝通、交換資料及使用功能的橋樑。</strong></p>
                 <figure class="article-figure">
-                    <img src="images/blog/api-guide/api-guide-page-02.webp" alt="API 連接使用者端、API 介面與伺服器資料庫的資料流程示意圖" width="2064" height="1152" loading="lazy" decoding="async">
+                    <img src="blog-api-key-security-assets/api-guide-page-02.webp" alt="API 連接使用者端、API 介面與伺服器資料庫的資料流程示意圖" width="2064" height="1152" loading="lazy" decoding="async">
                     <figcaption>API 介於使用者端與伺服器資料庫之間，負責身分驗證、資料交換與權限控管。</figcaption>
                 </figure>
                 <p>我們可以把 API 想像成餐廳裡的服務生。假設今天你到餐廳吃飯，想要點一份義大利麵，你不需要自己走進廚房料理，而是透過服務生將需求傳達給廚房。當廚房完成餐點後，服務生再將料理送到你面前。</p>
@@ -143,7 +143,7 @@
                     <li>網站呈現資料，讓使用者查看。</li>
                 </ol>
                 <figure class="article-figure">
-                    <img src="images/blog/api-guide/api-guide-page-03.webp" alt="API 呼叫結構包含 Endpoint、HTTP Method、Headers、Status Code 與 JSON Response 的示意圖" width="2064" height="1152" loading="lazy" decoding="async">
+                    <img src="blog-api-key-security-assets/api-guide-page-03.webp" alt="API 呼叫結構包含 Endpoint、HTTP Method、Headers、Status Code 與 JSON Response 的示意圖" width="2064" height="1152" loading="lazy" decoding="async">
                     <figcaption>一次 API 呼叫通常包含請求端的端點、方法與標頭，以及回應端的狀態碼與資料內容。</figcaption>
                 </figure>
                 <p>透過這樣的方式，不同系統即使使用不同的程式語言或技術架構，仍然可以依照約定好的介面進行資料交換。</p>
@@ -153,7 +153,7 @@
                 <h2>三、API 在日常生活中有哪些應用？</h2>
                 <p>API 並不是只有工程師才會接觸的技術，我們每天使用的許多網站與 APP，背後都有 API 的應用。以下整理四種常見的 API 使用情境。</p>
                 <figure class="article-figure">
-                    <img src="images/blog/api-guide/api-guide-page-04.webp" alt="API 支援節省開發成本、流程自動化、開拓新市場與提升客戶體驗的四項價值" width="2064" height="1152" loading="lazy" decoding="async">
+                    <img src="blog-api-key-security-assets/api-guide-page-04.webp" alt="API 支援節省開發成本、流程自動化、開拓新市場與提升客戶體驗的四項價值" width="2064" height="1152" loading="lazy" decoding="async">
                     <figcaption>API 的價值不只在資料串接，也包括降低重複開發、串接內部流程與改善使用者體驗。</figcaption>
                 </figure>
                 <h3>1. LINE 快速登入</h3>
@@ -174,13 +174,13 @@
                 <h3>API Key、OAuth 2.0 與 JWT 有什麼差別？</h3>
                 <p>API Key 常用於系統對系統的服務識別；OAuth 2.0 著重於授權第三方應用程式取得有限權限；JWT 則是一種可攜帶簽章資訊的 Token 格式。實際選擇仍應依照使用情境、資料敏感程度與權限需求決定。</p>
                 <figure class="article-figure">
-                    <img src="images/blog/api-guide/api-guide-page-09.webp" alt="API Key、OAuth 2.0 與 JWT 三種 API 驗證與授權機制的比較圖" width="2064" height="1152" loading="lazy" decoding="async">
+                    <img src="blog-api-key-security-assets/api-guide-page-09.webp" alt="API Key、OAuth 2.0 與 JWT 三種 API 驗證與授權機制的比較圖" width="2064" height="1152" loading="lazy" decoding="async">
                     <figcaption>API Key、OAuth 2.0 與 JWT 的用途不同，不能將三者視為完全相同的驗證方式。</figcaption>
                 </figure>
                 <h3>OAuth 2.0 與 PKCE 授權流程</h3>
                 <p>在公開客戶端的 OAuth 2.0 流程中，PKCE 會搭配一次性的授權碼與 <code>code_verifier</code>，降低授權碼遭攔截後被直接交換 Token 的風險。實際部署仍需依照授權伺服器與客戶端類型完成安全設定。</p>
                 <figure class="article-figure">
-                    <img src="images/blog/api-guide/api-guide-page-10.webp" alt="OAuth 2.0 搭配 PKCE 的授權流程，包含使用者、第三方應用程式、授權伺服器與資源伺服器" width="2064" height="1152" loading="lazy" decoding="async">
+                    <img src="blog-api-key-security-assets/api-guide-page-10.webp" alt="OAuth 2.0 搭配 PKCE 的授權流程，包含使用者、第三方應用程式、授權伺服器與資源伺服器" width="2064" height="1152" loading="lazy" decoding="async">
                     <figcaption>PKCE 透過 code challenge 與 code verifier 配對授權流程，適合需要保護公開客戶端的 OAuth 2.0 情境。</figcaption>
                 </figure>
                 <p>例如，當開發者使用 OpenAI API 時，可以透過 API Key 驗證請求，讓自己的程式使用特定的 AI 模型服務。</p>
@@ -193,7 +193,7 @@
                 <h2>五、如果 API Key 外洩，會發生什麼事？</h2>
                 <p>API Key 外洩的情況，可能比我們想像中更加常見。尤其對經常使用 GitHub、第三方服務或多人協作工具的開發者而言，更需要留意以下三種常見情境。</p>
                 <figure class="article-figure">
-                    <img src="images/blog/api-guide/api-guide-page-11.webp" alt="API Key 以硬編碼、版本控制外洩或通訊軟體分享等方式進入資安風險區的示意圖" width="2064" height="1152" loading="lazy" decoding="async">
+                    <img src="blog-api-key-security-assets/api-guide-page-11.webp" alt="API Key 以硬編碼、版本控制外洩或通訊軟體分享等方式進入資安風險區的示意圖" width="2064" height="1152" loading="lazy" decoding="async">
                     <figcaption>硬編碼、版本控制紀錄與團隊訊息分享，都是 API Key 可能進入公開或不當存取範圍的情境。</figcaption>
                 </figure>
                 <h3>1. 直接將 API Key 寫在程式碼中（Hardcoding）</h3>
@@ -215,7 +215,7 @@
                 <h2>六、如何避免 API Key 外洩？五項安全防護措施</h2>
                 <p>為了降低 API Key 外洩造成的風險，開發者可以從以下五個方向建立基本防護機制。</p>
                 <figure class="article-figure">
-                    <img src="images/blog/api-guide/api-guide-page-12.webp" alt="API Key 五項安全防護措施：環境變數、IP 限制、最小權限、金鑰輪換與即時監控" width="2064" height="1152" loading="lazy" decoding="async">
+                    <img src="blog-api-key-security-assets/api-guide-page-12.webp" alt="API Key 五項安全防護措施：環境變數、IP 限制、最小權限、金鑰輪換與即時監控" width="2064" height="1152" loading="lazy" decoding="async">
                     <figcaption>API Key 防護可從密鑰儲存、來源限制、最小權限、輪換與異常監控五個方向建立。</figcaption>
                 </figure>
                 <h3>1. 使用環境變數管理金鑰</h3>
