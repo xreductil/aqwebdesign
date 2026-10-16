@@ -28,6 +28,19 @@
     font-size: 1.1rem;
 }
 
+.page-hero.article-hero {
+    padding: 0;
+    background: #f4f3ef;
+}
+
+.article-hero img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: min(62vw, 720px);
+    object-fit: cover;
+}
+
 .page-container {
     max-width: 1120px;
     margin: 0 auto;
@@ -256,6 +269,27 @@ a.article-card:hover {
 
 .article-body {
     min-width: 0;
+}
+
+.article-heading {
+    margin-bottom: 2rem;
+}
+
+.article-heading h1 {
+    max-width: 900px;
+    margin: 0;
+    color: #333;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    line-height: 1.25;
+    text-align: left;
+}
+
+.article-heading p {
+    max-width: 760px;
+    margin: 1rem 0 0;
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1.8;
 }
 
 .article-detail .article-lead {
