@@ -455,6 +455,10 @@ a.article-card:hover {
 }
 
 @media (max-width: 900px) {
+    .article-detail section {
+        scroll-margin-top: 132px;
+    }
+
     .article-layout {
         display: flex;
         flex-direction: column;
