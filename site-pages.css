@@ -304,10 +304,6 @@ a.article-card:hover {
 
 .article-detail .article-lead {
     margin-top: 1.25rem;
-    color: #444;
-    font-size: 1.08rem;
-    font-weight: 600;
-    line-height: 1.9;
 }
 
 .article-detail .article-meta {
