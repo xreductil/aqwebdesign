@@ -9,6 +9,61 @@
       "permanent": true
     },
     {
+      "source": "/about",
+      "destination": "/about/",
+      "permanent": true
+    },
+    {
+      "source": "/services",
+      "destination": "/services/",
+      "permanent": true
+    },
+    {
+      "source": "/enterprise-website-design",
+      "destination": "/enterprise-website-design/",
+      "permanent": true
+    },
+    {
+      "source": "/ecommerce-website-design",
+      "destination": "/ecommerce-website-design/",
+      "permanent": true
+    },
+    {
+      "source": "/seo",
+      "destination": "/seo/",
+      "permanent": true
+    },
+    {
+      "source": "/brand-strategy",
+      "destination": "/brand-strategy/",
+      "permanent": true
+    },
+    {
+      "source": "/ui-ux-design",
+      "destination": "/ui-ux-design/",
+      "permanent": true
+    },
+    {
+      "source": "/portfolio",
+      "destination": "/portfolio/",
+      "permanent": true
+    },
+    {
+      "source": "/blog",
+      "destination": "/blog/",
+      "permanent": true
+    },
+    {
+      "source": "/blog-api-key-security",
+      "destination": "/blog-api-key-security/",
+      "permanent": true
+    },
+    {
+      "source": "/contact",
+      "destination": "/contact/",
+      "permanent": true
+    },
+    {
       "source": "/about.html",
       "destination": "/about/",
       "permanent": true
