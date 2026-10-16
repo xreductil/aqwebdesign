@@ -14,6 +14,12 @@ const copy = (source, destination = source) => {
   fs.cpSync(sourcePath, destinationPath, { recursive: true, force: true });
 };
 
+const copyIfExists = (source, destination = source) => {
+  if (fs.existsSync(path.join(repoRoot, source))) {
+    copy(source, destination);
+  }
+};
+
 // Root website pages and their existing static assets.
 const publicExtensions = new Set([
   '.css', '.gif', '.html', '.ico', '.jpeg', '.jpg', '.js', '.json',
@@ -28,7 +34,7 @@ for (const entry of fs.readdirSync(repoRoot, { withFileTypes: true })) {
 }
 
 copy('images');
-copy('uploads');
+copyIfExists('uploads');
 
 // Public portfolio/demo paths currently linked from the website.
 for (const directory of [
