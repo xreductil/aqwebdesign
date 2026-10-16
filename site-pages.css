@@ -278,6 +278,30 @@ a.article-card:hover {
     min-width: 0;
 }
 
+.article-heading {
+    display: block;
+    width: 100%;
+    margin: 1.5rem 0 2rem;
+}
+
+.article-heading h1 {
+    max-width: 900px;
+    margin: 0;
+    color: #333;
+    font-size: clamp(1.8rem, 3.4vw, 2.8rem);
+    line-height: 1.35;
+    text-align: left;
+}
+
+.article-heading p {
+    max-width: 760px;
+    margin: .75rem 0 0;
+    color: #666;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    text-align: left;
+}
+
 .article-detail .article-lead {
     margin-top: 1.25rem;
     color: #444;
