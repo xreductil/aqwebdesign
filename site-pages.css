@@ -29,6 +29,9 @@
 }
 
 .page-hero.article-hero {
+    position: relative;
+    z-index: 0;
+    overflow: hidden;
     padding: 0;
     background: #f4f3ef;
 }
@@ -257,6 +260,10 @@ a.article-card:hover {
 }
 
 .article-detail {
+    position: relative;
+    z-index: 1;
+    clear: both;
+    background: #fff;
     max-width: 1120px;
 }
 
@@ -272,6 +279,9 @@ a.article-card:hover {
 }
 
 .article-heading {
+    display: block;
+    width: 100%;
+    clear: both;
     margin-bottom: 2rem;
 }
 
