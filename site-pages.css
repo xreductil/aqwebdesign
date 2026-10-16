@@ -302,10 +302,6 @@ a.article-card:hover {
     text-align: left;
 }
 
-.article-detail .article-lead {
-    margin-top: 1.25rem;
-}
-
 .article-detail .article-meta {
     margin: -.25rem 0 0;
     color: #8a8178;
