@@ -244,7 +244,18 @@ a.article-card:hover {
 }
 
 .article-detail {
-    max-width: 900px;
+    max-width: 1120px;
+}
+
+.article-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 3.5rem;
+    align-items: start;
+}
+
+.article-body {
+    min-width: 0;
 }
 
 .article-detail .article-lead {
@@ -310,63 +321,85 @@ a.article-card:hover {
 }
 
 .article-toc {
-    margin-top: 2.5rem;
-    padding: 1.5rem 1.75rem;
+    position: sticky;
+    top: 88px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    max-height: none;
+    overflow: visible;
+    width: 100%;
+    max-width: none;
+    margin-top: 0;
+    padding: 1.25rem;
     border: 1px solid #e7e2dc;
     border-radius: 14px;
-    background: linear-gradient(135deg, #faf9f7 0%, #f4f7fa 100%);
+    background: #fff;
+    box-shadow: 0 12px 28px rgba(43, 39, 33, .08);
 }
 
 .article-toc h2 {
-    margin: 0 0 1rem;
+    display: block;
+    float: none;
+    width: 100%;
+    margin: 0 0 .85rem;
+    padding-bottom: .8rem;
+    border-bottom: 2px solid #f1eee8;
+    color: #333;
     font-size: 1.25rem;
     text-align: left;
 }
 
 .article-toc ol {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .75rem 1rem;
+    display: block;
+    clear: both;
+    width: 100%;
     margin: 0;
     padding: 0;
     list-style: none;
-    counter-reset: article-toc;
 }
 
 .article-toc li {
-    min-width: 0;
-    counter-increment: article-toc;
+    margin: 0;
 }
 
 .article-toc a {
     position: relative;
     display: block;
-    height: 100%;
-    padding: .75rem 1rem .75rem 2.75rem;
-    border: 1px solid #e7e2dc;
-    border-radius: 9px;
-    background: #fff;
+    padding: .55rem .65rem .55rem 1.4rem;
+    border-radius: 6px;
     color: #5d4f43;
-    line-height: 1.6;
+    font-size: .94rem;
+    line-height: 1.55;
     text-decoration: none;
-    transition: border-color .2s ease, background-color .2s ease, transform .2s ease;
+    transition: background-color .2s ease, color .2s ease;
 }
 
 .article-toc a::before {
-    content: counter(article-toc, decimal-leading-zero);
+    content: '○';
     position: absolute;
-    top: .75rem;
-    left: 1rem;
+    top: .52rem;
+    left: .25rem;
     color: #9a806b;
-    font-size: .85rem;
-    font-weight: 700;
-    letter-spacing: .04em;
+    font-size: .8rem;
 }
 
 .article-toc a:hover {
-    border-color: #bca58f;
     background: #f1eee8;
-    transform: translateY(-2px);
+    color: #333;
+}
+
+.article-toc a.is-active {
+    background: #f1eee8;
+    color: #333;
+    font-weight: 600;
+}
+
+.article-toc a.is-active::before {
+    content: '●';
+    color: #b88a4a;
+    font-size: .65rem;
 }
 
 .article-detail code {
@@ -402,7 +435,20 @@ a.article-card:hover {
     }
 
     .article-toc ol {
-        grid-template-columns: 1fr;
+        display: block;
+    }
+
+    .article-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .article-toc {
+        position: static;
+        order: -1;
+        width: 100%;
+        max-height: none;
     }
 
     .service-detail {
